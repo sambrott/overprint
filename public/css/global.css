@@ -238,8 +238,11 @@ body{background:var(--bg);color:var(--text);font-family:'IBM Plex Mono',monospac
 .tc-anim{width:100%;height:100%;filter:grayscale(1) brightness(0.4);transition:filter 0.4s ease,opacity 0.3s ease;opacity:0.6}
 .tool-card:hover .tc-anim{filter:grayscale(0) brightness(1);opacity:1}
 
-.tc-anim *{animation-play-state:paused !important}
-.tool-card:hover .tc-anim *{animation-play-state:running !important}
+/* Pause preview keyframes until hover — only when hover is available (not touch / mobile) */
+@media (hover: hover) {
+  .tc-anim *{animation-play-state:paused !important}
+  .tool-card:hover .tc-anim *{animation-play-state:running !important}
+}
 
 .tc-body{padding:16px 18px;position:relative;z-index:1}
 .tc-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
