@@ -421,7 +421,7 @@ body{background:var(--bg);color:var(--text);font-family:'IBM Plex Mono',monospac
 .drop-zone{border:1px dashed var(--border);padding:32px 20px;text-align:center;font-size:11px;color:var(--text-faint);letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:border-color .2s,background .2s}
 .drop-zone:hover{border-color:var(--border-hi);background:var(--bg)}
 
-.about-page{max-width:720px;margin:0 auto;padding:0 var(--pad) 48px}
+.about-page{max-width:720px;margin:0 auto;padding:clamp(20px,4vw,32px) var(--pad) 48px}
 .about-h1{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(28px,5vw,40px);text-transform:uppercase;letter-spacing:-1px;color:var(--text-hi);margin-bottom:10px;line-height:0.95}
 .about-h1 .c{color:var(--C)}
 .about-block{font-size:13px;color:var(--text-lo);line-height:1.8;margin-bottom:22px}
