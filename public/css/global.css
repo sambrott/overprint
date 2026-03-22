@@ -35,12 +35,6 @@ html::-webkit-scrollbar-corner{background:var(--bg)}
 body{background:var(--bg);color:var(--text);font-family:'IBM Plex Mono',monospace;line-height:1.6;overflow-x:hidden;-webkit-tap-highlight-color:rgba(0,180,216,0.15)}
 @media(max-width:640px){:root{--pad:14px}}
 
-/* Mobile / touch: previews full color (no hover) */
-@media (hover: none), (max-width: 640px) {
-  .tc-anim{filter:grayscale(0) brightness(1);opacity:1}
-  .tc-anim *{animation-play-state:running !important}
-}
-
 /* NAV */
 .nav{
   position:sticky;top:0;z-index:80;display:flex;justify-content:space-between;align-items:center;
@@ -330,11 +324,18 @@ body{background:var(--bg);color:var(--text);font-family:'IBM Plex Mono',monospac
 }
 .tool-card:hover .p-imgopt-f{border-color:var(--C);color:var(--C)}
 
-/* Mobile / touch: full “hover” ink on every tool card (no hover device) */
-@media (hover: none), (max-width: 640px) {
+/* Mobile / touch: full “hover” ink + full-color previews (base .tc-anim is later in file and was overriding early mobile rules) */
+@media (hover: none), (max-width: 768px) {
   .tool-card{border-color:var(--border-hi)}
   .tool-card::before{width:100%}
   .tool-card::after{opacity:1}
+
+  .tool-card .tc-anim{
+    filter:grayscale(0) brightness(1) !important;
+    -webkit-filter:grayscale(0) brightness(1) !important;
+    opacity:1 !important;
+  }
+  .tool-card .tc-anim *{animation-play-state:running !important}
 
   .tool-card[data-cat="image"] .tc-num{color:var(--C)}
   .tool-card[data-cat="create"] .tc-num{color:var(--M)}
