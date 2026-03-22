@@ -326,6 +326,27 @@ body{background:var(--bg);color:var(--text);font-family:'IBM Plex Mono',monospac
   color:var(--text-faint);border-radius:2px;text-transform:uppercase;transition:border-color .25s,color .25s
 }
 .tool-card:hover .p-imgopt-f{border-color:var(--C);color:var(--C)}
+
+/* Mobile / touch: full “hover” ink on every tool card (no hover device) */
+@media (hover: none), (max-width: 640px) {
+  .tool-card{border-color:var(--border-hi)}
+  .tool-card::before{width:100%}
+  .tool-card::after{opacity:1}
+
+  .tool-card[data-cat="image"] .tc-num{color:var(--C)}
+  .tool-card[data-cat="create"] .tc-num{color:var(--M)}
+  .tool-card[data-cat="color"] .tc-num{color:var(--Y)}
+  .tool-card[data-cat="type"] .tc-num{color:var(--K)}
+
+  .tool-card[data-cat="image"] .tc-tag{background:var(--C);color:var(--bg);border-color:transparent}
+  .tool-card[data-cat="create"] .tc-tag{background:var(--M);color:var(--bg);border-color:transparent}
+  .tool-card[data-cat="color"] .tc-tag{background:var(--Y);color:var(--bg);border-color:transparent}
+  .tool-card[data-cat="type"] .tc-tag{background:var(--K);color:var(--bg);border-color:transparent}
+
+  .tool-card .tc-arrow{transform:translateX(5px);color:var(--text-hi)}
+  .tool-card .p-frame{border-color:var(--C)}
+  .tool-card .p-imgopt-f{border-color:var(--C);color:var(--C)}
+}
 .p-imgopt-mid{display:flex;align-items:center;gap:6px;width:100%;justify-content:center;margin-top:2px}
 .p-imgopt-arrow{color:var(--C);font-size:13px;font-weight:700}
 .p-imgopt-out{font-size:8px;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-lo)}
