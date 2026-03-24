@@ -1184,61 +1184,794 @@
   var FONT_PAIRS = [
     { h: 'Syne', b: 'IBM Plex Mono', id: 'syne+ibm-plex-mono' },
     { h: 'Playfair Display', b: 'Source Sans 3', id: 'playfair-display+source-sans-3' },
+    { h: 'Merriweather', b: 'Open Sans', id: 'merriweather+open-sans' },
     { h: 'Bebas Neue', b: 'Montserrat', id: 'bebas-neue+montserrat' },
-    { h: 'Oswald', b: 'Lato', id: 'oswald+lato' },
     { h: 'Space Grotesk', b: 'Inter', id: 'space-grotesk+inter' },
+    { h: 'DM Serif Display', b: 'DM Sans', id: 'dm-serif-display+dm-sans' },
+    { h: 'Poppins', b: 'Open Sans', id: 'poppins+open-sans' },
+    { h: 'Roboto Slab', b: 'Roboto', id: 'roboto-slab+roboto' },
+    { h: 'Oswald', b: 'Lato', id: 'oswald+lato' },
+    { h: 'Fraunces', b: 'Nunito', id: 'fraunces+nunito' },
+    { h: 'Libre Baskerville', b: 'Lato', id: 'libre-baskerville+lato' },
+    { h: 'EB Garamond', b: 'Lato', id: 'eb-garamond+lato' },
+    { h: 'Spectral', b: 'Karla', id: 'spectral+karla' },
+    { h: 'Bitter', b: 'Raleway', id: 'bitter+raleway' },
+    { h: 'PT Serif', b: 'PT Sans', id: 'pt-serif+pt-sans' },
+    { h: 'Noto Serif', b: 'Noto Sans', id: 'noto-serif+noto-sans' },
+    { h: 'Anton', b: 'Manrope', id: 'anton+manrope' },
+    { h: 'Archivo Black', b: 'Archivo', id: 'archivo-black+archivo' },
+    { h: 'Raleway', b: 'Lato', id: 'raleway+lato' },
+    { h: 'Montserrat', b: 'Open Sans', id: 'montserrat+open-sans' },
+    { h: 'Outfit', b: 'Source Sans 3', id: 'outfit+source-sans-3' },
+    { h: 'Sora', b: 'Inter', id: 'sora+inter' },
+    { h: 'Lexend', b: 'IBM Plex Sans', id: 'lexend+ibm-plex-sans' },
+    { h: 'Plus Jakarta Sans', b: 'Inter', id: 'plus-jakarta-sans+inter' },
+    { h: 'Figtree', b: 'Source Serif 4', id: 'figtree+source-serif-4' },
+    { h: 'Urbanist', b: 'IBM Plex Sans', id: 'urbanist+ibm-plex-sans' },
+    { h: 'Josefin Sans', b: 'Crimson Text', id: 'josefin-sans+crimson-text' },
+    { h: 'Yeseva One', b: 'Josefin Sans', id: 'yeseva-one+josefin-sans' },
+    { h: 'Cormorant Garamond', b: 'Proza Libre', id: 'cormorant-garamond+proza-libre' },
+    { h: 'Newsreader', b: 'Work Sans', id: 'newsreader+work-sans' },
+    { h: 'Zilla Slab', b: 'Nunito Sans', id: 'zilla-slab+nunito-sans' },
+    { h: 'Rubik', b: 'Karla', id: 'rubik+karla' },
+    { h: 'Barlow', b: 'Fira Sans', id: 'barlow+fira-sans' },
+    { h: 'Quicksand', b: 'Mulish', id: 'quicksand+mulish' },
+    { h: 'Literata', b: 'Rubik', id: 'literata+rubik' },
+    { h: 'Lora', b: 'Nunito Sans', id: 'lora+nunito-sans' },
+    { h: 'Cinzel', b: 'Mulish', id: 'cinzel+mulish' },
+    { h: 'Instrument Serif', b: 'Inter', id: 'instrument-serif+inter' },
+    { h: 'Bodoni Moda', b: 'Outfit', id: 'bodoni-moda+outfit' },
+    { h: 'Alegreya', b: 'Alegreya Sans', id: 'alegreya+alegreya-sans' },
+    { h: 'Catamaran', b: 'Martel', id: 'catamaran+martel' },
+    { h: 'DM Sans', b: 'DM Serif Display', id: 'dm-sans+dm-serif-display' },
+    { h: 'Caveat', b: 'Quicksand', id: 'caveat+quicksand' },
+    { h: 'Arvo', b: 'Open Sans', id: 'arvo+open-sans' },
+    { h: 'Ubuntu', b: 'Open Sans', id: 'ubuntu+open-sans' },
+    { h: 'Kanit', b: 'Prompt', id: 'kanit+prompt' },
   ];
 
+
   function initFontPair(iface) {
-    var opts = FONT_PAIRS.map(function (p, i) {
-      return '<option value="' + i + '">' + p.h + ' / ' + p.b + '</option>';
+    function fpSvg(paths) {
+      return (
+        '<svg class="fp-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">' +
+        paths +
+        '</svg>'
+      );
+    }
+    var FP_MEDIUMS = [
+      { id: 'website', label: 'Website', svg: fpSvg('<rect x="3" y="4" width="18" height="14" rx="1"/><path d="M3 8h18"/>') },
+      { id: 'mobile', label: 'Mobile', svg: fpSvg('<rect x="7" y="3" width="10" height="18" rx="2"/><path d="M10 18h4"/>') },
+      { id: 'ui-grid', label: 'UI grid', svg: fpSvg('<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>') },
+      { id: 'slides', label: 'Slides', svg: fpSvg('<rect x="4" y="5" width="16" height="4" rx="1"/><rect x="4" y="11" width="16" height="4" rx="1"/><rect x="4" y="17" width="12" height="3" rx="1"/>') },
+      { id: 'social', label: 'Social', svg: fpSvg('<rect x="6" y="2" width="12" height="20" rx="2"/><circle cx="12" cy="7" r="2"/>') },
+      { id: 'newsletter', label: 'Newsletter', svg: fpSvg('<path d="M4 5h16v14H4z"/><path d="M4 7l8 5 8-5"/>') },
+      { id: 'business-card', label: 'Business card', svg: fpSvg('<rect x="3" y="8" width="18" height="9" rx="1"/><path d="M6 11h6M6 14h10"/>') },
+      { id: 'logo', label: 'Logo', svg: fpSvg('<circle cx="12" cy="12" r="7"/><path d="M9 12h6"/>') },
+      { id: 'type-scale', label: 'Type scale', svg: fpSvg('<path d="M4 6h16M4 10h12M4 14h14M4 18h10"/>') },
+      { id: 'icons', label: 'Icons', svg: fpSvg('<circle cx="6" cy="6" r="1.5"/><circle cx="12" cy="6" r="1.5"/><circle cx="18" cy="6" r="1.5"/><circle cx="6" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="18" cy="12" r="1.5"/><circle cx="6" cy="18" r="1.5"/><circle cx="12" cy="18" r="1.5"/><circle cx="18" cy="18" r="1.5"/>') },
+      { id: 'colors', label: 'Colors', svg: fpSvg('<path d="M4 6h16v4H4zM4 12h12v4H4zM4 18h10v4H4z"/>') },
+    ];
+    var FP_CONTEXTS = [
+      { id: 'startup', label: 'Startup', head: 'Ship the vision.', body: 'Iterate in public. Pair a strong display face with a calm UI font for decks, product, and landing pages.', hint: 4 },
+      { id: 'work', label: 'Work / corporate', head: 'Clarity at scale.', body: 'Reports, dashboards, and docs need hierarchy without noise. Favor legible serifs or grotesks with a neutral sans.', hint: 7 },
+      { id: 'wedding', label: 'Wedding', head: 'Together.', body: 'Invitations and sites call for warmth. Script or high-contrast serif headlines with a light sans for details.', hint: 1 },
+      { id: 'birthday', label: 'Birthday / party', head: 'Make it pop.', body: 'Posters and invites can go bolder. Display + geometric sans keeps RSVP blocks readable.', hint: 3 },
+      { id: 'education', label: 'Education', head: 'Learn by doing.', body: 'Course hubs and readers need long-form comfort. A sturdy serif body with a friendly sans for nav works well.', hint: 2 },
+      { id: 'nonprofit', label: 'Non-profit', head: 'Every voice counts.', body: 'Mission sites balance emotion and trust. Pair an expressive headline with an accessible sans for stories and CTAs.', hint: 1 },
+      { id: 'ecommerce', label: 'E-commerce', head: 'New drop.', body: 'Shop the edit.', hint: 5 },
+      { id: 'church', label: 'Church', head: 'Gather.', body: 'Event schedules and sermons online: traditional serif headlines with a simple sans for times and links.', hint: 11 },
+      { id: 'fashion', label: 'Fashion', head: 'The line.', body: 'Lookbooks reward contrast—tight display typography and a minimal grotesk for sizes and care copy.', hint: 8 },
+      { id: 'healthcare', label: 'Healthcare', head: 'Care, explained.', body: 'Patient-facing UI favors neutral sans pairs with clear hierarchy; reserve display for hero moments only.', hint: 6 },
+      { id: 'realestate', label: 'Real estate', head: 'Your next address.', body: 'Listings and tours: confident headline + readable sans for specs, maps, and disclosures.', hint: 0 },
+      { id: 'restaurant', label: 'Restaurant', head: 'Tonight’s menu.', body: 'Menus and sites: appetizing display for titles, clean sans for ingredients, hours, and reservations.', hint: 3 },
+    ];
+    var headSet = {};
+    var bodySet = {};
+    var hi;
+    for (hi = 0; hi < FONT_PAIRS.length; hi++) {
+      headSet[FONT_PAIRS[hi].h] = true;
+      bodySet[FONT_PAIRS[hi].b] = true;
+    }
+    var heads = Object.keys(headSet).sort();
+    var bodies = Object.keys(bodySet).sort();
+    var headOpts = heads
+      .map(function (f) {
+        return '<option value="' + f.replace(/"/g, '&quot;') + '">' + f + '</option>';
+      })
+      .join('');
+    var bodyOpts = bodies
+      .map(function (f) {
+        return '<option value="' + f.replace(/"/g, '&quot;') + '">' + f + '</option>';
+      })
+      .join('');
+    var curOpts =
+      '<option value="-1">Custom mix</option>' +
+      FONT_PAIRS.map(function (p, i) {
+        return '<option value="' + i + '">' + p.h + ' + ' + p.b + '</option>';
+      }).join('');
+    var FP_MEDIUM_DEFAULTS = {
+      website: {
+        head: 'Build beautiful products faster.',
+        body: 'Ship a calm, confident landing page with clear hierarchy and room to breathe.',
+      },
+      mobile: { head: 'Good morning', body: 'Tuesday · 3 updates waiting for you.' },
+      'ui-grid': { head: 'Dashboard', body: 'KPIs, activity, and files at a glance.' },
+      slides: { head: 'Q3 narrative', body: 'Three bullets your team will actually remember.' },
+      social: { head: 'Build. Ship. Scale.', body: 'Just launched our new feature! Check it out.' },
+      newsletter: {
+        head: 'Weekly brief',
+        body: 'The most important links and numbers from this week, in one scroll.',
+      },
+      'business-card': { head: 'Alex Rivera', body: 'Creative Director · studio.co' },
+      logo: { head: 'Overprint', body: 'Design utilities' },
+      'type-scale': { head: 'Display', body: 'Paragraph 01 · long-form rhythm for readers.' },
+      icons: { head: 'Icon sample', body: 'Glyph stress test at small sizes.' },
+      colors: { head: 'Palette', body: 'Overprint tokens and your accent preview.' },
+    };
+    var mediumOpts = FP_MEDIUMS.map(function (m, i) {
+      return (
+        '<option value="' +
+        m.id +
+        '"' +
+        (i === 0 ? ' selected' : '') +
+        '>' +
+        m.label +
+        '</option>'
+      );
     }).join('');
+    var contextOpts = FP_CONTEXTS.map(function (c, i) {
+      return (
+        '<option value="' +
+        c.id +
+        '"' +
+        (i === 0 ? ' selected' : '') +
+        '>' +
+        c.label +
+        '</option>'
+      );
+    }).join('');
+    var accentHex = ['#00b4d8', '#e040a0', '#f0d020', '#f59e0b', '#22c55e', '#a78bfa'];
+    var accentChips = accentHex
+      .map(function (hex, i) {
+        return (
+          '<button type="button" class="fp-chip' +
+          (i === 3 ? ' is-picked' : '') +
+          '" data-hex="' +
+          hex +
+          '" style="background:' +
+          hex +
+          '" title="' +
+          hex +
+          '"></button>'
+        );
+      })
+      .join('');
+    var svgLink =
+      '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 1 0-7l1-1a5 5 0 0 1 7 7l-1 1"/><path d="M14 11a5 5 0 0 1 0 7l-1 1a5 5 0 0 1-7-7l1-1"/></svg>';
+    var svgDl =
+      '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 12l5 5 5-5"/><path d="M5 21h14"/></svg>';
+    var svgChev =
+      '<svg class="fp-xbtn__chev" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
+    var fpLayouts =
+      '<div class="fp-layout fp-layout--website">' +
+      '<div class="fp-browser">' +
+      '<div class="fp-browser-chrome">' +
+      '<span class="fp-browser-dots"><i></i><i></i><i></i></span>' +
+      '<span class="fp-t-b fp-editable fp-browser-url">yoursite.com</span>' +
+      '</div>' +
+      '<div class="fp-browser-body">' +
+      '<nav class="fp-web-nav">' +
+      '<span class="fp-t-h fp-editable fp-web-brand">Acme</span>' +
+      '<div class="fp-web-nav-links">' +
+      '<span class="fp-t-b fp-editable">Features</span>' +
+      '<span class="fp-t-b fp-editable">Pricing</span>' +
+      '<span class="fp-t-b fp-editable">Blog</span>' +
+      '<span class="fp-t-b fp-editable">About</span>' +
+      '</div>' +
+      '<span class="fp-t-h fp-editable fp-web-cta-chip">Get started</span>' +
+      '</nav>' +
+      '<section class="fp-web-hero">' +
+      '<h2 class="fp-t-h fp-editable" data-fp-role="headline">Build beautiful products faster</h2>' +
+      '<p class="fp-t-b fp-editable" data-fp-role="body">Ship a calm, confident landing page with clear hierarchy and room to breathe.</p>' +
+      '<div class="fp-web-hero-btns">' +
+      '<span class="fp-web-btn-pri fp-t-h fp-editable">Start free trial</span>' +
+      '<span class="fp-web-btn-sec fp-t-b fp-editable">Watch demo \\u2192</span>' +
+      '</div></section>' +
+      '<div class="fp-web-stats">' +
+      '<div class="fp-web-stat"><span class="fp-web-stat-num fp-t-h fp-editable">10k+</span><span class="fp-web-stat-label fp-t-b fp-editable">Users</span></div>' +
+      '<div class="fp-web-stat"><span class="fp-web-stat-num fp-t-h fp-editable">99.9%</span><span class="fp-web-stat-label fp-t-b fp-editable">Uptime</span></div>' +
+      '<div class="fp-web-stat"><span class="fp-web-stat-num fp-t-h fp-editable">4.9\\u2605</span><span class="fp-web-stat-label fp-t-b fp-editable">Rating</span></div>' +
+      '</div>' +
+      '<div class="fp-web-features">' +
+      '<article class="fp-web-feat"><div class="fp-web-feat-ico"></div><span class="fp-t-h fp-editable">Analytics</span><span class="fp-t-b fp-editable">Real-time dashboards with the metrics that matter most.</span></article>' +
+      '<article class="fp-web-feat"><div class="fp-web-feat-ico"></div><span class="fp-t-h fp-editable">Automation</span><span class="fp-t-b fp-editable">Workflows that save your team hours every single week.</span></article>' +
+      '<article class="fp-web-feat"><div class="fp-web-feat-ico"></div><span class="fp-t-h fp-editable">Integrations</span><span class="fp-t-b fp-editable">Connect the tools you already use and love in minutes.</span></article>' +
+      '</div>' +
+      '<div class="fp-web-mid">' +
+      '<h3 class="fp-t-h fp-editable">Ready to launch?</h3>' +
+      '<p class="fp-t-b fp-editable" style="font-size:10px;opacity:.65;margin:4px 0 10px">Join thousands of teams shipping faster.</p>' +
+      '<span class="fp-web-btn-pri fp-t-h fp-editable">Start your free trial</span>' +
+      '</div>' +
+      '<footer class="fp-web-footer">' +
+      '<div class="fp-web-footcol"><span class="fp-t-h fp-editable" style="font-size:11px;font-weight:800">Acme</span><span class="fp-t-b fp-editable">Build products people love.</span></div>' +
+      '<div class="fp-web-footcol"><span class="fp-t-h fp-editable">Product</span><span class="fp-t-b fp-editable">Features</span><span class="fp-t-b fp-editable">Pricing</span><span class="fp-t-b fp-editable">Changelog</span></div>' +
+      '<div class="fp-web-footcol"><span class="fp-t-h fp-editable">Company</span><span class="fp-t-b fp-editable">About</span><span class="fp-t-b fp-editable">Careers</span><span class="fp-t-b fp-editable">Blog</span></div>' +
+      '<div class="fp-web-footcol"><span class="fp-t-h fp-editable">Legal</span><span class="fp-t-b fp-editable">Privacy</span><span class="fp-t-b fp-editable">Terms</span></div>' +
+      '</footer></div></div></div>' +
+      '<div class="fp-layout fp-layout--mobile">' +
+      '<div class="fp-phone"><div class="fp-phone-bar"></div><div class="fp-phone-screen">' +
+      '<div class="fp-phone-status"><span class="fp-t-b">9:41</span><div class="fp-phone-status-right"><span class="fp-status-pill fp-t-b">\\u2022\\u2022\\u2022\\u2022</span><svg width="12" height="10" viewBox="0 0 16 12" fill="currentColor" opacity=".6"><path d="M1 8h2v4H1zM5 5h2v7H5zM9 2h2v10H9zM13 0h2v12h-2z"/></svg></div></div>' +
+      '<h2 class="fp-t-h fp-editable fp-mob-greet" data-fp-role="headline">Good morning</h2>' +
+      '<p class="fp-t-b fp-editable fp-mob-sub" data-fp-role="body">Tuesday \\u00b7 3 updates waiting for you</p>' +
+      '<div class="fp-mob-search"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span class="fp-t-b fp-editable">Search</span></div>' +
+      '<div class="fp-mob-actions">' +
+      '<div class="fp-mob-act"><i></i><span class="fp-t-b fp-editable">Send</span></div>' +
+      '<div class="fp-mob-act"><i></i><span class="fp-t-b fp-editable">Pay</span></div>' +
+      '<div class="fp-mob-act"><i></i><span class="fp-t-b fp-editable">Cards</span></div>' +
+      '<div class="fp-mob-act"><i></i><span class="fp-t-b fp-editable">More</span></div>' +
+      '</div>' +
+      '<div class="fp-mob-list-head fp-t-b fp-editable">Recent activity</div>' +
+      '<div class="fp-mob-row"><div class="fp-mob-av"></div><span class="fp-t-h fp-editable">Jada</span><span class="fp-t-b fp-editable">Invoice paid</span><span class="fp-mob-time fp-t-b">2m</span></div>' +
+      '<div class="fp-mob-row"><div class="fp-mob-av"></div><span class="fp-t-h fp-editable">Phil</span><span class="fp-t-b fp-editable">Comment on deck</span><span class="fp-mob-time fp-t-b">15m</span></div>' +
+      '<div class="fp-mob-row"><div class="fp-mob-av"></div><span class="fp-t-h fp-editable">Mia</span><span class="fp-t-b fp-editable">Shared a file</span><span class="fp-mob-time fp-t-b">1h</span></div>' +
+      '<nav class="fp-phone-tabbar">' +
+      '<div class="fp-phone-tab is-active"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span class="fp-t-b">Home</span></div>' +
+      '<div class="fp-phone-tab"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span class="fp-t-b">Search</span></div>' +
+      '<div class="fp-phone-tab"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="fp-t-b">Activity</span></div>' +
+      '<div class="fp-phone-tab"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span class="fp-t-b">Profile</span></div>' +
+      '</nav>' +
+      '</div></div></div>' +
+      '<div class="fp-layout fp-layout--social">' +
+      '<div class="fp-phone"><div class="fp-phone-bar"></div><div class="fp-phone-screen">' +
+      '<div class="fp-phone-status"><span class="fp-t-b">9:41</span><div class="fp-phone-status-right"><svg width="12" height="10" viewBox="0 0 16 12" fill="currentColor" opacity=".6"><path d="M1 8h2v4H1zM5 5h2v7H5zM9 2h2v10H9zM13 0h2v12h-2z"/></svg></div></div>' +
+      '<div class="fp-soc-stories">' +
+      '<div class="fp-soc-story"><i></i><span class="fp-t-b fp-editable">You</span></div>' +
+      '<div class="fp-soc-story"><i></i><span class="fp-t-b fp-editable">Mia</span></div>' +
+      '<div class="fp-soc-story"><i></i><span class="fp-t-b fp-editable">Leo</span></div>' +
+      '<div class="fp-soc-story"><i></i><span class="fp-t-b fp-editable">Ava</span></div>' +
+      '</div>' +
+      '<div class="fp-soc-post">' +
+      '<div class="fp-soc-post-top"><div class="fp-soc-av"></div><span class="fp-t-h fp-editable">studio.acme</span><span class="fp-soc-post-menu">\\u2022\\u2022\\u2022</span></div>' +
+      '<div class="fp-soc-photo"><span class="fp-t-h fp-editable" data-fp-role="headline">Build. Ship. Scale.</span></div>' +
+      '<div class="fp-soc-actions"><svg class="fp-soc-action" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg><svg class="fp-soc-action" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><svg class="fp-soc-action" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg><svg class="fp-soc-action fp-soc-action--save" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></div>' +
+      '<div class="fp-soc-likes fp-t-h fp-editable">1,847 likes</div>' +
+      '<div class="fp-soc-caption"><strong class="fp-t-h fp-editable">studio.acme</strong> <span class="fp-t-b fp-editable" data-fp-role="body">Just launched our new feature! Check it out \\u2728</span></div>' +
+      '<div class="fp-soc-time fp-t-b fp-editable">2 hours ago</div>' +
+      '</div></div></div></div>' +
+      '<div class="fp-layout fp-layout--ui-grid">' +
+      '<div class="fp-browser">' +
+      '<div class="fp-browser-chrome">' +
+      '<span class="fp-browser-dots"><i></i><i></i><i></i></span>' +
+      '<span class="fp-t-b fp-editable fp-browser-url">app.acme.com/dashboard</span>' +
+      '</div>' +
+      '<div class="fp-browser-body fp-dash-body">' +
+      '<div class="fp-dash-sidebar">' +
+      '<span class="fp-dash-logo fp-t-h fp-editable" style="font-weight:800;font-size:11px;margin-bottom:16px;display:block">Acme</span>' +
+      '<span class="fp-dash-nav-item fp-t-b fp-editable is-active">Dashboard</span>' +
+      '<span class="fp-dash-nav-item fp-t-b fp-editable">Projects</span>' +
+      '<span class="fp-dash-nav-item fp-t-b fp-editable">Team</span>' +
+      '<span class="fp-dash-nav-item fp-t-b fp-editable">Settings</span>' +
+      '</div>' +
+      '<div class="fp-dash-main">' +
+      '<h2 class="fp-t-h fp-editable fp-dash-title" data-fp-role="headline">Dashboard</h2>' +
+      '<p class="fp-t-b fp-editable fp-dash-lead" data-fp-role="body">KPIs, activity, and files at a glance.</p>' +
+      '<div class="fp-dash-stats">' +
+      '<div class="fp-dash-stat"><span class="fp-dash-stat-num fp-t-h fp-editable">2,847</span><span class="fp-dash-stat-label fp-t-b fp-editable">Total users</span><span class="fp-dash-stat-trend fp-t-b">+12.5%</span></div>' +
+      '<div class="fp-dash-stat"><span class="fp-dash-stat-num fp-t-h fp-editable">$48.2k</span><span class="fp-dash-stat-label fp-t-b fp-editable">Revenue</span><span class="fp-dash-stat-trend fp-t-b">+8.1%</span></div>' +
+      '<div class="fp-dash-stat"><span class="fp-dash-stat-num fp-t-h fp-editable">94.2%</span><span class="fp-dash-stat-label fp-t-b fp-editable">Satisfaction</span><span class="fp-dash-stat-trend fp-t-b">+2.3%</span></div>' +
+      '<div class="fp-dash-stat"><span class="fp-dash-stat-num fp-t-h fp-editable">1,204</span><span class="fp-dash-stat-label fp-t-b fp-editable">Active now</span><span class="fp-dash-stat-trend fp-dash-stat-trend--live fp-t-b">\\u2022 Live</span></div>' +
+      '</div>' +
+      '<div class="fp-dash-activity">' +
+      '<span class="fp-dash-section-head fp-t-h fp-editable">Recent activity</span>' +
+      '<div class="fp-dash-row"><span class="fp-dash-row-dot"></span><span class="fp-t-b fp-editable">New signup from <strong>alex@company.co</strong></span><span class="fp-dash-row-time fp-t-b">2m ago</span></div>' +
+      '<div class="fp-dash-row"><span class="fp-dash-row-dot"></span><span class="fp-t-b fp-editable">Invoice #1042 paid \\u2014 $2,400</span><span class="fp-dash-row-time fp-t-b">15m ago</span></div>' +
+      '<div class="fp-dash-row"><span class="fp-dash-row-dot"></span><span class="fp-t-b fp-editable">Deploy v2.4.1 completed successfully</span><span class="fp-dash-row-time fp-t-b">1h ago</span></div>' +
+      '</div>' +
+      '</div></div></div></div>' +
+      '<div class="fp-layout fp-layout--slides">' +
+      '<div class="fp-slide">' +
+      '<div class="fp-slide-bar"></div>' +
+      '<h2 class="fp-t-h fp-editable" data-fp-role="headline">Q3 narrative</h2>' +
+      '<p class="fp-t-b fp-editable fp-slide-lead" data-fp-role="body">One line that frames the slide before the bullets.</p>' +
+      '<ul class="fp-slide-list">' +
+      '<li class="fp-t-b fp-editable">North star metric up 18% week over week</li>' +
+      '<li class="fp-t-b fp-editable">Shipped onboarding v2 to 40% of users</li>' +
+      '<li class="fp-t-b fp-editable">Hiring: 2 senior product designers</li>' +
+      '</ul>' +
+      '<div class="fp-slide-footer"><span class="fp-slide-num fp-t-b fp-editable">03</span><div class="fp-slide-dots"><span class="fp-slide-dot"></span><span class="fp-slide-dot"></span><span class="fp-slide-dot is-active"></span><span class="fp-slide-dot"></span><span class="fp-slide-dot"></span></div><span class="fp-slide-nav fp-t-b">\\u2192</span></div>' +
+      '</div></div>' +
+      '<div class="fp-layout fp-layout--newsletter">' +
+      '<div class="fp-email">' +
+      '<div class="fp-email-header"><div class="fp-email-mark"></div><span class="fp-t-h fp-editable fp-email-pub">The Weekly</span></div>' +
+      '<div class="fp-email-meta fp-t-b fp-editable">Issue 12 \\u00b7 September 2024</div>' +
+      '<h2 class="fp-t-h fp-editable" data-fp-role="headline">Weekly brief</h2>' +
+      '<p class="fp-t-b fp-editable" data-fp-role="body">The most important links and numbers from this week, in one scroll. Curated for builders.</p>' +
+      '<span class="fp-email-cta fp-t-h fp-editable">Read the full story</span>' +
+      '<div class="fp-email-divider"></div>' +
+      '<div class="fp-email-block fp-t-b fp-editable">In other news \\u2014 we shipped three features, opened two roles, and hosted a community AMA.</div>' +
+      '<div class="fp-email-footer fp-t-b fp-editable">Unsubscribe \\u00b7 Manage preferences \\u00b7 View in browser</div>' +
+      '</div></div>' +
+      '<div class="fp-layout fp-layout--business-card">' +
+      '<div class="fp-bc-card">' +
+      '<div class="fp-bc-accent"></div>' +
+      '<div class="fp-bc-layout">' +
+      '<div class="fp-bc-info">' +
+      '<h2 class="fp-t-h fp-editable" data-fp-role="headline">Alex Rivera</h2>' +
+      '<p class="fp-t-b fp-editable" data-fp-role="body">Creative Director</p>' +
+      '</div>' +
+      '<div class="fp-bc-mark"></div>' +
+      '</div>' +
+      '<div class="fp-bc-divider"></div>' +
+      '<div class="fp-bc-details">' +
+      '<div class="fp-bc-detail"><span class="fp-bc-detail-dot"></span><span class="fp-t-b fp-editable">alex@studio.co</span></div>' +
+      '<div class="fp-bc-detail"><span class="fp-bc-detail-dot"></span><span class="fp-t-b fp-editable">+1 (555) 000-0000</span></div>' +
+      '<div class="fp-bc-detail"><span class="fp-bc-detail-dot"></span><span class="fp-t-b fp-editable">studio.co</span></div>' +
+      '</div>' +
+      '</div></div>' +
+      '<div class="fp-layout fp-layout--logo">' +
+      '<div class="fp-logo-lockup">' +
+      '<div class="fp-logo-mark"></div>' +
+      '<h2 class="fp-t-h fp-editable" data-fp-role="headline">Overprint</h2>' +
+      '<div class="fp-logo-rule"></div>' +
+      '<p class="fp-t-b fp-editable" data-fp-role="body">Design utilities</p>' +
+      '<span class="fp-logo-est fp-t-b fp-editable">Est. 2024</span>' +
+      '</div></div>' +
+      '<div class="fp-layout fp-layout--type-scale">' +
+      '<div class="fp-ts">' +
+      '<div class="fp-ts-row fp-t-h fp-editable fp-ts-d1" data-fp-role="headline">Display</div>' +
+      '<hr class="fp-ts-hr"/>' +
+      '<div class="fp-ts-row fp-t-h fp-editable fp-ts-d2">Heading 1</div>' +
+      '<div class="fp-ts-row fp-t-h fp-editable fp-ts-d3">Heading 2</div>' +
+      '<div class="fp-ts-row fp-t-h fp-editable fp-ts-d4">Heading 3</div>' +
+      '<div class="fp-ts-row fp-t-h fp-editable fp-ts-d5">Heading 4</div>' +
+      '<hr class="fp-ts-hr"/>' +
+      '<div class="fp-ts-row fp-t-b fp-editable fp-ts-p1" data-fp-role="body">Paragraph 01 \\u00b7 long-form rhythm for readers and article body text.</div>' +
+      '<div class="fp-ts-row fp-t-b fp-editable fp-ts-p2">Paragraph 02 \\u00b7 secondary copy for supporting descriptions.</div>' +
+      '<div class="fp-ts-row fp-t-b fp-editable fp-ts-p3">Paragraph 03 \\u00b7 captions, meta lines, and timestamps.</div>' +
+      '<div class="fp-ts-row fp-t-b fp-editable fp-ts-p4">Paragraph 04 \\u00b7 fine print, legal, and footnotes.</div>' +
+      '</div></div>' +
+      '<div class="fp-layout fp-layout--icons">' +
+      '<div class="fp-icons-head">' +
+      '<h3 class="fp-t-h fp-editable" data-fp-role="headline">Icon sample</h3>' +
+      '<p class="fp-t-b fp-editable" data-fp-role="body">Glyph stress test at small sizes.</p></div>' +
+      '<div class="fp-icondemo">' +
+      '<span class="fp-t-h fp-editable">Aa</span>' +
+      '<span class="fp-t-h fp-editable">Bb</span>' +
+      '<span class="fp-t-h fp-editable">Gg</span>' +
+      '<span class="fp-t-h fp-editable">Qq</span>' +
+      '<span class="fp-t-h fp-editable">Rr</span>' +
+      '<span class="fp-t-h fp-editable">\\u03c0</span>' +
+      '<span class="fp-t-h fp-editable">\\u00a7</span>' +
+      '<span class="fp-t-h fp-editable">01</span>' +
+      '<span class="fp-t-h fp-editable">&amp;</span>' +
+      '<span class="fp-t-h fp-editable">@</span>' +
+      '</div></div>' +
+      '<div class="fp-layout fp-layout--colors">' +
+      '<div class="fp-colors-head">' +
+      '<h3 class="fp-t-h fp-editable" data-fp-role="headline">Palette</h3>' +
+      '<p class="fp-t-b fp-editable" data-fp-role="body">Overprint tokens and your accent preview.</p></div>' +
+      '<div class="fp-palette" id="fp-palette" aria-label="Color tokens">' +
+      '<div class="fp-palette-row" data-fp-var="--bg" style="background:var(--bg)">' +
+      '<span class="fp-palette-row__label fp-t-h">Background</span>' +
+      '<div class="fp-palette-row__meta"><span class="fp-palette-line fp-palette-hex fp-mono"></span><span class="fp-palette-line fp-palette-rgb fp-mono"></span><span class="fp-palette-line fp-palette-cmyk fp-mono"></span></div></div>' +
+      '<div class="fp-palette-row" data-fp-var="--s1" style="background:var(--s1)">' +
+      '<span class="fp-palette-row__label fp-t-h">Surface</span>' +
+      '<div class="fp-palette-row__meta"><span class="fp-palette-line fp-palette-hex fp-mono"></span><span class="fp-palette-line fp-palette-rgb fp-mono"></span><span class="fp-palette-line fp-palette-cmyk fp-mono"></span></div></div>' +
+      '<div class="fp-palette-row" data-fp-var="--text-hi" style="background:var(--text-hi)">' +
+      '<span class="fp-palette-row__label fp-t-h">Text</span>' +
+      '<div class="fp-palette-row__meta"><span class="fp-palette-line fp-palette-hex fp-mono"></span><span class="fp-palette-line fp-palette-rgb fp-mono"></span><span class="fp-palette-line fp-palette-cmyk fp-mono"></span></div></div>' +
+      '<div class="fp-palette-row" data-fp-var="--border" style="background:var(--border)">' +
+      '<span class="fp-palette-row__label fp-t-h">Border</span>' +
+      '<div class="fp-palette-row__meta"><span class="fp-palette-line fp-palette-hex fp-mono"></span><span class="fp-palette-line fp-palette-rgb fp-mono"></span><span class="fp-palette-line fp-palette-cmyk fp-mono"></span></div></div>' +
+      '<div class="fp-palette-row" data-fp-var="--C" style="background:var(--C)">' +
+      '<span class="fp-palette-row__label fp-t-h">Cyan</span>' +
+      '<div class="fp-palette-row__meta"><span class="fp-palette-line fp-palette-hex fp-mono"></span><span class="fp-palette-line fp-palette-rgb fp-mono"></span><span class="fp-palette-line fp-palette-cmyk fp-mono"></span></div></div>' +
+      '<div class="fp-palette-row fp-palette-row--accent" data-fp-var="--fp-accent" style="background:var(--fp-accent,var(--C))">' +
+      '<span class="fp-palette-row__label fp-t-h">Accent</span>' +
+      '<div class="fp-palette-row__meta"><span class="fp-palette-line fp-palette-hex fp-mono"></span><span class="fp-palette-line fp-palette-rgb fp-mono"></span><span class="fp-palette-line fp-palette-cmyk fp-mono"></span></div></div>' +
+      '</div></div>';
     iface.innerHTML =
-      '<div class="tool-stack">' +
-      '<div class="tool-field"><span class="tool-label">Pair</span><select class="tool-select" id="ov-fp">' +
-      opts +
+      '<div class="tool-stack fp-workbench">' +
+      '<div class="fp-shell">' +
+      '<div class="fp-work">' +
+      '<header class="fp-topbar">' +
+      '<div class="fp-topbar__pickers">' +
+      '<label class="fp-dd fp-dd--medium">' +
+      FP_MEDIUMS[0].svg +
+      '<select id="fp-medium" class="fp-dd__select" aria-label="Medium">' +
+      mediumOpts +
+      '</select></label>' +
+      '<label class="fp-dd fp-dd--context">' +
+      '<select id="fp-context" class="fp-dd__select" aria-label="Context">' +
+      contextOpts +
+      '</select></label>' +
+      '</div>' +
+      '<div class="fp-topbar__export">' +
+      '<button type="button" class="fp-xbtn fp-xbtn--icon" id="fp-share" title="Copy share summary">' +
+      svgLink +
+      '</button>' +
+      '<div class="fp-export-wrap" id="fp-export-wrap">' +
+      '<button type="button" class="fp-xbtn fp-xbtn--export" id="fp-export-toggle" aria-expanded="false" aria-haspopup="true">' +
+      svgDl +
+      '<span>Export code</span>' +
+      svgChev +
+      '</button>' +
+      '<div class="fp-export-menu" id="fp-export-menu" hidden>' +
+      '<button type="button" id="fp-exp-copy">Copy CSS</button>' +
+      '<button type="button" id="fp-exp-dl">Download .css file</button>' +
+      '</div></div>' +
+      '<button type="button" class="fp-xbtn fp-xbtn--brand" id="fp-brand-kit">' +
+      svgDl +
+      '<span>Brand Kit</span>' +
+      '</button>' +
+      '</div></header>' +
+      '<main class="fp-canvas" aria-label="Preview">' +
+      '<div class="fp-stage" id="fp-stage" data-medium="website">' +
+      fpLayouts +
+      '</div></main></div>' +
+      '<aside class="fp-rail fp-rail--right fp-rail--props" aria-label="Properties">' +
+      '<div class="fp-props-tabs" role="tablist">' +
+      '<button type="button" class="fp-tab is-active" role="tab" aria-selected="true" data-tab="design" id="fp-tab-design">Design</button>' +
+      '<button type="button" class="fp-tab" role="tab" aria-selected="false" data-tab="css" id="fp-tab-css">CSS</button>' +
+      '</div>' +
+      '<div class="fp-props-scroll">' +
+      '<div class="fp-props-panel" id="fp-panel-design" role="tabpanel" aria-labelledby="fp-tab-design">' +
+      '<div class="fp-prop-section">' +
+      '<div class="fp-prop-section__head">Typography</div>' +
+      '<div class="tool-field"><span class="tool-label">Curated set</span>' +
+      '<select class="tool-select" id="fp-curated">' +
+      curOpts +
       '</select></div>' +
-      '<div class="tool-field"><span class="tool-label">Sample</span><textarea class="tool-textarea" id="ov-fpt">Headline here\n\nBody copy in the paired font for quick UI checks.</textarea></div>' +
-      '<div id="ov-fpp" style="padding:20px;border:1px solid var(--border);background:var(--bg)">' +
-      '<div id="ov-fph" style="font-size:2rem;margin-bottom:12px">Headline here</div>' +
-      '<div id="ov-fpb" style="font-size:14px;line-height:1.6;color:var(--text-lo)">Body copy</div></div>' +
-      '<pre class="tool-pre-wrap" id="ov-fpc"></pre></div>';
+      '<div class="tool-field"><span class="tool-label">Headline font</span>' +
+      '<select class="tool-select" id="fp-head">' +
+      headOpts +
+      '</select></div>' +
+      '<div class="tool-field"><span class="tool-label">Body font</span>' +
+      '<select class="tool-select" id="fp-body">' +
+      bodyOpts +
+      '</select></div>' +
+      '<button type="button" class="tool-btn tool-btn--m fp-btn-shuffle" id="fp-rand">Shuffle pair</button>' +
+      '</div>' +
+      '<div class="fp-prop-section">' +
+      '<div class="fp-prop-section__head">Accent</div>' +
+      '<div class="fp-chip-row" id="fp-accents">' +
+      accentChips +
+      '</div></div>' +
+      '</div>' +
+      '<div class="fp-props-panel" id="fp-panel-css" role="tabpanel" aria-labelledby="fp-tab-css" hidden>' +
+      '<pre class="tool-pre-wrap fp-pre" id="fp-css"></pre></div>' +
+      '</div></aside></div></div>';
     var link = document.createElement('link');
     link.rel = 'stylesheet';
     document.head.appendChild(link);
-    OV.addCleanup(function () {
-      if (link.parentNode) link.parentNode.removeChild(link);
-    });
-    function apply() {
-      var p = FONT_PAIRS[+iface.querySelector('#ov-fp').value || 0];
+    var stage = iface.querySelector('#fp-stage');
+    (function enableFpStageEditables() {
+      var probe = document.createElement('div');
+      probe.contentEditable = 'plaintext-only';
+      var usePlain = probe.contentEditable === 'plaintext-only';
+      stage.querySelectorAll('.fp-editable').forEach(function (n) {
+        n.setAttribute('spellcheck', 'false');
+        n.contentEditable = usePlain ? 'plaintext-only' : 'true';
+      });
+    })();
+    var selMedium = iface.querySelector('#fp-medium');
+    var selContext = iface.querySelector('#fp-context');
+    var selCur = iface.querySelector('#fp-curated');
+    var selHead = iface.querySelector('#fp-head');
+    var selBody = iface.querySelector('#fp-body');
+    var preCss = iface.querySelector('#fp-css');
+    var exportMenu = iface.querySelector('#fp-export-menu');
+    var exportToggle = iface.querySelector('#fp-export-toggle');
+    var exportWrap = iface.querySelector('#fp-export-wrap');
+    var currentAccent = '#f59e0b';
+    function primaryEls(medium) {
+      var L = stage.querySelector('.fp-layout--' + medium);
+      if (!L) return { h: null, b: null };
+      return {
+        h: L.querySelector('[data-fp-role="headline"]'),
+        b: L.querySelector('[data-fp-role="body"]'),
+      };
+    }
+    function setPrimaryFromDefaults(medium) {
+      var d = FP_MEDIUM_DEFAULTS[medium];
+      if (!d) return;
+      var P = primaryEls(medium);
+      if (P.h) P.h.textContent = d.head;
+      if (P.b) P.b.textContent = d.body;
+    }
+    function setAccent(hex) {
+      currentAccent = hex;
+      stage.style.setProperty('--fp-accent', hex);
+      iface.querySelectorAll('.fp-chip').forEach(function (ch) {
+        ch.classList.toggle('is-picked', ch.getAttribute('data-hex') === hex);
+      });
+    }
+    function applyPairIndex(i) {
+      i = +i;
+      if (i < 0 || i >= FONT_PAIRS.length) return;
+      var p = FONT_PAIRS[i];
+      selHead.value = p.h;
+      selBody.value = p.b;
+      selCur.value = String(i);
+    }
+    function syncCuratedFromFonts() {
+      var h = selHead.value;
+      var b = selBody.value;
+      var j;
+      for (j = 0; j < FONT_PAIRS.length; j++) {
+        if (FONT_PAIRS[j].h === h && FONT_PAIRS[j].b === b) {
+          selCur.value = String(j);
+          return;
+        }
+      }
+      selCur.value = '-1';
+    }
+    function fpParseRgb(s) {
+      var m = (s || '').match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+      if (!m) return { r: 0, g: 0, b: 0 };
+      return { r: +m[1], g: +m[2], b: +m[3] };
+    }
+    function fpRgbToHex(r, g, b) {
+      return (
+        '#' +
+        [r, g, b]
+          .map(function (x) {
+            var h = x.toString(16);
+            return h.length === 1 ? '0' + h : h;
+          })
+          .join('')
+      );
+    }
+    function fpRgbToCmyk(r, g, b) {
+      var rr = r / 255;
+      var gg = g / 255;
+      var bb = b / 255;
+      var k = 1 - Math.max(rr, gg, bb);
+      if (k >= 0.999) return { c: 0, m: 0, y: 0, k: 100 };
+      var c = (1 - rr - k) / (1 - k);
+      var m = (1 - gg - k) / (1 - k);
+      var y = (1 - bb - k) / (1 - k);
+      return {
+        c: Math.round(c * 100),
+        m: Math.round(m * 100),
+        y: Math.round(y * 100),
+        k: Math.round(k * 100),
+      };
+    }
+    function fpRelLum(r, g, b) {
+      var a = [r, g, b].map(function (v) {
+        v /= 255;
+        return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+      });
+      return 0.2126 * a[0] + 0.7152 * a[1] + 0.0722 * a[2];
+    }
+    function refreshFpPalette() {
+      var pal = stage.querySelector('#fp-palette');
+      if (!pal) return;
+      pal.querySelectorAll('.fp-palette-row').forEach(function (row) {
+        var rgbStr = getComputedStyle(row).backgroundColor;
+        var rgb = fpParseRgb(rgbStr);
+        var hex = fpRgbToHex(rgb.r, rgb.g, rgb.b);
+        var cm = fpRgbToCmyk(rgb.r, rgb.g, rgb.b);
+        var h = row.querySelector('.fp-palette-hex');
+        var rb = row.querySelector('.fp-palette-rgb');
+        var ck = row.querySelector('.fp-palette-cmyk');
+        if (h) h.textContent = 'HEX · ' + hex.toUpperCase();
+        if (rb) rb.textContent = 'RGB · ' + rgb.r + ' · ' + rgb.g + ' · ' + rgb.b;
+        if (ck) ck.textContent = 'CMYK · ' + cm.c + '% · ' + cm.m + '% · ' + cm.y + '% · ' + cm.k + '%';
+        var lum = fpRelLum(rgb.r, rgb.g, rgb.b);
+        row.style.color = lum > 0.55 ? '#0a0a10' : '#f4f4f8';
+      });
+    }
+
+    function paint() {
+      var hName = selHead.value;
+      var bName = selBody.value;
       link.href =
         'https://fonts.googleapis.com/css2?family=' +
-        encodeURIComponent(p.h.replace(/ /g, '+')) +
-        ':wght@400;700&family=' +
-        encodeURIComponent(p.b.replace(/ /g, '+')) +
-        ':wght@400;600&display=swap';
-      var h = iface.querySelector('#ov-fph');
-      var b = iface.querySelector('#ov-fpb');
-      h.style.fontFamily = '"' + p.h + '",sans-serif';
-      b.style.fontFamily = '"' + p.b + '",monospace';
-      var lines = iface.querySelector('#ov-fpt').value.split('\n');
-      h.textContent = lines[0] || 'Headline';
-      b.textContent = lines.slice(1).join('\n') || 'Body';
-      iface.querySelector('#ov-fpc').textContent =
+        encodeURIComponent(hName.replace(/ /g, '+')) +
+        ':wght@300;400;500;600;700&family=' +
+        encodeURIComponent(bName.replace(/ /g, '+')) +
+        ':wght@300;400;500;600;700&display=swap';
+      stage.querySelectorAll('.fp-t-h').forEach(function (n) {
+        n.style.fontFamily = '"' + hName + '",sans-serif';
+      });
+      stage.querySelectorAll('.fp-t-b').forEach(function (n) {
+        n.style.fontFamily = '"' + bName + '",sans-serif';
+      });
+      preCss.textContent =
         '@import url("' +
         link.href +
-        '");\n\n.head { font-family: "' +
-        p.h +
-        '", sans-serif; }\n.body { font-family: "' +
-        p.b +
-        '", sans-serif; }';
+        '");\n\n:root { --accent: ' +
+        currentAccent +
+        '; }\n\n.display { font-family: "' +
+        hName +
+        '", sans-serif; font-weight: 700; }\n.body { font-family: "' +
+        bName +
+        '", sans-serif; }\n.accent { color: var(--accent); }\n';
+      refreshFpPalette();
     }
-    iface.querySelector('#ov-fp').addEventListener('change', apply);
-    iface.querySelector('#ov-fpt').addEventListener('input', apply);
-    apply();
-    copyRow(iface, 'Copy CSS snippet', function () {
-      return iface.querySelector('#ov-fpc').textContent;
+    function applyContext(id) {
+      var c = null;
+      var k;
+      for (k = 0; k < FP_CONTEXTS.length; k++) {
+        if (FP_CONTEXTS[k].id === id) {
+          c = FP_CONTEXTS[k];
+          break;
+        }
+      }
+      if (!c) return;
+      var med = stage.getAttribute('data-medium') || 'website';
+      var P = primaryEls(med);
+      if (P.h) P.h.textContent = c.head;
+      if (P.b) P.b.textContent = c.body;
+      if (typeof c.hint === 'number' && FONT_PAIRS[c.hint]) {
+        selCur.value = String(c.hint);
+        applyPairIndex(c.hint);
+      }
+      paint();
+    }
+    function buildShareText() {
+      var base = '';
+      if (typeof window !== 'undefined' && window.location && window.location.href) {
+        base = window.location.href.split('#')[0] + '#/tools/font-pair';
+      }
+      return (
+        'Overprint Font Pair\n' +
+        base +
+        '\n\nMedium: ' +
+        selMedium.options[selMedium.selectedIndex].text +
+        '\nContext: ' +
+        selContext.options[selContext.selectedIndex].text +
+        '\nHeadline font: ' +
+        selHead.value +
+        '\nBody font: ' +
+        selBody.value +
+        '\nAccent: ' +
+        currentAccent
+      );
+    }
+    function buildBrandKit() {
+      return (
+        'OVERPRINT · BRAND KIT (Font Pair)\n' +
+        '================================\n\n' +
+        'Google Fonts URL:\n' +
+        link.href +
+        '\n\n' +
+        'Headline font: ' +
+        selHead.value +
+        '\nBody font: ' +
+        selBody.value +
+        '\nAccent: ' +
+        currentAccent +
+        '\nMedium: ' +
+        selMedium.value +
+        '\nContext: ' +
+        selContext.value +
+        '\n\n:root {\n  --font-head: "' +
+        selHead.value +
+        '", sans-serif;\n  --font-body: "' +
+        selBody.value +
+        '", sans-serif;\n  --accent: ' +
+        currentAccent +
+        ';\n}\n'
+      );
+    }
+    var mediumDd = iface.querySelector('.fp-dd--medium');
+    function syncMediumIcon() {
+      var id = selMedium.value;
+      var svgStr = '';
+      var mi;
+      for (mi = 0; mi < FP_MEDIUMS.length; mi++) {
+        if (FP_MEDIUMS[mi].id === id) {
+          svgStr = FP_MEDIUMS[mi].svg;
+          break;
+        }
+      }
+      if (!svgStr || !mediumDd) return;
+      var oldIco = mediumDd.querySelector('.fp-ico');
+      if (oldIco) oldIco.remove();
+      selMedium.insertAdjacentHTML('beforebegin', svgStr);
+    }
+    selMedium.addEventListener('change', function () {
+      var m = selMedium.value;
+      stage.setAttribute('data-medium', m);
+      setPrimaryFromDefaults(m);
+      syncMediumIcon();
+      paint();
     });
+    selContext.addEventListener('change', function () {
+      applyContext(selContext.value);
+    });
+    selCur.addEventListener('change', function () {
+      var v = +selCur.value;
+      if (v < 0) return;
+      applyPairIndex(v);
+      paint();
+    });
+    selHead.addEventListener('change', function () {
+      syncCuratedFromFonts();
+      paint();
+    });
+    selBody.addEventListener('change', function () {
+      syncCuratedFromFonts();
+      paint();
+    });
+    var tabDesign = iface.querySelector('#fp-tab-design');
+    var tabCss = iface.querySelector('#fp-tab-css');
+    var panelDesign = iface.querySelector('#fp-panel-design');
+    var panelCss = iface.querySelector('#fp-panel-css');
+    function setPropsTab(which) {
+      var isD = which === 'design';
+      tabDesign.classList.toggle('is-active', isD);
+      tabCss.classList.toggle('is-active', !isD);
+      tabDesign.setAttribute('aria-selected', isD ? 'true' : 'false');
+      tabCss.setAttribute('aria-selected', isD ? 'false' : 'true');
+      panelDesign.hidden = !isD;
+      panelCss.hidden = isD;
+    }
+    tabDesign.addEventListener('click', function () {
+      setPropsTab('design');
+    });
+    tabCss.addEventListener('click', function () {
+      setPropsTab('css');
+    });
+    exportToggle.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var open = exportMenu.hidden;
+      exportMenu.hidden = !open;
+      exportToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    iface.querySelector('#fp-exp-copy').addEventListener('click', function () {
+      OV.copyText(preCss.textContent);
+      exportMenu.hidden = true;
+      exportToggle.setAttribute('aria-expanded', 'false');
+    });
+    iface.querySelector('#fp-exp-dl').addEventListener('click', function () {
+      OV.downloadBlob(
+        new Blob([preCss.textContent], { type: 'text/css;charset=utf-8' }),
+        'overprint-font-pair.css'
+      );
+      exportMenu.hidden = true;
+      exportToggle.setAttribute('aria-expanded', 'false');
+    });
+    iface.querySelector('#fp-share').addEventListener('click', function () {
+      OV.copyText(buildShareText());
+    });
+    iface.querySelector('#fp-brand-kit').addEventListener('click', function () {
+      paint();
+      OV.downloadBlob(
+        new Blob([buildBrandKit()], { type: 'text/plain;charset=utf-8' }),
+        'overprint-brand-kit.txt'
+      );
+    });
+    function closeExportMenu(ev) {
+      if (!exportWrap.contains(ev.target)) {
+        exportMenu.hidden = true;
+        exportToggle.setAttribute('aria-expanded', 'false');
+      }
+    }
+    document.addEventListener('click', closeExportMenu);
+    iface.querySelector('#fp-accents').addEventListener('click', function (e) {
+      var t = e.target.closest('.fp-chip');
+      if (!t) return;
+      setAccent(t.getAttribute('data-hex'));
+      paint();
+    });
+    iface.querySelector('#fp-rand').addEventListener('click', function () {
+      var n = Math.floor(Math.random() * FONT_PAIRS.length);
+      applyPairIndex(n);
+      paint();
+    });
+    OV.addCleanup(function () {
+      document.removeEventListener('click', closeExportMenu);
+      if (link.parentNode) link.parentNode.removeChild(link);
+    });
+    setAccent(currentAccent);
+    applyPairIndex(0);
+    applyContext(selContext.value);
+    syncMediumIcon();
   }
 
   /* —— Beat maker —— (Web Audio; timeline + instruments + genre presets) */

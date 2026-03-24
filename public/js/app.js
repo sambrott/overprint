@@ -44,15 +44,22 @@ document.addEventListener('DOMContentLoaded', function () {
   (function initNavHomeWordReveal() {
     var navLeft = document.querySelector('.nav-left');
     if (!navLeft) return;
-    /** Show “OVERPRINT” in the nav only on the home dashboard, after .header-title has scrolled out of view. */
+    /** True when a tool page is open (#/tools/:slug, not #/tools alone). */
+    function isToolRoute() {
+      var h = window.location.hash || '';
+      return /^#\/tools\/.+/.test(h);
+    }
+    /** Show “OVERPRINT” in the nav on tool pages (always), or on the home dashboard after .header-title has scrolled out of view. */
     function updateNavHomeWordVisible() {
       var dash = document.getElementById('dashboard');
       var title = document.querySelector('#dashboard .header-title');
-      var show = false;
-      if (dash && !dash.classList.contains('is-hidden') && title) {
+      var onTool = isToolRoute();
+      var show = onTool;
+      if (!show && dash && !dash.classList.contains('is-hidden') && title) {
         var r = title.getBoundingClientRect();
         show = r.bottom <= 0;
       }
+      navLeft.classList.toggle('nav-tool-active', onTool);
       navLeft.classList.toggle('nav-home-word-visible', show);
     }
     window.addEventListener('scroll', updateNavHomeWordVisible, { passive: true });
