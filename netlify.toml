@@ -1,0 +1,3 @@
+# Deploy this repo on Netlify: set publish directory to "public" (or use this file).
+[build]
+  publish = "public"

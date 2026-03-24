@@ -1,4 +1,56 @@
 /* Hash SPA: #/ #/tools #/about #/tools/:slug — smooth route transitions */
+
+/**
+ * Folder that contains about.html + tools/ (the static root), derived from script URLs.
+ * Using the page URL alone breaks when the server omits index.html or uses odd paths.
+ */
+function getOverprintStaticRoot() {
+  var w = window;
+  if (w.__OVERPRINT_BASE__ != null && String(w.__OVERPRINT_BASE__).trim() !== '') {
+    return new URL(String(w.__OVERPRINT_BASE__).trim(), w.location.href).href;
+  }
+  var scripts = document.querySelectorAll('script[src]');
+  var i;
+  var src;
+  for (i = scripts.length - 1; i >= 0; i--) {
+    src = scripts[i].getAttribute('src');
+    if (!src) continue;
+    if (/\/(app\.js|router\.js|tools\.js|tool-utils\.js|filters\.js|beat-preview\.js)(\?|#|$)/i.test(src)) {
+      var scriptAbs = new URL(src, w.location.href);
+      return new URL('../', scriptAbs).href;
+    }
+  }
+  return pageDirectoryHref(w.location.href.replace(/#.*$/, ''));
+}
+
+/** Directory containing the current HTML document (trailing slash), for fetch() bases. */
+function pageDirectoryHref(pageHref) {
+  try {
+    var u = new URL(pageHref);
+    var p = u.pathname;
+    if (!p || p === '/') {
+      u.pathname = '/';
+    } else if (p.endsWith('/')) {
+      /* keep */
+    } else if (/\.html?$/i.test(p)) {
+      u.pathname = p.replace(/\/[^/]+$/, '/') || '/';
+    } else {
+      u.pathname = (p.endsWith('/') ? p : p + '/') || '/';
+    }
+    u.hash = '';
+    u.search = '';
+    return u.href;
+  } catch (e) {
+    return pageHref;
+  }
+}
+
+function fetchAppAsset(path) {
+  var root = getOverprintStaticRoot();
+  var rel = String(path || '').replace(/^\/+/, '');
+  return fetch(new URL(rel, root));
+}
+
 function parseRoute() {
   var h = window.location.hash;
   var raw = h && h.length > 1 ? h.replace(/^#/, '') : '/';
@@ -11,7 +63,7 @@ function parseRoute() {
 
 function bindBackButtons(container) {
   if (!container) return;
-  container.querySelectorAll('[data-back]').forEach(function (btn) {
+  Array.prototype.forEach.call(container.querySelectorAll('[data-back]'), function (btn) {
     btn.addEventListener('click', function () {
       window.location.hash = '#/';
     });
@@ -20,7 +72,7 @@ function bindBackButtons(container) {
 
 function routeDurationMs() {
   if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return 0;
-  return 420;
+  return 220;
 }
 
 function waitMs(ms) {
@@ -63,6 +115,7 @@ async function renderRoute() {
         if (myGen !== routeGeneration) return;
         pageView.classList.remove('route-leave-to');
       }
+      if (window.OV && typeof window.OV.unmountTool === 'function') window.OV.unmountTool();
       pageView.innerHTML = '';
       pageView.classList.remove('is-visible');
     }
@@ -113,30 +166,41 @@ async function renderRoute() {
 
   var html = '';
   var titleSuffix = 'Overprint';
+  var routeContentOk = false;
 
   try {
     if (route.type === 'about') {
-      var res = await fetch('about.html');
+      var res = await fetchAppAsset('about.html');
+      if (!res.ok) throw new Error('about fetch failed');
       html = await res.text();
       titleSuffix = 'About — Overprint';
+      routeContentOk = true;
     } else if (route.type === 'tool') {
-      var tres = await fetch('tools/' + route.slug + '.html');
+      var tres = await fetchAppAsset('tools/' + route.slug + '.html');
       if (!tres.ok) throw new Error('not found');
       html = await tres.text();
       var tmp = document.createElement('div');
       tmp.innerHTML = html;
       var nameEl = tmp.querySelector('.tool-header-name');
       titleSuffix = (nameEl ? nameEl.textContent.trim() : route.slug) + ' — Overprint';
+      routeContentOk = true;
+    } else {
+      routeContentOk = true;
     }
   } catch (e) {
+    console.error('Overprint route fetch:', e);
     html =
-      '<div class="tool-page"><div class="tool-header"><button type="button" class="back-btn" data-back>← Back</button><div class="tool-header-info"><h1 class="tool-header-name">Not found</h1></div></div><p class="tool-placeholder">This tool page is missing or could not be loaded. Use a local server (see README).</p></div>';
+      '<div class="tool-page"><div class="tool-header"><button type="button" class="back-btn" data-back>← Back</button><div class="tool-header-info"><h1 class="tool-header-name">Not found</h1></div></div>' +
+      '<div class="tool-interface"><p class="tool-placeholder">Could not load this page. If you opened <code>index.html</code> from disk (<code>file://</code>), use a local server instead:</p>' +
+      '<pre class="tool-pre-wrap">cd public && python3 -m http.server 8080\n# then open http://localhost:8080/#/</pre>' +
+      '<p class="tool-placeholder">Also check the browser console for network errors.</p></div></div>';
     titleSuffix = 'Not found — Overprint';
   }
 
   if (myGen !== routeGeneration) return;
 
   pageView.classList.remove('route-leave-to');
+  if (window.OV && typeof window.OV.unmountTool === 'function') window.OV.unmountTool();
   pageView.innerHTML = html;
   pageView.classList.add('is-visible');
 
@@ -149,10 +213,27 @@ async function renderRoute() {
 
   document.title = titleSuffix;
   bindBackButtons(pageView);
+  if (
+    route.type === 'tool' &&
+    routeContentOk &&
+    window.OV &&
+    typeof window.OV.mountTool === 'function'
+  ) {
+    window.OV.mountTool(route.slug, pageView);
+  }
   routeFirstBoot = false;
 }
 
 function initRouter() {
-  window.addEventListener('hashchange', renderRoute);
-  renderRoute();
+  var h = window.location.hash;
+  if (!h || h === '#') {
+    window.location.hash = '#/';
+  }
+  function runRoute() {
+    return renderRoute().catch(function (err) {
+      console.error('Overprint: route error', err);
+    });
+  }
+  window.addEventListener('hashchange', runRoute);
+  runRoute();
 }

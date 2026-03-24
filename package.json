@@ -1,0 +1,9 @@
+{
+  "name": "overprint",
+  "private": true,
+  "description": "Free client-side design tools — serve the public/ folder",
+  "scripts": {
+    "start": "python3 -m http.server 8080 --bind 127.0.0.1 --directory public",
+    "serve": "python3 -m http.server 8080 --bind 127.0.0.1 --directory public"
+  }
+}
