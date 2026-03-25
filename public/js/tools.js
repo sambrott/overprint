@@ -29,6 +29,20 @@
     return d.firstElementChild;
   }
 
+  /** Beat-maker style: range + `.tool-bpm-val`; optional `fmt(n)` for decimals / units. */
+  function bindToolSliderValue(root, rangeSel, valSel, fmt) {
+    var r = root.querySelector(rangeSel);
+    var v = root.querySelector(valSel);
+    if (!r || !v) return;
+    function sync() {
+      var n = +r.value;
+      v.textContent = fmt ? fmt(n) : String(Math.round(n));
+      r.setAttribute('aria-valuenow', String(n));
+    }
+    r.addEventListener('input', sync);
+    sync();
+  }
+
   function tabs(iface, names, renderers) {
     var wrap = el('<div class="tool-stack"></div>');
     var nav = el('<div class="tool-tabs"></div>');
@@ -292,7 +306,11 @@
         p.innerHTML =
           '<div class="tool-stack">' +
           '<div class="tool-row">' +
-          '<div class="tool-field"><span class="tool-label">Paragraphs</span><input type="number" class="tool-input" id="ov-lo-n" value="3" min="1" max="20"></div>' +
+          '<div class="tool-field tool-field--slider">' +
+          '<span class="tool-label">Paragraphs</span>' +
+          '<div class="tool-bpm-slider-row">' +
+          '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ov-lo-n" min="1" max="20" step="1" value="3" aria-valuemin="1" aria-valuemax="20" aria-valuenow="3">' +
+          '<span class="tool-bpm-val" id="ov-lo-n-val">3</span></div></div>' +
           '</div>' +
           '<textarea class="tool-textarea" id="ov-lo-t" readonly></textarea>' +
           '</div>';
@@ -305,6 +323,7 @@
           p.querySelector('#ov-lo-t').value = parts.join('\n\n');
         }
         p.querySelector('#ov-lo-n').addEventListener('input', gen);
+        bindToolSliderValue(p, '#ov-lo-n', '#ov-lo-n-val');
         gen();
         copyRow(p, 'Copy text', function () {
           return p.querySelector('#ov-lo-t').value;
@@ -336,8 +355,16 @@
       function (p) {
         p.innerHTML =
           '<div class="tool-row">' +
-          '<div class="tool-field"><span class="tool-label">W</span><input type="number" class="tool-input" id="ov-ph-w" value="800"></div>' +
-          '<div class="tool-field"><span class="tool-label">H</span><input type="number" class="tool-input" id="ov-ph-h" value="450"></div>' +
+          '<div class="tool-field tool-field--slider">' +
+          '<span class="tool-label">W</span>' +
+          '<div class="tool-bpm-slider-row">' +
+          '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ov-ph-w" min="100" max="2400" step="10" value="800" aria-valuemin="100" aria-valuemax="2400" aria-valuenow="800">' +
+          '<span class="tool-bpm-val" id="ov-ph-w-val">800</span></div></div>' +
+          '<div class="tool-field tool-field--slider">' +
+          '<span class="tool-label">H</span>' +
+          '<div class="tool-bpm-slider-row">' +
+          '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ov-ph-h" min="100" max="2400" step="10" value="450" aria-valuemin="100" aria-valuemax="2400" aria-valuenow="450">' +
+          '<span class="tool-bpm-val" id="ov-ph-h-val">450</span></div></div>' +
           '<div class="tool-field"><span class="tool-label">Label</span><input type="text" class="tool-input" id="ov-ph-l" value="Placeholder"></div>' +
           '</div>' +
           '<div class="tool-row"><button type="button" class="tool-btn tool-btn--c" id="ov-ph-dl">Download PNG</button></div>';
@@ -363,6 +390,8 @@
           x.fillText(w + ' × ' + h, w / 2, h / 2 + 14);
           OV.downloadCanvas(c, 'placeholder.png', 'image/png');
         });
+        bindToolSliderValue(p, '#ov-ph-w', '#ov-ph-w-val');
+        bindToolSliderValue(p, '#ov-ph-h', '#ov-ph-h-val');
       },
       function (p) {
         p.innerHTML =
@@ -409,7 +438,11 @@
           '<div class="tool-row">' +
           '<div class="tool-field"><span class="tool-label">C1</span><input type="color" class="tool-input" id="g1" value="#00b4d8"></div>' +
           '<div class="tool-field"><span class="tool-label">C2</span><input type="color" class="tool-input" id="g2" value="#e040a0"></div>' +
-          '<div class="tool-field"><span class="tool-label">Angle</span><input type="number" class="tool-input" id="ga" value="135"></div>' +
+          '<div class="tool-field tool-field--slider">' +
+          '<span class="tool-label">Angle</span>' +
+          '<div class="tool-bpm-slider-row">' +
+          '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ga" min="0" max="360" step="1" value="135" aria-valuemin="0" aria-valuemax="360" aria-valuenow="135">' +
+          '<span class="tool-bpm-val" id="ga-val">135</span></div></div>' +
           '</div>' +
           '<div id="gp" style="height:80px;border:1px solid var(--border);border-radius:2px"></div>' +
           '<pre class="tool-pre-wrap" id="go"></pre>';
@@ -424,6 +457,7 @@
         ['g1', 'g2', 'ga'].forEach(function (id) {
           p.querySelector('#' + id).addEventListener('input', u);
         });
+        bindToolSliderValue(p, '#ga', '#ga-val');
         u();
         copyRow(p, 'Copy CSS', function () {
           return p.querySelector('#go').textContent;
@@ -432,10 +466,26 @@
       function (p) {
         p.innerHTML =
           '<div class="tool-row">' +
-          '<div class="tool-field"><span class="tool-label">X</span><input type="number" class="tool-input" id="sx" value="4"></div>' +
-          '<div class="tool-field"><span class="tool-label">Y</span><input type="number" class="tool-input" id="sy" value="8"></div>' +
-          '<div class="tool-field"><span class="tool-label">Blur</span><input type="number" class="tool-input" id="sb" value="24"></div>' +
-          '<div class="tool-field"><span class="tool-label">Spread</span><input type="number" class="tool-input" id="ss" value="0"></div>' +
+          '<div class="tool-field tool-field--slider">' +
+          '<span class="tool-label">X</span>' +
+          '<div class="tool-bpm-slider-row">' +
+          '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="sx" min="-40" max="40" step="1" value="4" aria-valuenow="4">' +
+          '<span class="tool-bpm-val" id="sx-val">4</span></div></div>' +
+          '<div class="tool-field tool-field--slider">' +
+          '<span class="tool-label">Y</span>' +
+          '<div class="tool-bpm-slider-row">' +
+          '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="sy" min="-40" max="40" step="1" value="8" aria-valuenow="8">' +
+          '<span class="tool-bpm-val" id="sy-val">8</span></div></div>' +
+          '<div class="tool-field tool-field--slider">' +
+          '<span class="tool-label">Blur</span>' +
+          '<div class="tool-bpm-slider-row">' +
+          '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="sb" min="0" max="80" step="1" value="24" aria-valuenow="24">' +
+          '<span class="tool-bpm-val" id="sb-val">24</span></div></div>' +
+          '<div class="tool-field tool-field--slider">' +
+          '<span class="tool-label">Spread</span>' +
+          '<div class="tool-bpm-slider-row">' +
+          '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ss" min="-32" max="32" step="1" value="0" aria-valuenow="0">' +
+          '<span class="tool-bpm-val" id="ss-val">0</span></div></div>' +
           '</div>' +
           '<div class="tool-field"><span class="tool-label">Color</span><input type="color" class="tool-input" id="sc" value="#000000"></div>' +
           '<div id="sp" style="width:120px;height:80px;background:var(--s2);margin:12px auto;border:1px solid var(--border)"></div>' +
@@ -453,6 +503,10 @@
         p.querySelectorAll('.tool-input').forEach(function (i) {
           i.addEventListener('input', u);
         });
+        bindToolSliderValue(p, '#sx', '#sx-val');
+        bindToolSliderValue(p, '#sy', '#sy-val');
+        bindToolSliderValue(p, '#sb', '#sb-val');
+        bindToolSliderValue(p, '#ss', '#ss-val');
         u();
         copyRow(p, 'Copy CSS', function () {
           return p.querySelector('#so').textContent;
@@ -461,7 +515,11 @@
       function (p) {
         p.innerHTML =
           '<div class="tool-row">' +
-          '<div class="tool-field"><span class="tool-label">All</span><input type="number" class="tool-input" id="ra" value="12"></div>' +
+          '<div class="tool-field tool-field--slider">' +
+          '<span class="tool-label">All</span>' +
+          '<div class="tool-bpm-slider-row">' +
+          '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ra" min="0" max="64" step="1" value="12" aria-valuenow="12">' +
+          '<span class="tool-bpm-val" id="ra-val">12</span></div></div>' +
           '</div>' +
           '<div id="rp" style="width:140px;height:90px;background:var(--C-dim);border:2px solid var(--C);margin:12px auto"></div>' +
           '<pre class="tool-pre-wrap" id="ro"></pre>';
@@ -471,6 +529,7 @@
           p.querySelector('#ro').textContent = 'border-radius: ' + r + ';';
         }
         p.querySelector('#ra').addEventListener('input', u);
+        bindToolSliderValue(p, '#ra', '#ra-val');
         u();
         copyRow(p, 'Copy CSS', function () {
           return p.querySelector('#ro').textContent;
@@ -583,7 +642,11 @@
           '<div class="tool-row">' +
           '<div class="tool-field"><span class="tool-label">A</span><input type="color" class="tool-input" id="cg1" value="#00b4d8"></div>' +
           '<div class="tool-field"><span class="tool-label">B</span><input type="color" class="tool-input" id="cg2" value="#f0d020"></div>' +
-          '<div class="tool-field"><span class="tool-label">°</span><input type="number" class="tool-input" id="cga" value="90"></div>' +
+          '<div class="tool-field tool-field--slider">' +
+          '<span class="tool-label">°</span>' +
+          '<div class="tool-bpm-slider-row">' +
+          '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="cga" min="0" max="360" step="1" value="90" aria-valuenow="90">' +
+          '<span class="tool-bpm-val" id="cga-val">90</span></div></div>' +
           '</div>' +
           '<div id="cgp" style="height:72px;border:1px solid var(--border)"></div>' +
           '<pre class="tool-pre-wrap" id="cgo"></pre>';
@@ -598,6 +661,7 @@
         p.querySelectorAll('#cg1,#cg2,#cga').forEach(function (x) {
           x.addEventListener('input', u);
         });
+        bindToolSliderValue(p, '#cga', '#cga-val');
         u();
         copyRow(p, 'Copy CSS', function () {
           return p.querySelector('#cgo').textContent;
@@ -611,8 +675,16 @@
     iface.innerHTML =
       '<div class="tool-stack">' +
       '<div class="tool-row">' +
-      '<div class="tool-field"><span class="tool-label">Frequency</span><input type="range" class="tool-input" id="nf" min="0.2" max="2.5" step="0.05" value="0.65"></div>' +
-      '<div class="tool-field"><span class="tool-label">Octaves</span><input type="number" class="tool-input" id="no" value="4" min="1" max="6"></div>' +
+      '<div class="tool-field tool-field--slider">' +
+      '<span class="tool-label">Frequency</span>' +
+      '<div class="tool-bpm-slider-row">' +
+      '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="nf" min="0.2" max="2.5" step="0.05" value="0.65" aria-valuenow="0.65">' +
+      '<span class="tool-bpm-val" id="nf-val">0.65</span></div></div>' +
+      '<div class="tool-field tool-field--slider">' +
+      '<span class="tool-label">Octaves</span>' +
+      '<div class="tool-bpm-slider-row">' +
+      '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="no" min="1" max="6" step="1" value="4" aria-valuenow="4">' +
+      '<span class="tool-bpm-val" id="no-val">4</span></div></div>' +
       '</div>' +
       '<div id="nv" style="max-width:320px;border:1px solid var(--border);background:var(--bg)"></div>' +
       '<div class="tool-row"><button type="button" class="tool-btn tool-btn--c" id="nsv">Download SVG</button>' +
@@ -637,6 +709,10 @@
     }
     iface.querySelector('#nf').addEventListener('input', render);
     iface.querySelector('#no').addEventListener('input', render);
+    bindToolSliderValue(iface, '#nf', '#nf-val', function (n) {
+      return n.toFixed(2);
+    });
+    bindToolSliderValue(iface, '#no', '#no-val');
     iface.querySelector('#nsv').addEventListener('click', function () {
       var blob = new Blob([svgStr()], { type: 'image/svg+xml' });
       OV.downloadBlob(blob, 'texture.svg');
@@ -660,19 +736,24 @@
   /* —— QR —— */
   function initQrCodeGenerator(iface) {
     iface.innerHTML =
-      '<div class="tool-stack">' +
+      '<div class="tool-shell tool-shell--split">' +
+      '<div class="tool-preview-pane" aria-label="QR preview">' +
+      '<div class="qr-preview-canvas"><canvas id="qrc" width="280" height="280" aria-label="QR code preview"></canvas></div>' +
+      '</div>' +
+      '<aside class="tool-toolbar-pane" aria-label="QR options">' +
       '<div class="tool-field tool-field--grow"><span class="tool-label">Content (URL or text)</span>' +
       '<input type="text" class="tool-input" id="qrt" value="" autocomplete="off" placeholder="https://example.com"></div>' +
       '<div class="tool-row">' +
       '<div class="tool-field"><span class="tool-label">FG</span><input type="color" class="tool-input" id="qrf" value="#08080c"></div>' +
       '<div class="tool-field"><span class="tool-label">BG</span><input type="color" class="tool-input" id="qrb" value="#ffffff"></div>' +
-      '<div class="tool-field"><span class="tool-label">Export size (px)</span><input type="number" class="tool-input" id="qrs" value="200" min="64" max="800"></div>' +
       '</div>' +
-      '<div class="qr-preview">' +
-      '<div class="qr-preview-label">Preview</div>' +
-      '<div class="qr-preview-canvas"><canvas id="qrc" width="280" height="280" aria-label="QR code preview"></canvas></div>' +
-      '</div>' +
+      '<div class="tool-field tool-field--slider">' +
+      '<span class="tool-label">Export size (px)</span>' +
+      '<div class="tool-bpm-slider-row">' +
+      '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="qrs" min="64" max="800" step="1" value="200" aria-valuemin="64" aria-valuemax="800" aria-valuenow="200">' +
+      '<span class="tool-bpm-val" id="qrs-val">200</span></div></div>' +
       '<div class="tool-row"><button type="button" class="tool-btn tool-btn--c" id="qrp">Download PNG</button></div>' +
+      '</aside>' +
       '</div>';
     var canvas = iface.querySelector('#qrc');
     var QR = typeof QRCode !== 'undefined' ? QRCode : null;
@@ -783,6 +864,7 @@
       x.addEventListener('input', drawPreview);
       x.addEventListener('change', drawPreview);
     });
+    bindToolSliderValue(iface, '#qrs', '#qrs-val');
     iface.querySelector('#qrt').addEventListener('blur', function () {
       var el = iface.querySelector('#qrt');
       var cur = el.value.trim();
@@ -824,8 +906,16 @@
     panel.innerHTML =
       '<canvas id="ov-itc" style="max-width:100%;border:1px solid var(--border)"></canvas>' +
       '<div class="tool-row">' +
-      '<div class="tool-field"><span class="tool-label">Quality %</span><input type="range" class="tool-input" id="ov-iq" min="0.5" max="1" step="0.05" value="0.92"></div>' +
-      '<div class="tool-field"><span class="tool-label">Scale %</span><input type="number" class="tool-input" id="ov-isc" value="100" min="5" max="200"></div>' +
+      '<div class="tool-field tool-field--slider">' +
+      '<span class="tool-label">Quality</span>' +
+      '<div class="tool-bpm-slider-row">' +
+      '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ov-iq" min="0.5" max="1" step="0.05" value="0.92" aria-valuenow="0.92">' +
+      '<span class="tool-bpm-val" id="ov-iq-val">92%</span></div></div>' +
+      '<div class="tool-field tool-field--slider">' +
+      '<span class="tool-label">Scale %</span>' +
+      '<div class="tool-bpm-slider-row">' +
+      '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ov-isc" min="5" max="200" step="1" value="100" aria-valuenow="100">' +
+      '<span class="tool-bpm-val" id="ov-isc-val">100</span></div></div>' +
       '<div class="tool-field"><span class="tool-label">Format</span><select class="tool-select" id="ov-ifmt"><option value="image/png">PNG</option><option value="image/jpeg">JPEG</option><option value="image/webp">WebP</option></select></div>' +
       '</div>' +
       '<div class="tool-row">' +
@@ -833,6 +923,10 @@
       '<button type="button" class="tool-btn" id="ov-iflip">Flip H</button>' +
       '<button type="button" class="tool-btn tool-btn--c" id="ov-idl">Download</button></div>';
     iface.appendChild(panel);
+    bindToolSliderValue(panel, '#ov-iq', '#ov-iq-val', function (n) {
+      return Math.round(n * 100) + '%';
+    });
+    bindToolSliderValue(panel, '#ov-isc', '#ov-isc-val');
     var img,
       c,
       ctx,
@@ -909,11 +1003,18 @@
               (file.size / 1024).toFixed(1) +
               ' KB</span>' +
               '<div class="tool-row" style="margin-top:8px">' +
-              '<label class="tool-field tool-field--inline"><span class="tool-label">Quality</span><input type="range" class="tool-input tool-input--range" min="0.5" max="1" step="0.05" value="0.85" data-q></label>' +
+              '<div class="tool-field tool-field--slider" style="flex:1;min-width:140px">' +
+              '<span class="tool-label">Quality</span>' +
+              '<div class="tool-bpm-slider-row">' +
+              '<input type="range" class="tool-input tool-input--range tool-input--bpm" min="0.5" max="1" step="0.05" value="0.85" data-q aria-valuenow="0.85">' +
+              '<span class="tool-bpm-val" data-qv>85%</span></div></div>' +
               '<select class="tool-select" data-f><option value="image/jpeg">JPEG</option><option value="image/webp">WebP</option><option value="image/png">PNG</option></select>' +
               '<button type="button" class="tool-btn tool-btn--c" data-go>Export</button></div></div>'
           );
           row.appendChild(meta);
+          bindToolSliderValue(meta, '[data-q]', '[data-qv]', function (n) {
+            return Math.round(n * 100) + '%';
+          });
           list.appendChild(row);
           var cFull = document.createElement('canvas');
           cFull.width = img.naturalWidth;
@@ -1011,12 +1112,17 @@
         '<div class="tool-row">' +
         '<div class="tool-field"><span class="tool-label">Aspect W:H</span><select class="tool-select" id="ov-gr">' +
         '<option value="4/5">4:5</option><option value="1/1">1:1</option><option value="16/9">16:9</option><option value="9/16">9:16</option></select></div>' +
-        '<div class="tool-field"><span class="tool-label">Output max px</span><input type="number" class="tool-input" id="ov-gm" value="1080" min="200" max="4096"></div>' +
+        '<div class="tool-field tool-field--slider">' +
+        '<span class="tool-label">Output max px</span>' +
+        '<div class="tool-bpm-slider-row">' +
+        '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ov-gm" min="200" max="4096" step="10" value="1080" aria-valuenow="1080">' +
+        '<span class="tool-bpm-val" id="ov-gm-val">1080</span></div></div>' +
         '</div>' +
         '<div class="tool-row"><button type="button" class="tool-btn tool-btn--c" id="ov-gzip">ZIP all</button></div>' +
         '<div class="tool-grid-preview" id="ov-gprev"></div></div>'
     );
     iface.appendChild(controls);
+    bindToolSliderValue(iface, '#ov-gm', '#ov-gm-val');
     var files = [];
     function refreshGridPreview() {
       if (!files.length) return;
@@ -1104,10 +1210,15 @@
     iface.appendChild(el('<div class="drop-zone" id="ov-cz">Drop one wide image</div>'));
     var row = el(
       '<div class="tool-row">' +
-        '<div class="tool-field"><span class="tool-label">Panels</span><input type="number" class="tool-input" id="ov-cn" value="3" min="2" max="10"></div>' +
+        '<div class="tool-field tool-field--slider">' +
+        '<span class="tool-label">Panels</span>' +
+        '<div class="tool-bpm-slider-row">' +
+        '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ov-cn" min="2" max="10" step="1" value="3" aria-valuenow="3">' +
+        '<span class="tool-bpm-val" id="ov-cn-val">3</span></div></div>' +
         '<button type="button" class="tool-btn tool-btn--c" id="ov-cdl">Download ZIP</button></div>'
     );
     iface.appendChild(row);
+    bindToolSliderValue(iface, '#ov-cn', '#ov-cn-val');
     var wrap = el('<div class="tool-grid-preview" id="ov-cprev"></div>');
     iface.appendChild(wrap);
     var srcImg = null;
@@ -1176,14 +1287,24 @@
     var ui = el(
       '<div class="tool-stack" style="margin-top:12px">' +
         '<div class="tool-row">' +
-        '<div class="tool-field"><span class="tool-label">Padding</span><input type="number" class="tool-input" id="ov-spad" value="48"></div>' +
-        '<div class="tool-field"><span class="tool-label">Radius</span><input type="number" class="tool-input" id="ov-srd" value="12"></div>' +
+        '<div class="tool-field tool-field--slider">' +
+        '<span class="tool-label">Padding</span>' +
+        '<div class="tool-bpm-slider-row">' +
+        '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ov-spad" min="0" max="160" step="2" value="48" aria-valuenow="48">' +
+        '<span class="tool-bpm-val" id="ov-spad-val">48</span></div></div>' +
+        '<div class="tool-field tool-field--slider">' +
+        '<span class="tool-label">Radius</span>' +
+        '<div class="tool-bpm-slider-row">' +
+        '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ov-srd" min="0" max="64" step="1" value="12" aria-valuenow="12">' +
+        '<span class="tool-bpm-val" id="ov-srd-val">12</span></div></div>' +
         '<div class="tool-field"><span class="tool-label">BG</span><input type="color" class="tool-input" id="ov-sbg" value="#131318"></div>' +
         '</div>' +
         '<div class="tool-row"><button type="button" class="tool-btn tool-btn--c" id="ov-sdl">Export PNG</button></div>' +
         '<canvas id="ov-spc" style="max-width:100%;border:1px solid var(--border)"></canvas></div>'
     );
     iface.appendChild(ui);
+    bindToolSliderValue(iface, '#ov-spad', '#ov-spad-val');
+    bindToolSliderValue(iface, '#ov-srd', '#ov-srd-val');
     var shot = null;
     function compose() {
       if (!shot) return;
@@ -1415,7 +1536,6 @@
       '</div></section>' +
       '<section class="fcv-section" id="fcv-section-type">' +
       '<div class="fcv-section-title" id="fcv-typo-title">Typography</div>' +
-      '<p class="fcv-section-hint" id="fcv-type-hint"></p>' +
       '<div class="tool-field" id="ov-fwrap-ffont"><span class="tool-label">Typeface</span>' +
       '<select class="tool-select" id="ov-ffont" aria-label="Font family">' +
       fcvFontOpts +
@@ -1427,8 +1547,9 @@
       '</select></div>' +
       '<div class="tool-field fcv-field-range">' +
       '<span class="tool-label">Size <span id="ov-fsize-val" class="fcv-size-val">100</span>px</span>' +
-      '<input type="range" class="tool-input tool-input--range" id="ov-fsize" min="56" max="132" value="100" step="2" aria-valuemin="56" aria-valuemax="132" aria-valuenow="100">' +
-      '</div></section>' +
+      '<div class="tool-bpm-slider-row">' +
+      '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ov-fsize" min="56" max="132" value="100" step="2" aria-valuemin="56" aria-valuemax="132" aria-valuenow="100">' +
+      '</div></div></section>' +
       '<section class="fcv-section">' +
       '<div class="fcv-section-title">Mask and color</div>' +
       '<div class="tool-field"><span class="tool-label">Mask shape</span>' +
@@ -1550,20 +1671,6 @@
       ctx.fill(spec.rule || 'nonzero');
     }
 
-    function syncTypeHint() {
-      var hint = iface.querySelector('#fcv-type-hint');
-      if (!hint) return;
-      var mode = iface.querySelector('#ov-fmode').value;
-      if (mode === 'symbol') {
-        hint.textContent =
-          'Typeface applies to custom characters. Vector icons scale with the size slider.';
-      } else if (mode === 'emoji') {
-        hint.textContent = 'Size and weight adjust emoji. Typeface applies to letter mode.';
-      } else {
-        hint.textContent = 'Font, weight, and size apply to letters.';
-      }
-    }
-
     function syncContentUi() {
       var mode = iface.querySelector('#ov-fmode').value;
       iface.querySelector('#ov-fwrap-letter').hidden = mode !== 'letter';
@@ -1579,7 +1686,6 @@
           typoTitle.textContent = 'Typography';
         }
       }
-      syncTypeHint();
     }
 
     function emojiGlyph() {
@@ -1723,12 +1829,8 @@
           draw();
         });
       });
-      iface.querySelector('#ov-fsize').addEventListener('input', function () {
-        var lab = iface.querySelector('#ov-fsize-val');
-        if (lab) lab.textContent = this.value;
-        this.setAttribute('aria-valuenow', this.value);
-        draw();
-      });
+      iface.querySelector('#ov-fsize').addEventListener('input', draw);
+      bindToolSliderValue(iface, '#ov-fsize', '#ov-fsize-val');
       iface.querySelector('#ov-ffont').addEventListener('change', applyFcvFont);
       iface.querySelector('#ov-fweight').addEventListener('change', draw);
       iface.querySelector('#ov-femoji-in').addEventListener('input', draw);

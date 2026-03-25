@@ -453,9 +453,9 @@ html.theme-light .tool-card[data-cat="type"] .tc-tag{color:var(--text-hi)}
 .fcv-section-title{
   font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text-lo);margin:0
 }
-.fcv-section-hint{font-size:11px;line-height:1.45;color:var(--text-lo);margin:0}
 .fcv-section--presets .fcv-presets{margin-top:2px}
 .fcv-field-range .tool-label{margin-bottom:2px}
+.fcv-field-range .tool-bpm-slider-row{width:100%}
 .fcv-size-val{color:var(--C);font-weight:600}
 .fcv-main-wrap{
   flex:1;min-height:0;display:flex;flex-direction:column;gap:10px;overflow:hidden
@@ -725,17 +725,30 @@ html.theme-light .tool-header-tag.cat-type{color:var(--text-hi)}
 .tool-badge--bad{background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(239,68,68,.3)}
 .tool-badge--neu{background:var(--s2);color:var(--text-faint);border:1px solid var(--border)}
 .tool-preview-box{border:1px solid var(--border);background:var(--bg);border-radius:2px;padding:16px;margin-top:8px}
-.qr-preview{
-  margin-top:8px;border:1px solid var(--border);background:var(--bg);border-radius:2px;padding:12px 14px 14px
+/* Split layout: preview left, toolbar right (QR and other tools) */
+.tool-shell--split{
+  display:flex;flex-direction:row;align-items:stretch;gap:0;min-height:min(520px,calc(100vh - 220px));max-height:min(720px,calc(100vh - 160px));
+  border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--s2);max-width:100%;box-sizing:border-box
 }
-.qr-preview-label{
-  font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text-lo);margin:0 0 10px
+.tool-preview-pane{
+  flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:20px 18px 24px;background:var(--s2);border-right:1px solid var(--border)
+}
+.tool-toolbar-pane{
+  width:min(320px,100%);flex-shrink:0;min-width:240px;display:flex;flex-direction:column;gap:14px;
+  padding:16px 18px 20px;background:var(--bg);box-sizing:border-box;overflow-y:auto
+}
+.tool-toolbar-pane .tool-row{flex-wrap:wrap}
+@media (max-width:900px){
+  .tool-shell--split{flex-direction:column;min-height:0;max-height:none}
+  .tool-preview-pane{border-right:none;border-bottom:1px solid var(--border);padding:16px}
+  .tool-toolbar-pane{width:100%;min-width:0;max-height:min(50vh,420px)}
 }
 .qr-preview-canvas{
-  display:flex;justify-content:center;align-items:center;min-height:80px
+  display:flex;justify-content:center;align-items:center;width:100%;min-height:120px
 }
 .qr-preview-canvas canvas{
-  display:block;max-width:100%;height:auto;image-rendering:pixelated;image-rendering:crisp-edges;
+  display:block;max-width:min(280px,100%);height:auto;image-rendering:pixelated;image-rendering:crisp-edges;
   border:1px solid var(--border);border-radius:2px;background:var(--s1)
 }
 #qrt::placeholder{color:var(--text-faint);opacity:1}
@@ -752,7 +765,7 @@ html.theme-light .tool-header-tag.cat-type{color:var(--text-hi)}
   display:flex;flex-direction:column;align-items:stretch;align-self:flex-start;
   gap:14px;width:var(--tool-beat-transport-px,auto);max-width:100%;min-width:0;box-sizing:border-box
 }
-.tool-field--beat-preset,.tool-field--beat-bpm{width:100%;max-width:100%;min-width:0;flex:0 0 auto;box-sizing:border-box}
+.tool-field--beat-preset,.tool-field--beat-bpm,.tool-field--slider{width:100%;max-width:100%;min-width:0;flex:0 0 auto;box-sizing:border-box}
 .tool-bpm-slider-row{display:flex;align-items:center;gap:12px;width:100%;min-width:0}
 .tool-bpm-val{
   font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:var(--text-hi);
