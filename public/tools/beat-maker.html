@@ -1,11 +1,20 @@
-<div class="tool-page">
-  <div class="tool-header">
-    <button type="button" class="back-btn" data-back>← Back</button>
-    <div class="tool-header-info">
-      <span class="tool-header-num">08</span>
-      <span class="tool-header-tag cat-create">Create</span>
-      <h1 class="tool-header-name">Beat Maker</h1>
+<div class="tool-page tool-page--beat">
+  <header class="tool-header tool-header--split">
+    <div class="tool-header-main">
+      <button type="button" class="back-btn" data-back aria-label="Back to tools">
+        <span class="back-btn__glyph" aria-hidden="true">←</span>
+        <span class="back-btn__txt">Tools</span>
+      </button>
+      <div class="tool-header-info">
+        <span class="tool-header-num">08</span>
+        <span class="tool-header-tag cat-create">Create</span>
+        <h1 class="tool-header-name">Beat Maker</h1>
+      </div>
     </div>
-  </div>
+    <button type="button" class="tool-header-export" id="ov-bexport" aria-label="Export loop as WAV for editing">
+      <svg class="tool-header-export__icon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 12l5 5 5-5"/><path d="M5 21h14"/></svg>
+      <span class="tool-header-export__label">Export</span>
+    </button>
+  </header>
   <div class="tool-interface"></div>
 </div>

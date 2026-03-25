@@ -190,7 +190,7 @@ async function renderRoute() {
   } catch (e) {
     console.error('Overprint route fetch:', e);
     html =
-      '<div class="tool-page"><div class="tool-header"><button type="button" class="back-btn" data-back>← Back</button><div class="tool-header-info"><h1 class="tool-header-name">Not found</h1></div></div>' +
+      '<div class="tool-page"><div class="tool-header"><div class="tool-header-main"><button type="button" class="back-btn" data-back aria-label="Back to tools"><span class="back-btn__glyph" aria-hidden="true">←</span><span class="back-btn__txt">Tools</span></button><div class="tool-header-info"><h1 class="tool-header-name">Not found</h1></div></div></div>' +
       '<div class="tool-interface"><p class="tool-placeholder">Could not load this page. If you opened <code>index.html</code> from disk (<code>file://</code>), use a local server instead:</p>' +
       '<pre class="tool-pre-wrap">cd public && python3 -m http.server 8080\n# then open http://localhost:8080/#/</pre>' +
       '<p class="tool-placeholder">Also check the browser console for network errors.</p></div></div>';

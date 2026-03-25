@@ -58,7 +58,7 @@
 
   function copyRow(iface, label, getText) {
     var row = el(
-      '<div class="tool-row"><button type="button" class="tool-btn tool-btn--c">' + label + '</button><span class="tool-hint" data-copy-status></span></div>'
+      '<div class="tool-row"><button type="button" class="tool-btn tool-btn--c">' + label + '</button><span class="tool-copy-status" data-copy-status></span></div>'
     );
     row.querySelector('button').addEventListener('click', function () {
       OV.copyText(getText()).then(function () {
@@ -78,7 +78,6 @@
   function initContrastChecker(iface) {
     iface.innerHTML =
       '<div class="tool-stack">' +
-      '<p class="tool-hint">Foreground and background colors. Ratios use WCAG relative luminance.</p>' +
       '<div class="tool-row">' +
       '<div class="tool-field"><span class="tool-label">Foreground</span><input type="color" class="tool-input" id="ov-fg" value="#e4e4ea"></div>' +
       '<div class="tool-field"><span class="tool-label">Background</span><input type="color" class="tool-input" id="ov-bg" value="#08080c"></div>' +
@@ -91,7 +90,7 @@
       '<p style="font-size:14px;margin-bottom:8px">Sample body text for reading.</p>' +
       '<p style="font-size:18px;font-weight:700">Large bold heading text</p>' +
       '</div>' +
-      '<p class="tool-hint" id="ov-cratio"></p>' +
+      '<p class="tool-out" id="ov-cratio"></p>' +
       '<div id="ov-badges"></div>' +
       '<div class="tool-row"><button type="button" class="tool-btn tool-btn--y" id="ov-suggest">Suggest passing FG</button></div>' +
       '</div>';
@@ -201,12 +200,12 @@
       '<div class="tool-field"><span class="tool-label">Width</span><input type="number" class="tool-input" id="ov-aw" value="1920" min="1"></div>' +
       '<div class="tool-field"><span class="tool-label">Height</span><input type="number" class="tool-input" id="ov-ah" value="1080" min="1"></div>' +
       '</div>' +
-      '<p class="tool-hint" id="ov-arout"></p>' +
+      '<p class="tool-out" id="ov-arout"></p>' +
       '<div class="tool-row">' +
       '<div class="tool-field"><span class="tool-label">Scale to W</span><input type="number" class="tool-input" id="ov-sw" placeholder="px"></div>' +
       '<div class="tool-field"><span class="tool-label">Scale to H</span><input type="number" class="tool-input" id="ov-sh" placeholder="px"></div>' +
       '</div>' +
-      '<p class="tool-hint" id="ov-scaleout"></p>' +
+      '<p class="tool-out" id="ov-scaleout"></p>' +
       '<div class="tool-row tool-row--top">' +
       '<span class="tool-label" style="width:100%">Presets</span></div>' +
       '<div class="tool-row" id="ov-presets"></div>' +
@@ -313,7 +312,6 @@
       },
       function (p) {
         p.innerHTML =
-          '<p class="tool-hint">Generated locally — not real people.</p>' +
           '<textarea class="tool-textarea" id="ov-fake" readonly></textarea>';
         var first = ['Alex', 'Jordan', 'Sam', 'Riley', 'Casey', 'Morgan'];
         var last = ['Nguyen', 'Smith', 'Garcia', 'Kim', 'Patel', 'Brown'];
@@ -368,7 +366,6 @@
       },
       function (p) {
         p.innerHTML =
-          '<p class="tool-hint">Abstract geometric avatar.</p>' +
           '<div class="tool-row"><button type="button" class="tool-btn tool-btn--m" id="ov-av-gen">New avatar</button>' +
           '<button type="button" class="tool-btn tool-btn--c" id="ov-av-dl">Download PNG</button></div>' +
           '<div style="margin-top:12px" id="ov-av-h"></div>';
@@ -496,7 +493,6 @@
       },
       function (p) {
         p.innerHTML =
-          '<p class="tool-hint">SVG turbulence — use as data URL in CSS.</p>' +
           '<pre class="tool-pre-wrap" id="nsvg"></pre>' +
           '<div class="tool-row"><button type="button" class="tool-btn tool-btn--c" id="ndl">Download SVG</button></div>';
         var svg =
@@ -522,7 +518,7 @@
         p.innerHTML =
           '<div class="tool-field"><span class="tool-label">Base hex</span><input type="text" class="tool-input" id="chx" value="#00b4d8"></div>' +
           '<div class="tool-row" id="chsw" style="gap:8px;margin-top:12px"></div>' +
-          '<p class="tool-hint" id="chn"></p>';
+          '<p class="tool-out" id="chn"></p>';
         function paint() {
           var rgb = OV.parseHex(p.querySelector('#chx').value) || { r: 0, g: 180, b: 216 };
           var hsl = OV.rgbToHsl(rgb.r, rgb.g, rgb.b);
@@ -674,7 +670,7 @@
       '</div>' +
       '<div style="display:flex;justify-content:center"><canvas id="qrc"></canvas></div>' +
       '<div class="tool-row"><button type="button" class="tool-btn tool-btn--c" id="qrp">Download PNG</button></div>' +
-      '<p class="tool-hint" id="qre"></p></div>';
+      '<p class="tool-out" id="qre"></p></div>';
     var canvas = iface.querySelector('#qrc');
     var err = iface.querySelector('#qre');
     function draw() {
@@ -806,11 +802,11 @@
           var meta = el(
             '<div class="tool-field tool-field--grow"><span class="tool-label">' +
               file.name +
-              '</span><span class="tool-hint">' +
+              '</span><span class="tool-meta-kb">' +
               (file.size / 1024).toFixed(1) +
               ' KB</span>' +
               '<div class="tool-row" style="margin-top:8px">' +
-              '<label class="tool-hint">Quality <input type="range" class="tool-input" min="0.5" max="1" step="0.05" value="0.85" data-q></label>' +
+              '<label class="tool-field tool-field--inline"><span class="tool-label">Quality</span><input type="range" class="tool-input tool-input--range" min="0.5" max="1" step="0.05" value="0.85" data-q></label>' +
               '<select class="tool-select" data-f><option value="image/jpeg">JPEG</option><option value="image/webp">WebP</option><option value="image/png">PNG</option></select>' +
               '<button type="button" class="tool-btn tool-btn--c" data-go>Export</button></div></div>'
           );
@@ -1184,52 +1180,10 @@
   var FONT_PAIRS = [
     { h: 'Syne', b: 'IBM Plex Mono', id: 'syne+ibm-plex-mono' },
     { h: 'Playfair Display', b: 'Source Sans 3', id: 'playfair-display+source-sans-3' },
-    { h: 'Merriweather', b: 'Open Sans', id: 'merriweather+open-sans' },
     { h: 'Bebas Neue', b: 'Montserrat', id: 'bebas-neue+montserrat' },
-    { h: 'Space Grotesk', b: 'Inter', id: 'space-grotesk+inter' },
-    { h: 'DM Serif Display', b: 'DM Sans', id: 'dm-serif-display+dm-sans' },
-    { h: 'Poppins', b: 'Open Sans', id: 'poppins+open-sans' },
-    { h: 'Roboto Slab', b: 'Roboto', id: 'roboto-slab+roboto' },
     { h: 'Oswald', b: 'Lato', id: 'oswald+lato' },
-    { h: 'Fraunces', b: 'Nunito', id: 'fraunces+nunito' },
-    { h: 'Libre Baskerville', b: 'Lato', id: 'libre-baskerville+lato' },
-    { h: 'EB Garamond', b: 'Lato', id: 'eb-garamond+lato' },
-    { h: 'Spectral', b: 'Karla', id: 'spectral+karla' },
-    { h: 'Bitter', b: 'Raleway', id: 'bitter+raleway' },
-    { h: 'PT Serif', b: 'PT Sans', id: 'pt-serif+pt-sans' },
-    { h: 'Noto Serif', b: 'Noto Sans', id: 'noto-serif+noto-sans' },
-    { h: 'Anton', b: 'Manrope', id: 'anton+manrope' },
-    { h: 'Archivo Black', b: 'Archivo', id: 'archivo-black+archivo' },
-    { h: 'Raleway', b: 'Lato', id: 'raleway+lato' },
-    { h: 'Montserrat', b: 'Open Sans', id: 'montserrat+open-sans' },
-    { h: 'Outfit', b: 'Source Sans 3', id: 'outfit+source-sans-3' },
-    { h: 'Sora', b: 'Inter', id: 'sora+inter' },
-    { h: 'Lexend', b: 'IBM Plex Sans', id: 'lexend+ibm-plex-sans' },
-    { h: 'Plus Jakarta Sans', b: 'Inter', id: 'plus-jakarta-sans+inter' },
-    { h: 'Figtree', b: 'Source Serif 4', id: 'figtree+source-serif-4' },
-    { h: 'Urbanist', b: 'IBM Plex Sans', id: 'urbanist+ibm-plex-sans' },
-    { h: 'Josefin Sans', b: 'Crimson Text', id: 'josefin-sans+crimson-text' },
-    { h: 'Yeseva One', b: 'Josefin Sans', id: 'yeseva-one+josefin-sans' },
-    { h: 'Cormorant Garamond', b: 'Proza Libre', id: 'cormorant-garamond+proza-libre' },
-    { h: 'Newsreader', b: 'Work Sans', id: 'newsreader+work-sans' },
-    { h: 'Zilla Slab', b: 'Nunito Sans', id: 'zilla-slab+nunito-sans' },
-    { h: 'Rubik', b: 'Karla', id: 'rubik+karla' },
-    { h: 'Barlow', b: 'Fira Sans', id: 'barlow+fira-sans' },
-    { h: 'Quicksand', b: 'Mulish', id: 'quicksand+mulish' },
-    { h: 'Literata', b: 'Rubik', id: 'literata+rubik' },
-    { h: 'Lora', b: 'Nunito Sans', id: 'lora+nunito-sans' },
-    { h: 'Cinzel', b: 'Mulish', id: 'cinzel+mulish' },
-    { h: 'Instrument Serif', b: 'Inter', id: 'instrument-serif+inter' },
-    { h: 'Bodoni Moda', b: 'Outfit', id: 'bodoni-moda+outfit' },
-    { h: 'Alegreya', b: 'Alegreya Sans', id: 'alegreya+alegreya-sans' },
-    { h: 'Catamaran', b: 'Martel', id: 'catamaran+martel' },
-    { h: 'DM Sans', b: 'DM Serif Display', id: 'dm-sans+dm-serif-display' },
-    { h: 'Caveat', b: 'Quicksand', id: 'caveat+quicksand' },
-    { h: 'Arvo', b: 'Open Sans', id: 'arvo+open-sans' },
-    { h: 'Ubuntu', b: 'Open Sans', id: 'ubuntu+open-sans' },
-    { h: 'Kanit', b: 'Prompt', id: 'kanit+prompt' },
+    { h: 'Space Grotesk', b: 'Inter', id: 'space-grotesk+inter' },
   ];
-
 
   function initFontPair(iface) {
     function fpSvg(paths) {
@@ -1251,18 +1205,19 @@
       { id: 'type-scale', label: 'Type scale', svg: fpSvg('<path d="M4 6h16M4 10h12M4 14h14M4 18h10"/>') },
       { id: 'icons', label: 'Icons', svg: fpSvg('<circle cx="6" cy="6" r="1.5"/><circle cx="12" cy="6" r="1.5"/><circle cx="18" cy="6" r="1.5"/><circle cx="6" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="18" cy="12" r="1.5"/><circle cx="6" cy="18" r="1.5"/><circle cx="12" cy="18" r="1.5"/><circle cx="18" cy="18" r="1.5"/>') },
       { id: 'colors', label: 'Colors', svg: fpSvg('<path d="M4 6h16v4H4zM4 12h12v4H4zM4 18h10v4H4z"/>') },
+      { id: 'illustrations', label: 'Illustrations', svg: fpSvg('<rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/>') },
     ];
     var FP_CONTEXTS = [
-      { id: 'startup', label: 'Startup', head: 'Ship the vision.', body: 'Iterate in public. Pair a strong display face with a calm UI font for decks, product, and landing pages.', hint: 4 },
-      { id: 'work', label: 'Work / corporate', head: 'Clarity at scale.', body: 'Reports, dashboards, and docs need hierarchy without noise. Favor legible serifs or grotesks with a neutral sans.', hint: 7 },
-      { id: 'wedding', label: 'Wedding', head: 'Together.', body: 'Invitations and sites call for warmth. Script or high-contrast serif headlines with a light sans for details.', hint: 1 },
+      { id: 'startup', label: 'Startup', head: 'Ship the vision.', body: 'Iterate in public. Pair a strong display face with a calm UI font for decks, product, and landing pages.', hint: 5 },
+      { id: 'work', label: 'Work / corporate', head: 'Clarity at scale.', body: 'Reports, dashboards, and docs need hierarchy without noise. Favor legible serifs or grotesks with a neutral sans.', hint: 1 },
+      { id: 'wedding', label: 'Wedding', head: 'Together.', body: 'Invitations and sites call for warmth. Script or high-contrast serif headlines with a light sans for details.', hint: 2 },
       { id: 'birthday', label: 'Birthday / party', head: 'Make it pop.', body: 'Posters and invites can go bolder. Display + geometric sans keeps RSVP blocks readable.', hint: 3 },
-      { id: 'education', label: 'Education', head: 'Learn by doing.', body: 'Course hubs and readers need long-form comfort. A sturdy serif body with a friendly sans for nav works well.', hint: 2 },
-      { id: 'nonprofit', label: 'Non-profit', head: 'Every voice counts.', body: 'Mission sites balance emotion and trust. Pair an expressive headline with an accessible sans for stories and CTAs.', hint: 1 },
-      { id: 'ecommerce', label: 'E-commerce', head: 'New drop.', body: 'Shop the edit.', hint: 5 },
-      { id: 'church', label: 'Church', head: 'Gather.', body: 'Event schedules and sermons online: traditional serif headlines with a simple sans for times and links.', hint: 11 },
-      { id: 'fashion', label: 'Fashion', head: 'The line.', body: 'Lookbooks reward contrast—tight display typography and a minimal grotesk for sizes and care copy.', hint: 8 },
-      { id: 'healthcare', label: 'Healthcare', head: 'Care, explained.', body: 'Patient-facing UI favors neutral sans pairs with clear hierarchy; reserve display for hero moments only.', hint: 6 },
+      { id: 'education', label: 'Education', head: 'Learn by doing.', body: 'Course hubs and readers need long-form comfort. A sturdy serif body with a friendly sans for nav works well.', hint: 1 },
+      { id: 'nonprofit', label: 'Non-profit', head: 'Every voice counts.', body: 'Mission sites balance emotion and trust. Pair an expressive headline with an accessible sans for stories and CTAs.', hint: 2 },
+      { id: 'ecommerce', label: 'E-commerce', head: 'New drop.', body: 'Shop the edit.', hint: 4 },
+      { id: 'church', label: 'Church', head: 'Gather.', body: 'Event schedules and sermons online: traditional serif headlines with a simple sans for times and links.', hint: 2 },
+      { id: 'fashion', label: 'Fashion', head: 'The line.', body: 'Lookbooks reward contrast—tight display typography and a minimal grotesk for sizes and care copy.', hint: 6 },
+      { id: 'healthcare', label: 'Healthcare', head: 'Care, explained.', body: 'Patient-facing UI favors neutral sans pairs with clear hierarchy; reserve display for hero moments only.', hint: 7 },
       { id: 'realestate', label: 'Real estate', head: 'Your next address.', body: 'Listings and tours: confident headline + readable sans for specs, maps, and disclosures.', hint: 0 },
       { id: 'restaurant', label: 'Restaurant', head: 'Tonight’s menu.', body: 'Menus and sites: appetizing display for titles, clean sans for ingredients, hours, and reservations.', hint: 3 },
     ];
@@ -1290,45 +1245,28 @@
       FONT_PAIRS.map(function (p, i) {
         return '<option value="' + i + '">' + p.h + ' + ' + p.b + '</option>';
       }).join('');
-    var FP_MEDIUM_DEFAULTS = {
-      website: {
-        head: 'Build beautiful products faster.',
-        body: 'Ship a calm, confident landing page with clear hierarchy and room to breathe.',
-      },
-      mobile: { head: 'Good morning', body: 'Tuesday · 3 updates waiting for you.' },
-      'ui-grid': { head: 'Dashboard', body: 'KPIs, activity, and files at a glance.' },
-      slides: { head: 'Q3 narrative', body: 'Three bullets your team will actually remember.' },
-      social: { head: 'Build. Ship. Scale.', body: 'Just launched our new feature! Check it out.' },
-      newsletter: {
-        head: 'Weekly brief',
-        body: 'The most important links and numbers from this week, in one scroll.',
-      },
-      'business-card': { head: 'Alex Rivera', body: 'Creative Director · studio.co' },
-      logo: { head: 'Overprint', body: 'Design utilities' },
-      'type-scale': { head: 'Display', body: 'Paragraph 01 · long-form rhythm for readers.' },
-      icons: { head: 'Icon sample', body: 'Glyph stress test at small sizes.' },
-      colors: { head: 'Palette', body: 'Overprint tokens and your accent preview.' },
-    };
-    var mediumOpts = FP_MEDIUMS.map(function (m, i) {
+    var mediumBtns = FP_MEDIUMS.map(function (m, i) {
       return (
-        '<option value="' +
+        '<button type="button" class="fp-rail-item' +
+        (i === 0 ? ' is-active' : '') +
+        '" data-medium="' +
         m.id +
-        '"' +
-        (i === 0 ? ' selected' : '') +
-        '>' +
+        '">' +
+        m.svg +
+        '<span class="fp-rail-txt">' +
         m.label +
-        '</option>'
+        '</span></button>'
       );
     }).join('');
-    var contextOpts = FP_CONTEXTS.map(function (c, i) {
+    var contextBtns = FP_CONTEXTS.map(function (c, i) {
       return (
-        '<option value="' +
+        '<button type="button" class="fp-rail-item' +
+        (i === 0 ? ' is-active' : '') +
+        '" data-context="' +
         c.id +
-        '"' +
-        (i === 0 ? ' selected' : '') +
-        '>' +
+        '"><span class="fp-rail-txt">' +
         c.label +
-        '</option>'
+        '</span></button>'
       );
     }).join('');
     var accentHex = ['#00b4d8', '#e040a0', '#f0d020', '#f59e0b', '#22c55e', '#a78bfa'];
@@ -1347,269 +1285,44 @@
         );
       })
       .join('');
-    var svgLink =
-      '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 1 0-7l1-1a5 5 0 0 1 7 7l-1 1"/><path d="M14 11a5 5 0 0 1 0 7l-1 1a5 5 0 0 1-7-7l1-1"/></svg>';
-    var svgDl =
-      '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 12l5 5 5-5"/><path d="M5 21h14"/></svg>';
-    var svgChev =
-      '<svg class="fp-xbtn__chev" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
-    var fpLayouts =
-      '<div class="fp-layout fp-layout--website">' +
-      '<div class="fp-browser">' +
-      '<div class="fp-browser-chrome">' +
-      '<span class="fp-browser-dots"><i></i><i></i><i></i></span>' +
-      '<span class="fp-t-b fp-editable fp-browser-url">yoursite.com</span>' +
-      '</div>' +
-      '<div class="fp-browser-body">' +
-      '<nav class="fp-web-nav">' +
-      '<span class="fp-t-h fp-editable fp-web-brand">Acme</span>' +
-      '<div class="fp-web-nav-links">' +
-      '<span class="fp-t-b fp-editable">Features</span>' +
-      '<span class="fp-t-b fp-editable">Pricing</span>' +
-      '<span class="fp-t-b fp-editable">Blog</span>' +
-      '<span class="fp-t-b fp-editable">About</span>' +
-      '</div>' +
-      '<span class="fp-t-h fp-editable fp-web-cta-chip">Get started</span>' +
-      '</nav>' +
-      '<section class="fp-web-hero">' +
-      '<h2 class="fp-t-h fp-editable" data-fp-role="headline">Build beautiful products faster</h2>' +
-      '<p class="fp-t-b fp-editable" data-fp-role="body">Ship a calm, confident landing page with clear hierarchy and room to breathe.</p>' +
-      '<div class="fp-web-hero-btns">' +
-      '<span class="fp-web-btn-pri fp-t-h fp-editable">Start free trial</span>' +
-      '<span class="fp-web-btn-sec fp-t-b fp-editable">Watch demo \\u2192</span>' +
-      '</div></section>' +
-      '<div class="fp-web-stats">' +
-      '<div class="fp-web-stat"><span class="fp-web-stat-num fp-t-h fp-editable">10k+</span><span class="fp-web-stat-label fp-t-b fp-editable">Users</span></div>' +
-      '<div class="fp-web-stat"><span class="fp-web-stat-num fp-t-h fp-editable">99.9%</span><span class="fp-web-stat-label fp-t-b fp-editable">Uptime</span></div>' +
-      '<div class="fp-web-stat"><span class="fp-web-stat-num fp-t-h fp-editable">4.9\\u2605</span><span class="fp-web-stat-label fp-t-b fp-editable">Rating</span></div>' +
-      '</div>' +
-      '<div class="fp-web-features">' +
-      '<article class="fp-web-feat"><div class="fp-web-feat-ico"></div><span class="fp-t-h fp-editable">Analytics</span><span class="fp-t-b fp-editable">Real-time dashboards with the metrics that matter most.</span></article>' +
-      '<article class="fp-web-feat"><div class="fp-web-feat-ico"></div><span class="fp-t-h fp-editable">Automation</span><span class="fp-t-b fp-editable">Workflows that save your team hours every single week.</span></article>' +
-      '<article class="fp-web-feat"><div class="fp-web-feat-ico"></div><span class="fp-t-h fp-editable">Integrations</span><span class="fp-t-b fp-editable">Connect the tools you already use and love in minutes.</span></article>' +
-      '</div>' +
-      '<div class="fp-web-mid">' +
-      '<h3 class="fp-t-h fp-editable">Ready to launch?</h3>' +
-      '<p class="fp-t-b fp-editable" style="font-size:10px;opacity:.65;margin:4px 0 10px">Join thousands of teams shipping faster.</p>' +
-      '<span class="fp-web-btn-pri fp-t-h fp-editable">Start your free trial</span>' +
-      '</div>' +
-      '<footer class="fp-web-footer">' +
-      '<div class="fp-web-footcol"><span class="fp-t-h fp-editable" style="font-size:11px;font-weight:800">Acme</span><span class="fp-t-b fp-editable">Build products people love.</span></div>' +
-      '<div class="fp-web-footcol"><span class="fp-t-h fp-editable">Product</span><span class="fp-t-b fp-editable">Features</span><span class="fp-t-b fp-editable">Pricing</span><span class="fp-t-b fp-editable">Changelog</span></div>' +
-      '<div class="fp-web-footcol"><span class="fp-t-h fp-editable">Company</span><span class="fp-t-b fp-editable">About</span><span class="fp-t-b fp-editable">Careers</span><span class="fp-t-b fp-editable">Blog</span></div>' +
-      '<div class="fp-web-footcol"><span class="fp-t-h fp-editable">Legal</span><span class="fp-t-b fp-editable">Privacy</span><span class="fp-t-b fp-editable">Terms</span></div>' +
-      '</footer></div></div></div>' +
-      '<div class="fp-layout fp-layout--mobile">' +
-      '<div class="fp-phone"><div class="fp-phone-bar"></div><div class="fp-phone-screen">' +
-      '<div class="fp-phone-status"><span class="fp-t-b">9:41</span><div class="fp-phone-status-right"><span class="fp-status-pill fp-t-b">\\u2022\\u2022\\u2022\\u2022</span><svg width="12" height="10" viewBox="0 0 16 12" fill="currentColor" opacity=".6"><path d="M1 8h2v4H1zM5 5h2v7H5zM9 2h2v10H9zM13 0h2v12h-2z"/></svg></div></div>' +
-      '<h2 class="fp-t-h fp-editable fp-mob-greet" data-fp-role="headline">Good morning</h2>' +
-      '<p class="fp-t-b fp-editable fp-mob-sub" data-fp-role="body">Tuesday \\u00b7 3 updates waiting for you</p>' +
-      '<div class="fp-mob-search"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span class="fp-t-b fp-editable">Search</span></div>' +
-      '<div class="fp-mob-actions">' +
-      '<div class="fp-mob-act"><i></i><span class="fp-t-b fp-editable">Send</span></div>' +
-      '<div class="fp-mob-act"><i></i><span class="fp-t-b fp-editable">Pay</span></div>' +
-      '<div class="fp-mob-act"><i></i><span class="fp-t-b fp-editable">Cards</span></div>' +
-      '<div class="fp-mob-act"><i></i><span class="fp-t-b fp-editable">More</span></div>' +
-      '</div>' +
-      '<div class="fp-mob-list-head fp-t-b fp-editable">Recent activity</div>' +
-      '<div class="fp-mob-row"><div class="fp-mob-av"></div><span class="fp-t-h fp-editable">Jada</span><span class="fp-t-b fp-editable">Invoice paid</span><span class="fp-mob-time fp-t-b">2m</span></div>' +
-      '<div class="fp-mob-row"><div class="fp-mob-av"></div><span class="fp-t-h fp-editable">Phil</span><span class="fp-t-b fp-editable">Comment on deck</span><span class="fp-mob-time fp-t-b">15m</span></div>' +
-      '<div class="fp-mob-row"><div class="fp-mob-av"></div><span class="fp-t-h fp-editable">Mia</span><span class="fp-t-b fp-editable">Shared a file</span><span class="fp-mob-time fp-t-b">1h</span></div>' +
-      '<nav class="fp-phone-tabbar">' +
-      '<div class="fp-phone-tab is-active"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span class="fp-t-b">Home</span></div>' +
-      '<div class="fp-phone-tab"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span class="fp-t-b">Search</span></div>' +
-      '<div class="fp-phone-tab"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="fp-t-b">Activity</span></div>' +
-      '<div class="fp-phone-tab"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span class="fp-t-b">Profile</span></div>' +
-      '</nav>' +
-      '</div></div></div>' +
-      '<div class="fp-layout fp-layout--social">' +
-      '<div class="fp-phone"><div class="fp-phone-bar"></div><div class="fp-phone-screen">' +
-      '<div class="fp-phone-status"><span class="fp-t-b">9:41</span><div class="fp-phone-status-right"><svg width="12" height="10" viewBox="0 0 16 12" fill="currentColor" opacity=".6"><path d="M1 8h2v4H1zM5 5h2v7H5zM9 2h2v10H9zM13 0h2v12h-2z"/></svg></div></div>' +
-      '<div class="fp-soc-stories">' +
-      '<div class="fp-soc-story"><i></i><span class="fp-t-b fp-editable">You</span></div>' +
-      '<div class="fp-soc-story"><i></i><span class="fp-t-b fp-editable">Mia</span></div>' +
-      '<div class="fp-soc-story"><i></i><span class="fp-t-b fp-editable">Leo</span></div>' +
-      '<div class="fp-soc-story"><i></i><span class="fp-t-b fp-editable">Ava</span></div>' +
-      '</div>' +
-      '<div class="fp-soc-post">' +
-      '<div class="fp-soc-post-top"><div class="fp-soc-av"></div><span class="fp-t-h fp-editable">studio.acme</span><span class="fp-soc-post-menu">\\u2022\\u2022\\u2022</span></div>' +
-      '<div class="fp-soc-photo"><span class="fp-t-h fp-editable" data-fp-role="headline">Build. Ship. Scale.</span></div>' +
-      '<div class="fp-soc-actions"><svg class="fp-soc-action" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg><svg class="fp-soc-action" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><svg class="fp-soc-action" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg><svg class="fp-soc-action fp-soc-action--save" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></div>' +
-      '<div class="fp-soc-likes fp-t-h fp-editable">1,847 likes</div>' +
-      '<div class="fp-soc-caption"><strong class="fp-t-h fp-editable">studio.acme</strong> <span class="fp-t-b fp-editable" data-fp-role="body">Just launched our new feature! Check it out \\u2728</span></div>' +
-      '<div class="fp-soc-time fp-t-b fp-editable">2 hours ago</div>' +
-      '</div></div></div></div>' +
-      '<div class="fp-layout fp-layout--ui-grid">' +
-      '<div class="fp-browser">' +
-      '<div class="fp-browser-chrome">' +
-      '<span class="fp-browser-dots"><i></i><i></i><i></i></span>' +
-      '<span class="fp-t-b fp-editable fp-browser-url">app.acme.com/dashboard</span>' +
-      '</div>' +
-      '<div class="fp-browser-body fp-dash-body">' +
-      '<div class="fp-dash-sidebar">' +
-      '<span class="fp-dash-logo fp-t-h fp-editable" style="font-weight:800;font-size:11px;margin-bottom:16px;display:block">Acme</span>' +
-      '<span class="fp-dash-nav-item fp-t-b fp-editable is-active">Dashboard</span>' +
-      '<span class="fp-dash-nav-item fp-t-b fp-editable">Projects</span>' +
-      '<span class="fp-dash-nav-item fp-t-b fp-editable">Team</span>' +
-      '<span class="fp-dash-nav-item fp-t-b fp-editable">Settings</span>' +
-      '</div>' +
-      '<div class="fp-dash-main">' +
-      '<h2 class="fp-t-h fp-editable fp-dash-title" data-fp-role="headline">Dashboard</h2>' +
-      '<p class="fp-t-b fp-editable fp-dash-lead" data-fp-role="body">KPIs, activity, and files at a glance.</p>' +
-      '<div class="fp-dash-stats">' +
-      '<div class="fp-dash-stat"><span class="fp-dash-stat-num fp-t-h fp-editable">2,847</span><span class="fp-dash-stat-label fp-t-b fp-editable">Total users</span><span class="fp-dash-stat-trend fp-t-b">+12.5%</span></div>' +
-      '<div class="fp-dash-stat"><span class="fp-dash-stat-num fp-t-h fp-editable">$48.2k</span><span class="fp-dash-stat-label fp-t-b fp-editable">Revenue</span><span class="fp-dash-stat-trend fp-t-b">+8.1%</span></div>' +
-      '<div class="fp-dash-stat"><span class="fp-dash-stat-num fp-t-h fp-editable">94.2%</span><span class="fp-dash-stat-label fp-t-b fp-editable">Satisfaction</span><span class="fp-dash-stat-trend fp-t-b">+2.3%</span></div>' +
-      '<div class="fp-dash-stat"><span class="fp-dash-stat-num fp-t-h fp-editable">1,204</span><span class="fp-dash-stat-label fp-t-b fp-editable">Active now</span><span class="fp-dash-stat-trend fp-dash-stat-trend--live fp-t-b">\\u2022 Live</span></div>' +
-      '</div>' +
-      '<div class="fp-dash-activity">' +
-      '<span class="fp-dash-section-head fp-t-h fp-editable">Recent activity</span>' +
-      '<div class="fp-dash-row"><span class="fp-dash-row-dot"></span><span class="fp-t-b fp-editable">New signup from <strong>alex@company.co</strong></span><span class="fp-dash-row-time fp-t-b">2m ago</span></div>' +
-      '<div class="fp-dash-row"><span class="fp-dash-row-dot"></span><span class="fp-t-b fp-editable">Invoice #1042 paid \\u2014 $2,400</span><span class="fp-dash-row-time fp-t-b">15m ago</span></div>' +
-      '<div class="fp-dash-row"><span class="fp-dash-row-dot"></span><span class="fp-t-b fp-editable">Deploy v2.4.1 completed successfully</span><span class="fp-dash-row-time fp-t-b">1h ago</span></div>' +
-      '</div>' +
-      '</div></div></div></div>' +
-      '<div class="fp-layout fp-layout--slides">' +
-      '<div class="fp-slide">' +
-      '<div class="fp-slide-bar"></div>' +
-      '<h2 class="fp-t-h fp-editable" data-fp-role="headline">Q3 narrative</h2>' +
-      '<p class="fp-t-b fp-editable fp-slide-lead" data-fp-role="body">One line that frames the slide before the bullets.</p>' +
-      '<ul class="fp-slide-list">' +
-      '<li class="fp-t-b fp-editable">North star metric up 18% week over week</li>' +
-      '<li class="fp-t-b fp-editable">Shipped onboarding v2 to 40% of users</li>' +
-      '<li class="fp-t-b fp-editable">Hiring: 2 senior product designers</li>' +
-      '</ul>' +
-      '<div class="fp-slide-footer"><span class="fp-slide-num fp-t-b fp-editable">03</span><div class="fp-slide-dots"><span class="fp-slide-dot"></span><span class="fp-slide-dot"></span><span class="fp-slide-dot is-active"></span><span class="fp-slide-dot"></span><span class="fp-slide-dot"></span></div><span class="fp-slide-nav fp-t-b">\\u2192</span></div>' +
-      '</div></div>' +
-      '<div class="fp-layout fp-layout--newsletter">' +
-      '<div class="fp-email">' +
-      '<div class="fp-email-header"><div class="fp-email-mark"></div><span class="fp-t-h fp-editable fp-email-pub">The Weekly</span></div>' +
-      '<div class="fp-email-meta fp-t-b fp-editable">Issue 12 \\u00b7 September 2024</div>' +
-      '<h2 class="fp-t-h fp-editable" data-fp-role="headline">Weekly brief</h2>' +
-      '<p class="fp-t-b fp-editable" data-fp-role="body">The most important links and numbers from this week, in one scroll. Curated for builders.</p>' +
-      '<span class="fp-email-cta fp-t-h fp-editable">Read the full story</span>' +
-      '<div class="fp-email-divider"></div>' +
-      '<div class="fp-email-block fp-t-b fp-editable">In other news \\u2014 we shipped three features, opened two roles, and hosted a community AMA.</div>' +
-      '<div class="fp-email-footer fp-t-b fp-editable">Unsubscribe \\u00b7 Manage preferences \\u00b7 View in browser</div>' +
-      '</div></div>' +
-      '<div class="fp-layout fp-layout--business-card">' +
-      '<div class="fp-bc-card">' +
-      '<div class="fp-bc-accent"></div>' +
-      '<div class="fp-bc-layout">' +
-      '<div class="fp-bc-info">' +
-      '<h2 class="fp-t-h fp-editable" data-fp-role="headline">Alex Rivera</h2>' +
-      '<p class="fp-t-b fp-editable" data-fp-role="body">Creative Director</p>' +
-      '</div>' +
-      '<div class="fp-bc-mark"></div>' +
-      '</div>' +
-      '<div class="fp-bc-divider"></div>' +
-      '<div class="fp-bc-details">' +
-      '<div class="fp-bc-detail"><span class="fp-bc-detail-dot"></span><span class="fp-t-b fp-editable">alex@studio.co</span></div>' +
-      '<div class="fp-bc-detail"><span class="fp-bc-detail-dot"></span><span class="fp-t-b fp-editable">+1 (555) 000-0000</span></div>' +
-      '<div class="fp-bc-detail"><span class="fp-bc-detail-dot"></span><span class="fp-t-b fp-editable">studio.co</span></div>' +
-      '</div>' +
-      '</div></div>' +
-      '<div class="fp-layout fp-layout--logo">' +
-      '<div class="fp-logo-lockup">' +
-      '<div class="fp-logo-mark"></div>' +
-      '<h2 class="fp-t-h fp-editable" data-fp-role="headline">Overprint</h2>' +
-      '<div class="fp-logo-rule"></div>' +
-      '<p class="fp-t-b fp-editable" data-fp-role="body">Design utilities</p>' +
-      '<span class="fp-logo-est fp-t-b fp-editable">Est. 2024</span>' +
-      '</div></div>' +
-      '<div class="fp-layout fp-layout--type-scale">' +
-      '<div class="fp-ts">' +
-      '<div class="fp-ts-row fp-t-h fp-editable fp-ts-d1" data-fp-role="headline">Display</div>' +
-      '<hr class="fp-ts-hr"/>' +
-      '<div class="fp-ts-row fp-t-h fp-editable fp-ts-d2">Heading 1</div>' +
-      '<div class="fp-ts-row fp-t-h fp-editable fp-ts-d3">Heading 2</div>' +
-      '<div class="fp-ts-row fp-t-h fp-editable fp-ts-d4">Heading 3</div>' +
-      '<div class="fp-ts-row fp-t-h fp-editable fp-ts-d5">Heading 4</div>' +
-      '<hr class="fp-ts-hr"/>' +
-      '<div class="fp-ts-row fp-t-b fp-editable fp-ts-p1" data-fp-role="body">Paragraph 01 \\u00b7 long-form rhythm for readers and article body text.</div>' +
-      '<div class="fp-ts-row fp-t-b fp-editable fp-ts-p2">Paragraph 02 \\u00b7 secondary copy for supporting descriptions.</div>' +
-      '<div class="fp-ts-row fp-t-b fp-editable fp-ts-p3">Paragraph 03 \\u00b7 captions, meta lines, and timestamps.</div>' +
-      '<div class="fp-ts-row fp-t-b fp-editable fp-ts-p4">Paragraph 04 \\u00b7 fine print, legal, and footnotes.</div>' +
-      '</div></div>' +
-      '<div class="fp-layout fp-layout--icons">' +
-      '<div class="fp-icons-head">' +
-      '<h3 class="fp-t-h fp-editable" data-fp-role="headline">Icon sample</h3>' +
-      '<p class="fp-t-b fp-editable" data-fp-role="body">Glyph stress test at small sizes.</p></div>' +
-      '<div class="fp-icondemo">' +
-      '<span class="fp-t-h fp-editable">Aa</span>' +
-      '<span class="fp-t-h fp-editable">Bb</span>' +
-      '<span class="fp-t-h fp-editable">Gg</span>' +
-      '<span class="fp-t-h fp-editable">Qq</span>' +
-      '<span class="fp-t-h fp-editable">Rr</span>' +
-      '<span class="fp-t-h fp-editable">\\u03c0</span>' +
-      '<span class="fp-t-h fp-editable">\\u00a7</span>' +
-      '<span class="fp-t-h fp-editable">01</span>' +
-      '<span class="fp-t-h fp-editable">&amp;</span>' +
-      '<span class="fp-t-h fp-editable">@</span>' +
-      '</div></div>' +
-      '<div class="fp-layout fp-layout--colors">' +
-      '<div class="fp-colors-head">' +
-      '<h3 class="fp-t-h fp-editable" data-fp-role="headline">Palette</h3>' +
-      '<p class="fp-t-b fp-editable" data-fp-role="body">Overprint tokens and your accent preview.</p></div>' +
-      '<div class="fp-palette" id="fp-palette" aria-label="Color tokens">' +
-      '<div class="fp-palette-row" data-fp-var="--bg" style="background:var(--bg)">' +
-      '<span class="fp-palette-row__label fp-t-h">Background</span>' +
-      '<div class="fp-palette-row__meta"><span class="fp-palette-line fp-palette-hex fp-mono"></span><span class="fp-palette-line fp-palette-rgb fp-mono"></span><span class="fp-palette-line fp-palette-cmyk fp-mono"></span></div></div>' +
-      '<div class="fp-palette-row" data-fp-var="--s1" style="background:var(--s1)">' +
-      '<span class="fp-palette-row__label fp-t-h">Surface</span>' +
-      '<div class="fp-palette-row__meta"><span class="fp-palette-line fp-palette-hex fp-mono"></span><span class="fp-palette-line fp-palette-rgb fp-mono"></span><span class="fp-palette-line fp-palette-cmyk fp-mono"></span></div></div>' +
-      '<div class="fp-palette-row" data-fp-var="--text-hi" style="background:var(--text-hi)">' +
-      '<span class="fp-palette-row__label fp-t-h">Text</span>' +
-      '<div class="fp-palette-row__meta"><span class="fp-palette-line fp-palette-hex fp-mono"></span><span class="fp-palette-line fp-palette-rgb fp-mono"></span><span class="fp-palette-line fp-palette-cmyk fp-mono"></span></div></div>' +
-      '<div class="fp-palette-row" data-fp-var="--border" style="background:var(--border)">' +
-      '<span class="fp-palette-row__label fp-t-h">Border</span>' +
-      '<div class="fp-palette-row__meta"><span class="fp-palette-line fp-palette-hex fp-mono"></span><span class="fp-palette-line fp-palette-rgb fp-mono"></span><span class="fp-palette-line fp-palette-cmyk fp-mono"></span></div></div>' +
-      '<div class="fp-palette-row" data-fp-var="--C" style="background:var(--C)">' +
-      '<span class="fp-palette-row__label fp-t-h">Cyan</span>' +
-      '<div class="fp-palette-row__meta"><span class="fp-palette-line fp-palette-hex fp-mono"></span><span class="fp-palette-line fp-palette-rgb fp-mono"></span><span class="fp-palette-line fp-palette-cmyk fp-mono"></span></div></div>' +
-      '<div class="fp-palette-row fp-palette-row--accent" data-fp-var="--fp-accent" style="background:var(--fp-accent,var(--C))">' +
-      '<span class="fp-palette-row__label fp-t-h">Accent</span>' +
-      '<div class="fp-palette-row__meta"><span class="fp-palette-line fp-palette-hex fp-mono"></span><span class="fp-palette-line fp-palette-rgb fp-mono"></span><span class="fp-palette-line fp-palette-cmyk fp-mono"></span></div></div>' +
-      '</div></div>';
     iface.innerHTML =
       '<div class="tool-stack fp-workbench">' +
       '<div class="fp-shell">' +
-      '<div class="fp-work">' +
-      '<header class="fp-topbar">' +
-      '<div class="fp-topbar__pickers">' +
-      '<label class="fp-dd fp-dd--medium">' +
-      FP_MEDIUMS[0].svg +
-      '<select id="fp-medium" class="fp-dd__select" aria-label="Medium">' +
-      mediumOpts +
-      '</select></label>' +
-      '<label class="fp-dd fp-dd--context">' +
-      '<select id="fp-context" class="fp-dd__select" aria-label="Context">' +
-      contextOpts +
-      '</select></label>' +
-      '</div>' +
-      '<div class="fp-topbar__export">' +
-      '<button type="button" class="fp-xbtn fp-xbtn--icon" id="fp-share" title="Copy share summary">' +
-      svgLink +
-      '</button>' +
-      '<div class="fp-export-wrap" id="fp-export-wrap">' +
-      '<button type="button" class="fp-xbtn fp-xbtn--export" id="fp-export-toggle" aria-expanded="false" aria-haspopup="true">' +
-      svgDl +
-      '<span>Export code</span>' +
-      svgChev +
-      '</button>' +
-      '<div class="fp-export-menu" id="fp-export-menu" hidden>' +
-      '<button type="button" id="fp-exp-copy">Copy CSS</button>' +
-      '<button type="button" id="fp-exp-dl">Download .css file</button>' +
-      '</div></div>' +
-      '<button type="button" class="fp-xbtn fp-xbtn--brand" id="fp-brand-kit">' +
-      svgDl +
-      '<span>Brand Kit</span>' +
-      '</button>' +
-      '</div></header>' +
+      '<aside class="fp-rail fp-rail--left" aria-label="Medium">' +
+      '<div class="fp-rail-head">Medium</div>' +
+      '<div class="fp-rail-scroll">' +
+      mediumBtns +
+      '</div></aside>' +
       '<main class="fp-canvas" aria-label="Preview">' +
       '<div class="fp-stage" id="fp-stage" data-medium="website">' +
-      fpLayouts +
-      '</div></main></div>' +
+      '<div class="fp-card">' +
+      '<div class="fp-card-accent"></div>' +
+      '<div class="fp-scale" id="fp-scale">' +
+      '<div class="fp-sc fp-editable" id="fp-sc1" contenteditable="plaintext-only" spellcheck="false">Display</div>' +
+      '<div class="fp-sc fp-editable" id="fp-sc2" contenteditable="plaintext-only" spellcheck="false">Heading</div>' +
+      '<div class="fp-sc fp-editable" id="fp-sc3" contenteditable="plaintext-only" spellcheck="false">Subhead</div>' +
+      '<div class="fp-sc fp-editable" id="fp-sc4" contenteditable="plaintext-only" spellcheck="false">Caption</div>' +
+      '</div>' +
+      '<h2 class="fp-h fp-editable" id="fp-h" contenteditable="plaintext-only" spellcheck="false">Ship the vision.</h2>' +
+      '<p class="fp-b fp-editable" id="fp-b" contenteditable="plaintext-only" spellcheck="false">Iterate in public. Pair a strong display face with a calm UI font for decks, product, and landing pages.</p>' +
+      '<div class="fp-uigrid" id="fp-uigrid">' +
+      '<div class="fp-uic"><span class="fp-line-h fp-editable" contenteditable="plaintext-only" spellcheck="false">Overview</span><span class="fp-line-b fp-editable" contenteditable="plaintext-only" spellcheck="false">Status, owners, and timeline in one glance.</span></div>' +
+      '<div class="fp-uic"><span class="fp-line-h fp-editable" contenteditable="plaintext-only" spellcheck="false">Activity</span><span class="fp-line-b fp-editable" contenteditable="plaintext-only" spellcheck="false">Latest comments sync across the team.</span></div>' +
+      '<div class="fp-uic"><span class="fp-line-h fp-editable" contenteditable="plaintext-only" spellcheck="false">Files</span><span class="fp-line-b fp-editable" contenteditable="plaintext-only" spellcheck="false">Assets stay versioned beside the brief.</span></div>' +
+      '<div class="fp-uic"><span class="fp-line-h fp-editable" contenteditable="plaintext-only" spellcheck="false">Settings</span><span class="fp-line-b fp-editable" contenteditable="plaintext-only" spellcheck="false">Roles, exports, and brand tokens.</span></div>' +
+      '</div>' +
+      '<div class="fp-icondemo" id="fp-icondemo">' +
+      '<span class="fp-editable" contenteditable="plaintext-only" spellcheck="false">Aa</span>' +
+      '<span class="fp-editable" contenteditable="plaintext-only" spellcheck="false">Bb</span>' +
+      '<span class="fp-editable" contenteditable="plaintext-only" spellcheck="false">Ag</span>' +
+      '<span class="fp-editable" contenteditable="plaintext-only" spellcheck="false">π</span>' +
+      '<span class="fp-editable" contenteditable="plaintext-only" spellcheck="false">01</span>' +
+      '</div>' +
+      '<div class="fp-swatches" id="fp-swatches">' +
+      '<i style="background:#0c0c10"></i><i style="background:#fafafa"></i><i style="background:var(--fp-accent,var(--C))"></i><i style="background:#444"></i>' +
+      '</div>' +
+      '<div class="fp-illu" id="fp-illu"><div></div><div></div><div></div><div></div></div>' +
+      '</div></div></main>' +
       '<aside class="fp-rail fp-rail--right fp-rail--props" aria-label="Properties">' +
       '<div class="fp-props-tabs" role="tablist">' +
       '<button type="button" class="fp-tab is-active" role="tab" aria-selected="true" data-tab="design" id="fp-tab-design">Design</button>' +
@@ -1617,6 +1330,11 @@
       '</div>' +
       '<div class="fp-props-scroll">' +
       '<div class="fp-props-panel" id="fp-panel-design" role="tabpanel" aria-labelledby="fp-tab-design">' +
+      '<div class="fp-prop-section">' +
+      '<div class="fp-prop-section__head">Context</div>' +
+      '<div class="fp-context-list">' +
+      contextBtns +
+      '</div></div>' +
       '<div class="fp-prop-section">' +
       '<div class="fp-prop-section__head">Typography</div>' +
       '<div class="tool-field"><span class="tool-label">Curated set</span>' +
@@ -1646,40 +1364,17 @@
     link.rel = 'stylesheet';
     document.head.appendChild(link);
     var stage = iface.querySelector('#fp-stage');
-    (function enableFpStageEditables() {
-      var probe = document.createElement('div');
-      probe.contentEditable = 'plaintext-only';
-      var usePlain = probe.contentEditable === 'plaintext-only';
-      stage.querySelectorAll('.fp-editable').forEach(function (n) {
-        n.setAttribute('spellcheck', 'false');
-        n.contentEditable = usePlain ? 'plaintext-only' : 'true';
-      });
-    })();
-    var selMedium = iface.querySelector('#fp-medium');
-    var selContext = iface.querySelector('#fp-context');
+    var elH = iface.querySelector('#fp-h');
+    var elB = iface.querySelector('#fp-b');
     var selCur = iface.querySelector('#fp-curated');
     var selHead = iface.querySelector('#fp-head');
     var selBody = iface.querySelector('#fp-body');
     var preCss = iface.querySelector('#fp-css');
-    var exportMenu = iface.querySelector('#fp-export-menu');
-    var exportToggle = iface.querySelector('#fp-export-toggle');
-    var exportWrap = iface.querySelector('#fp-export-wrap');
+    var sc1 = iface.querySelector('#fp-sc1');
+    var sc2 = iface.querySelector('#fp-sc2');
+    var sc3 = iface.querySelector('#fp-sc3');
+    var sc4 = iface.querySelector('#fp-sc4');
     var currentAccent = '#f59e0b';
-    function primaryEls(medium) {
-      var L = stage.querySelector('.fp-layout--' + medium);
-      if (!L) return { h: null, b: null };
-      return {
-        h: L.querySelector('[data-fp-role="headline"]'),
-        b: L.querySelector('[data-fp-role="body"]'),
-      };
-    }
-    function setPrimaryFromDefaults(medium) {
-      var d = FP_MEDIUM_DEFAULTS[medium];
-      if (!d) return;
-      var P = primaryEls(medium);
-      if (P.h) P.h.textContent = d.head;
-      if (P.b) P.b.textContent = d.body;
-    }
     function setAccent(hex) {
       currentAccent = hex;
       stage.style.setProperty('--fp-accent', hex);
@@ -1707,78 +1402,35 @@
       }
       selCur.value = '-1';
     }
-    function fpParseRgb(s) {
-      var m = (s || '').match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
-      if (!m) return { r: 0, g: 0, b: 0 };
-      return { r: +m[1], g: +m[2], b: +m[3] };
-    }
-    function fpRgbToHex(r, g, b) {
-      return (
-        '#' +
-        [r, g, b]
-          .map(function (x) {
-            var h = x.toString(16);
-            return h.length === 1 ? '0' + h : h;
-          })
-          .join('')
-      );
-    }
-    function fpRgbToCmyk(r, g, b) {
-      var rr = r / 255;
-      var gg = g / 255;
-      var bb = b / 255;
-      var k = 1 - Math.max(rr, gg, bb);
-      if (k >= 0.999) return { c: 0, m: 0, y: 0, k: 100 };
-      var c = (1 - rr - k) / (1 - k);
-      var m = (1 - gg - k) / (1 - k);
-      var y = (1 - bb - k) / (1 - k);
-      return {
-        c: Math.round(c * 100),
-        m: Math.round(m * 100),
-        y: Math.round(y * 100),
-        k: Math.round(k * 100),
-      };
-    }
-    function fpRelLum(r, g, b) {
-      var a = [r, g, b].map(function (v) {
-        v /= 255;
-        return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
-      });
-      return 0.2126 * a[0] + 0.7152 * a[1] + 0.0722 * a[2];
-    }
-    function refreshFpPalette() {
-      var pal = stage.querySelector('#fp-palette');
-      if (!pal) return;
-      pal.querySelectorAll('.fp-palette-row').forEach(function (row) {
-        var rgbStr = getComputedStyle(row).backgroundColor;
-        var rgb = fpParseRgb(rgbStr);
-        var hex = fpRgbToHex(rgb.r, rgb.g, rgb.b);
-        var cm = fpRgbToCmyk(rgb.r, rgb.g, rgb.b);
-        var h = row.querySelector('.fp-palette-hex');
-        var rb = row.querySelector('.fp-palette-rgb');
-        var ck = row.querySelector('.fp-palette-cmyk');
-        if (h) h.textContent = 'HEX · ' + hex.toUpperCase();
-        if (rb) rb.textContent = 'RGB · ' + rgb.r + ' · ' + rgb.g + ' · ' + rgb.b;
-        if (ck) ck.textContent = 'CMYK · ' + cm.c + '% · ' + cm.m + '% · ' + cm.y + '% · ' + cm.k + '%';
-        var lum = fpRelLum(rgb.r, rgb.g, rgb.b);
-        row.style.color = lum > 0.55 ? '#0a0a10' : '#f4f4f8';
-      });
-    }
-
     function paint() {
       var hName = selHead.value;
       var bName = selBody.value;
       link.href =
         'https://fonts.googleapis.com/css2?family=' +
         encodeURIComponent(hName.replace(/ /g, '+')) +
-        ':wght@300;400;500;600;700&family=' +
+        ':wght@400;600;700&family=' +
         encodeURIComponent(bName.replace(/ /g, '+')) +
-        ':wght@300;400;500;600;700&display=swap';
-      stage.querySelectorAll('.fp-t-h').forEach(function (n) {
+        ':wght@400;500;600&display=swap';
+      elH.style.fontFamily = '"' + hName + '",sans-serif';
+      elB.style.fontFamily = '"' + bName + '",sans-serif';
+      elH.style.fontSize = '';
+      sc1.style.fontFamily = '"' + hName + '",sans-serif';
+      sc2.style.fontFamily = '"' + hName + '",sans-serif';
+      sc3.style.fontFamily = '"' + hName + '",sans-serif';
+      sc4.style.fontFamily = '"' + bName + '",sans-serif';
+      sc1.style.fontSize = 'clamp(1.75rem,4vw,2.25rem)';
+      sc2.style.fontSize = '1.35rem';
+      sc3.style.fontSize = '1.05rem';
+      sc4.style.fontSize = '0.8rem';
+      sc4.style.color = 'var(--text-lo)';
+      iface.querySelectorAll('.fp-uic .fp-line-h').forEach(function (n) {
         n.style.fontFamily = '"' + hName + '",sans-serif';
       });
-      stage.querySelectorAll('.fp-t-b').forEach(function (n) {
+      iface.querySelectorAll('.fp-uic .fp-line-b').forEach(function (n) {
         n.style.fontFamily = '"' + bName + '",sans-serif';
+      });
+      iface.querySelectorAll('.fp-icondemo span').forEach(function (n) {
+        n.style.fontFamily = '"' + hName + '",sans-serif';
       });
       preCss.textContent =
         '@import url("' +
@@ -1790,7 +1442,6 @@
         '", sans-serif; font-weight: 700; }\n.body { font-family: "' +
         bName +
         '", sans-serif; }\n.accent { color: var(--accent); }\n';
-      refreshFpPalette();
     }
     function applyContext(id) {
       var c = null;
@@ -1802,88 +1453,15 @@
         }
       }
       if (!c) return;
-      var med = stage.getAttribute('data-medium') || 'website';
-      var P = primaryEls(med);
-      if (P.h) P.h.textContent = c.head;
-      if (P.b) P.b.textContent = c.body;
+      elH.textContent = c.head;
+      elB.textContent = c.body;
       if (typeof c.hint === 'number' && FONT_PAIRS[c.hint]) {
         selCur.value = String(c.hint);
         applyPairIndex(c.hint);
       }
       paint();
     }
-    function buildShareText() {
-      var base = '';
-      if (typeof window !== 'undefined' && window.location && window.location.href) {
-        base = window.location.href.split('#')[0] + '#/tools/font-pair';
-      }
-      return (
-        'Overprint Font Pair\n' +
-        base +
-        '\n\nMedium: ' +
-        selMedium.options[selMedium.selectedIndex].text +
-        '\nContext: ' +
-        selContext.options[selContext.selectedIndex].text +
-        '\nHeadline font: ' +
-        selHead.value +
-        '\nBody font: ' +
-        selBody.value +
-        '\nAccent: ' +
-        currentAccent
-      );
-    }
-    function buildBrandKit() {
-      return (
-        'OVERPRINT · BRAND KIT (Font Pair)\n' +
-        '================================\n\n' +
-        'Google Fonts URL:\n' +
-        link.href +
-        '\n\n' +
-        'Headline font: ' +
-        selHead.value +
-        '\nBody font: ' +
-        selBody.value +
-        '\nAccent: ' +
-        currentAccent +
-        '\nMedium: ' +
-        selMedium.value +
-        '\nContext: ' +
-        selContext.value +
-        '\n\n:root {\n  --font-head: "' +
-        selHead.value +
-        '", sans-serif;\n  --font-body: "' +
-        selBody.value +
-        '", sans-serif;\n  --accent: ' +
-        currentAccent +
-        ';\n}\n'
-      );
-    }
-    var mediumDd = iface.querySelector('.fp-dd--medium');
-    function syncMediumIcon() {
-      var id = selMedium.value;
-      var svgStr = '';
-      var mi;
-      for (mi = 0; mi < FP_MEDIUMS.length; mi++) {
-        if (FP_MEDIUMS[mi].id === id) {
-          svgStr = FP_MEDIUMS[mi].svg;
-          break;
-        }
-      }
-      if (!svgStr || !mediumDd) return;
-      var oldIco = mediumDd.querySelector('.fp-ico');
-      if (oldIco) oldIco.remove();
-      selMedium.insertAdjacentHTML('beforebegin', svgStr);
-    }
-    selMedium.addEventListener('change', function () {
-      var m = selMedium.value;
-      stage.setAttribute('data-medium', m);
-      setPrimaryFromDefaults(m);
-      syncMediumIcon();
-      paint();
-    });
-    selContext.addEventListener('change', function () {
-      applyContext(selContext.value);
-    });
+    applyPairIndex(0);
     selCur.addEventListener('change', function () {
       var v = +selCur.value;
       if (v < 0) return;
@@ -1917,42 +1495,25 @@
     tabCss.addEventListener('click', function () {
       setPropsTab('css');
     });
-    exportToggle.addEventListener('click', function (e) {
-      e.stopPropagation();
-      var open = exportMenu.hidden;
-      exportMenu.hidden = !open;
-      exportToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    iface.querySelectorAll('.fp-rail--left .fp-rail-item').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        iface.querySelectorAll('.fp-rail--left .fp-rail-item').forEach(function (b) {
+          b.classList.remove('is-active');
+        });
+        btn.classList.add('is-active');
+        stage.setAttribute('data-medium', btn.getAttribute('data-medium'));
+        paint();
+      });
     });
-    iface.querySelector('#fp-exp-copy').addEventListener('click', function () {
-      OV.copyText(preCss.textContent);
-      exportMenu.hidden = true;
-      exportToggle.setAttribute('aria-expanded', 'false');
+    iface.querySelectorAll('.fp-rail--right .fp-rail-item').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        iface.querySelectorAll('.fp-rail--right .fp-rail-item').forEach(function (b) {
+          b.classList.remove('is-active');
+        });
+        btn.classList.add('is-active');
+        applyContext(btn.getAttribute('data-context'));
+      });
     });
-    iface.querySelector('#fp-exp-dl').addEventListener('click', function () {
-      OV.downloadBlob(
-        new Blob([preCss.textContent], { type: 'text/css;charset=utf-8' }),
-        'overprint-font-pair.css'
-      );
-      exportMenu.hidden = true;
-      exportToggle.setAttribute('aria-expanded', 'false');
-    });
-    iface.querySelector('#fp-share').addEventListener('click', function () {
-      OV.copyText(buildShareText());
-    });
-    iface.querySelector('#fp-brand-kit').addEventListener('click', function () {
-      paint();
-      OV.downloadBlob(
-        new Blob([buildBrandKit()], { type: 'text/plain;charset=utf-8' }),
-        'overprint-brand-kit.txt'
-      );
-    });
-    function closeExportMenu(ev) {
-      if (!exportWrap.contains(ev.target)) {
-        exportMenu.hidden = true;
-        exportToggle.setAttribute('aria-expanded', 'false');
-      }
-    }
-    document.addEventListener('click', closeExportMenu);
     iface.querySelector('#fp-accents').addEventListener('click', function (e) {
       var t = e.target.closest('.fp-chip');
       if (!t) return;
@@ -1965,23 +1526,23 @@
       paint();
     });
     OV.addCleanup(function () {
-      document.removeEventListener('click', closeExportMenu);
       if (link.parentNode) link.parentNode.removeChild(link);
     });
     setAccent(currentAccent);
-    applyPairIndex(0);
-    applyContext(selContext.value);
-    syncMediumIcon();
+    paint();
+    copyRow(iface, 'Copy CSS snippet', function () {
+      return preCss.textContent;
+    });
   }
 
   /* —— Beat maker —— (Web Audio; timeline + instruments + genre presets) */
   function initBeatMaker(iface) {
     var BEAT_INSTRUMENTS_HTML =
-      '<optgroup label="Classic (original beeps)">' +
-      '<option value="classic_kick">Classic kick · sine 180</option>' +
-      '<option value="classic_snare">Classic snare · triangle 220</option>' +
-      '<option value="classic_hat">Classic hat · square 800</option>' +
-      '<option value="classic_bass">Classic bass · saw 120</option>' +
+      '<optgroup label="Core (quick mix)">' +
+      '<option value="classic_kick">Punch kick</option>' +
+      '<option value="classic_snare">Dry snare</option>' +
+      '<option value="classic_hat">Tight hat</option>' +
+      '<option value="classic_bass">Soft pluck</option>' +
       '</optgroup>' +
       '<optgroup label="Kick">' +
       '<option value="kick_sub">Sub (deep)</option>' +
@@ -2024,7 +1585,7 @@
     var BEAT_PRESETS = [
       {
         id: '_',
-        name: '— Pick a groove (basic) —',
+        name: '— Pick a groove —',
         bpm: 110,
         instruments: ['kick_sub', 'snare_tight', 'hat_closed', 'bass_sub'],
         pattern: [pat([]), pat([]), pat([]), pat([])],
@@ -2087,23 +1648,22 @@
     var cellEls = [];
     var noiseBuf = null;
     var master = null;
+    var outGain = null;
     var playlineEl = null;
-    var basicMode = true;
 
     iface.innerHTML =
       '<div class="tool-stack">' +
-      '<p class="tool-hint">16-step loop. <strong>Tap Play</strong> once to start sound (required on iPhone / Safari). Magenta line = playhead. Tap again to stop. <strong>Advanced</strong> unlocks every instrument.</p>' +
       '<p class="tool-beat-audio-status" id="ov-bstat" role="status" aria-live="polite"></p>' +
-      '<div class="tool-row tool-row--top">' +
-      '<label class="tool-field" style="flex-direction:row;align-items:center;gap:10px;cursor:pointer">' +
-      '<input type="checkbox" id="ov-badv" style="width:20px;height:20px">' +
-      '<span class="tool-label" style="margin:0">Advanced · per-track instruments</span></label>' +
-      '</div>' +
       '<div class="tool-beat-control-column">' +
       '<div class="tool-row tool-row--top tool-row--beat-preset">' +
       '<div class="tool-field tool-field--beat-preset"><span class="tool-label">Pattern preset</span>' +
       '<select class="tool-select tool-select--beat-preset" id="ov-bpre"></select></div>' +
-      '<div class="tool-field tool-field--beat-bpm"><span class="tool-label">BPM</span><input type="number" class="tool-input" id="ov-bpm" value="110" min="60" max="200" step="1"></div>' +
+      '<div class="tool-field tool-field--beat-bpm">' +
+      '<span class="tool-label">BPM</span>' +
+      '<div class="tool-bpm-slider-row">' +
+      '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ov-bpm" value="110" min="60" max="200" step="1" aria-valuemin="60" aria-valuemax="200" aria-valuenow="110" aria-label="Tempo BPM">' +
+      '<span class="tool-bpm-val" id="ov-bpm-val">110</span>' +
+      '</div></div>' +
       '</div>' +
       '<div class="tool-row tool-row--beat-transport">' +
       '<button type="button" class="tool-btn tool-btn--c tool-beat-transport" id="ov-bplay" aria-pressed="false" aria-label="Play beat">Play</button>' +
@@ -2140,18 +1700,12 @@
     }
     beatInner.appendChild(timeline);
 
-    var BASIC_LABELS = ['Kick', 'Snare / tom', 'Hi-hat', 'Bass'];
-    var defaultInst = ['classic_kick', 'classic_snare', 'classic_hat', 'classic_bass'];
+    var defaultInst = ['classic_kick', 'classic_snare', 'classic_hat', 'bass_pluck'];
     for (var r = 0; r < rows; r++) {
       grid[r] = [];
       cellEls[r] = [];
       var brow = el('<div class="tool-beat-row"></div>');
       var head = el('<div class="tool-beat-row-head"></div>');
-      var lab = el(
-        '<span class="tool-beat-basic-label tool-label" style="display:none;padding:10px 0">' +
-          BASIC_LABELS[r] +
-          ' · classic</span>'
-      );
       var sel = el(
         '<select class="tool-select tool-select--beat" data-row="' + r + '" aria-label="Instrument track ' +
           (r + 1) +
@@ -2160,7 +1714,6 @@
           '</select>'
       );
       sel.value = defaultInst[r];
-      head.appendChild(lab);
       head.appendChild(sel);
       brow.appendChild(head);
       for (var c = 0; c < cols; c++) {
@@ -2185,28 +1738,13 @@
       beatInner.appendChild(brow);
     }
 
-    function syncBasicAdvancedUi() {
-      basicMode = !iface.querySelector('#ov-badv').checked;
-      var labels = beatInner.querySelectorAll('.tool-beat-basic-label');
-      var sels = beatInner.querySelectorAll('select.tool-select--beat');
-      var i;
-      for (i = 0; i < labels.length; i++) {
-        labels[i].style.display = basicMode ? 'block' : 'none';
-      }
-      for (i = 0; i < sels.length; i++) {
-        sels[i].style.display = basicMode ? 'none' : 'block';
-        sels[i].disabled = basicMode;
-      }
-    }
-    iface.querySelector('#ov-badv').addEventListener('change', syncBasicAdvancedUi);
-    syncBasicAdvancedUi();
-
     var beatControlCol = iface.querySelector('.tool-beat-control-column');
     function syncBeatPresetColumnToTransport() {
       var tr = iface.querySelector('.tool-row--beat-transport');
       if (!beatControlCol || !tr) return;
       var w = Math.round(tr.getBoundingClientRect().width);
       if (w > 0) beatControlCol.style.setProperty('--tool-beat-transport-px', w + 'px');
+      syncPlaylineVertical();
     }
     syncBeatPresetColumnToTransport();
     requestAnimationFrame(syncBeatPresetColumnToTransport);
@@ -2230,8 +1768,20 @@
       cell.style.opacity = on ? '1' : '0.28';
     }
 
-    var CLASSIC_IDS = ['classic_kick', 'classic_snare', 'classic_hat', 'classic_bass'];
     var lastBeatCol = -1;
+
+    function syncPlaylineVertical() {
+      if (!playlineEl || !beatInner) return;
+      var gridRows = beatInner.querySelectorAll('.tool-beat-row:not(.tool-beat-row--timeline)');
+      if (!gridRows.length) return;
+      var firstRow = gridRows[0];
+      var lastRow = gridRows[gridRows.length - 1];
+      var top = firstRow.offsetTop;
+      var h = lastRow.offsetTop + lastRow.offsetHeight - top;
+      playlineEl.style.top = top + 'px';
+      playlineEl.style.height = Math.max(0, h) + 'px';
+      playlineEl.style.bottom = 'auto';
+    }
 
     function setPlayhead(col) {
       if (col >= 0) lastBeatCol = col;
@@ -2240,6 +1790,7 @@
           cellEls[rr][cc].classList.toggle('is-playhead', cc === col);
         }
       }
+      syncPlaylineVertical();
       if (playlineEl && cellEls[0] && cellEls[0][0]) {
         if (col < 0) {
           playlineEl.style.opacity = '0';
@@ -2247,7 +1798,13 @@
           playlineEl.style.opacity = '1';
           var cell = cellEls[0][col];
           var rowEl = cell.parentElement;
+          var c0 = cellEls[0][0];
+          var cLast = cellEls[0][cols - 1];
+          var gridLeft = rowEl.offsetLeft + c0.offsetLeft;
+          var gridRight = rowEl.offsetLeft + cLast.offsetLeft + cLast.offsetWidth;
+          var half = 1.5;
           var cx = rowEl.offsetLeft + cell.offsetLeft + cell.offsetWidth / 2;
+          cx = Math.max(gridLeft + half, Math.min(gridRight - half, cx));
           playlineEl.style.left = cx + 'px';
         }
       }
@@ -2260,22 +1817,30 @@
 
     wrap.addEventListener('scroll', function () {
       if (lastBeatCol >= 0) setPlayhead(lastBeatCol);
+      else syncPlaylineVertical();
     });
 
-    function ensureNoise(ac) {
-      if (noiseBuf) return noiseBuf;
-      var n = ac.sampleRate * 0.25;
-      var buf = ac.createBuffer(1, n, ac.sampleRate);
-      var d = buf.getChannelData(0);
+    function fillNoiseDeterministic(d) {
+      var s = 0x9e3779b9;
       var i;
-      for (i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+      for (i = 0; i < d.length; i++) {
+        s = Math.imul(s ^ (s >>> 13), 0x85ebca6b);
+        s ^= s >>> 17;
+        d[i] = ((s >>> 0) / 0xffffffff) * 2 - 1;
+      }
+    }
+
+    function ensureNoise(ac) {
+      if (noiseBuf && noiseBuf.sampleRate === ac.sampleRate) return noiseBuf;
+      var n = Math.floor(ac.sampleRate * 0.25);
+      var buf = ac.createBuffer(1, n, ac.sampleRate);
+      fillNoiseDeterministic(buf.getChannelData(0));
       noiseBuf = buf;
       return noiseBuf;
     }
 
     function connectOut(g) {
-      if (master) g.connect(master);
-      else if (ctx) g.connect(ctx.destination);
+      if (outGain) g.connect(outGain);
     }
 
     var playInstrument = {
@@ -2283,53 +1848,81 @@
         var o = ac.createOscillator();
         var g = ac.createGain();
         o.type = 'sine';
-        o.frequency.value = 180;
-        g.gain.setValueAtTime(0.0001, t);
-        g.gain.linearRampToValueAtTime(0.22, t + 0.01);
-        g.gain.linearRampToValueAtTime(0.0001, t + 0.08);
+        o.frequency.setValueAtTime(152, t);
+        o.frequency.exponentialRampToValueAtTime(48, t + 0.06);
+        g.gain.setValueAtTime(0.0008, t);
+        g.gain.exponentialRampToValueAtTime(0.48, t + 0.0025);
+        g.gain.exponentialRampToValueAtTime(0.0008, t + 0.2);
         o.connect(g);
         connectOut(g);
         o.start(t);
-        o.stop(t + 0.1);
+        o.stop(t + 0.22);
       },
       classic_snare: function (ac, t) {
-        var o = ac.createOscillator();
+        var buf = ensureNoise(ac);
+        var src = ac.createBufferSource();
+        src.buffer = buf;
+        var hp = ac.createBiquadFilter();
+        hp.type = 'highpass';
+        hp.frequency.value = 1800;
+        var bp = ac.createBiquadFilter();
+        bp.type = 'bandpass';
+        bp.frequency.value = 3200;
+        bp.Q.value = 0.55;
         var g = ac.createGain();
-        o.type = 'triangle';
-        o.frequency.value = 220;
-        g.gain.setValueAtTime(0.0001, t);
-        g.gain.linearRampToValueAtTime(0.2, t + 0.008);
-        g.gain.linearRampToValueAtTime(0.0001, t + 0.06);
-        o.connect(g);
+        g.gain.setValueAtTime(0.0008, t);
+        g.gain.exponentialRampToValueAtTime(0.38, t + 0.002);
+        g.gain.exponentialRampToValueAtTime(0.0008, t + 0.09);
+        src.connect(hp);
+        hp.connect(bp);
+        bp.connect(g);
         connectOut(g);
+        src.start(t, 0.04, 0.1);
+        var o = ac.createOscillator();
+        o.type = 'triangle';
+        o.frequency.value = 185;
+        var g2 = ac.createGain();
+        g2.gain.setValueAtTime(0.0008, t);
+        g2.gain.exponentialRampToValueAtTime(0.12, t + 0.002);
+        g2.gain.exponentialRampToValueAtTime(0.0008, t + 0.045);
+        o.connect(g2);
+        connectOut(g2);
         o.start(t);
-        o.stop(t + 0.08);
+        o.stop(t + 0.055);
       },
       classic_hat: function (ac, t) {
-        var o = ac.createOscillator();
+        var buf = ensureNoise(ac);
+        var src = ac.createBufferSource();
+        src.buffer = buf;
+        var hp = ac.createBiquadFilter();
+        hp.type = 'highpass';
+        hp.frequency.value = 7200;
         var g = ac.createGain();
-        o.type = 'square';
-        o.frequency.value = 800;
-        g.gain.setValueAtTime(0.0001, t);
-        g.gain.linearRampToValueAtTime(0.18, t + 0.004);
-        g.gain.linearRampToValueAtTime(0.0001, t + 0.04);
-        o.connect(g);
+        g.gain.setValueAtTime(0.0008, t);
+        g.gain.exponentialRampToValueAtTime(0.16, t + 0.001);
+        g.gain.exponentialRampToValueAtTime(0.0008, t + 0.032);
+        src.connect(hp);
+        hp.connect(g);
         connectOut(g);
-        o.start(t);
-        o.stop(t + 0.05);
+        src.start(t, 0.12, 0.045);
       },
       classic_bass: function (ac, t) {
         var o = ac.createOscillator();
         var g = ac.createGain();
-        o.type = 'sawtooth';
-        o.frequency.value = 120;
-        g.gain.setValueAtTime(0.0001, t);
-        g.gain.linearRampToValueAtTime(0.18, t + 0.012);
-        g.gain.linearRampToValueAtTime(0.0001, t + 0.12);
-        o.connect(g);
+        var f = ac.createBiquadFilter();
+        o.type = 'triangle';
+        o.frequency.value = 92;
+        f.type = 'lowpass';
+        f.frequency.setValueAtTime(520, t);
+        f.frequency.exponentialRampToValueAtTime(110, t + 0.1);
+        g.gain.setValueAtTime(0.0008, t);
+        g.gain.exponentialRampToValueAtTime(0.2, t + 0.004);
+        g.gain.exponentialRampToValueAtTime(0.0008, t + 0.16);
+        o.connect(f);
+        f.connect(g);
         connectOut(g);
         o.start(t);
-        o.stop(t + 0.14);
+        o.stop(t + 0.18);
       },
       kick_sub: function (ac, t) {
         var o = ac.createOscillator();
@@ -2447,25 +2040,36 @@
       },
       clap: function (ac, t) {
         var buf = ensureNoise(ac);
+        var taps = [
+          { delay: 0, peak: 0.42, bpf: 1650, q: 0.72, hp: 420, off: 0.02, dur: 0.048 },
+          { delay: 0.0045, peak: 0.48, bpf: 2100, q: 0.65, hp: 380, off: 0.056, dur: 0.052 },
+          { delay: 0.0095, peak: 0.34, bpf: 1350, q: 0.78, hp: 450, off: 0.091, dur: 0.05 },
+          { delay: 0.016, peak: 0.24, bpf: 2400, q: 0.58, hp: 360, off: 0.128, dur: 0.046 },
+          { delay: 0.0245, peak: 0.14, bpf: 1750, q: 0.82, hp: 400, off: 0.162, dur: 0.042 },
+        ];
         var i;
-        for (i = 0; i < 3; i++) {
-          (function (delay) {
+        for (i = 0; i < taps.length; i++) {
+          (function (tap) {
             var src = ac.createBufferSource();
             src.buffer = buf;
-            var f = ac.createBiquadFilter();
-            f.type = 'bandpass';
-            f.frequency.value = 1200;
+            var bp = ac.createBiquadFilter();
+            bp.type = 'bandpass';
+            bp.frequency.value = tap.bpf;
+            bp.Q.value = tap.q;
+            var hp = ac.createBiquadFilter();
+            hp.type = 'highpass';
+            hp.frequency.value = tap.hp;
             var g = ac.createGain();
-            var t0 = t + delay;
-            g.gain.setValueAtTime(0.0008, t0);
-            g.gain.exponentialRampToValueAtTime(0.22, t0 + 0.002);
-            g.gain.exponentialRampToValueAtTime(0.0008, t0 + 0.04);
-            src.connect(f);
-            f.connect(g);
+            var t0 = t + tap.delay;
+            g.gain.setValueAtTime(0.0001, t0);
+            g.gain.exponentialRampToValueAtTime(tap.peak, t0 + 0.0018);
+            g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.062);
+            src.connect(bp);
+            bp.connect(hp);
+            hp.connect(g);
             connectOut(g);
-            src.start(t0);
-            src.stop(t0 + 0.05);
-          })(i * 0.012);
+            src.start(t0, tap.off, tap.dur);
+          })(taps[i]);
         }
       },
       hat_closed: function (ac, t) {
@@ -2628,6 +2232,106 @@
       },
     };
 
+    function beatMonoBufferToStereoWavBlob(audioBuffer) {
+      var sr = audioBuffer.sampleRate;
+      var n = audioBuffer.length;
+      var ch0 = audioBuffer.getChannelData(0);
+      var interleaved = new Float32Array(n * 2);
+      var i;
+      for (i = 0; i < n; i++) {
+        interleaved[i * 2] = ch0[i];
+        interleaved[i * 2 + 1] = ch0[i];
+      }
+      var buffer = new ArrayBuffer(44 + interleaved.length * 2);
+      var view = new DataView(buffer);
+      var writeStr = function (off, s) {
+        var j;
+        for (j = 0; j < s.length; j++) view.setUint8(off + j, s.charCodeAt(j));
+      };
+      var numChannels = 2;
+      writeStr(0, 'RIFF');
+      view.setUint32(4, 36 + interleaved.length * 2, true);
+      writeStr(8, 'WAVE');
+      writeStr(12, 'fmt ');
+      view.setUint32(16, 16, true);
+      view.setUint16(20, 1, true);
+      view.setUint16(22, numChannels, true);
+      view.setUint32(24, sr, true);
+      view.setUint32(28, sr * numChannels * 2, true);
+      view.setUint16(32, numChannels * 2, true);
+      view.setUint16(34, 16, true);
+      writeStr(36, 'data');
+      view.setUint32(40, interleaved.length * 2, true);
+      var offset = 44;
+      for (i = 0; i < interleaved.length; i++) {
+        var sm = Math.max(-1, Math.min(1, interleaved[i]));
+        view.setInt16(offset, Math.max(-32768, Math.min(32767, Math.round(sm * 32767))), true);
+        offset += 2;
+      }
+      return new Blob([buffer], { type: 'audio/wav' });
+    }
+
+    function exportBeatLoopWav() {
+      var OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+      if (!OAC) {
+        setBeatStat('Offline audio not available in this browser.', true);
+        return;
+      }
+      setBeatStat('Rendering…');
+      var sp = beatSecondsPerStep();
+      var tailSec = 0.45;
+      var duration = cols * sp + tailSec;
+      var sampleRate = 48000;
+      var offline = new OAC(1, Math.ceil(duration * sampleRate), sampleRate);
+      var savedNoise = noiseBuf;
+      var savedOut = outGain;
+      noiseBuf = null;
+      var mg = offline.createGain();
+      mg.gain.value = 0.65;
+      mg.connect(offline.destination);
+      outGain = mg;
+      ensureNoise(offline);
+      var tOff = 0.02;
+      var c;
+      for (c = 0; c < cols; c++) {
+        var tSound = c * sp + tOff;
+        var r;
+        for (r = 0; r < rows; r++) {
+          if (!grid[r][c]) continue;
+          var sel = beatInner.querySelector('select[data-row="' + r + '"]');
+          var id = (sel && sel.value) || defaultInst[r];
+          var fn = playInstrument[id];
+          if (fn) {
+            try {
+              fn(offline, tSound);
+            } catch (err) {
+              console.error('Overprint beat export:', id, err);
+            }
+          }
+        }
+      }
+      outGain = savedOut;
+      noiseBuf = savedNoise;
+      offline
+        .startRendering()
+        .then(function (buf) {
+          var blob = beatMonoBufferToStereoWavBlob(buf);
+          var a = document.createElement('a');
+          var bpm = Math.round(+iface.querySelector('#ov-bpm').value || 110);
+          a.href = URL.createObjectURL(blob);
+          a.download = 'overprint-beat-' + bpm + 'bpm-48k-stereo.wav';
+          a.click();
+          setTimeout(function () {
+            URL.revokeObjectURL(a.href);
+          }, 4000);
+          setBeatStat('Exported 48 kHz WAV (stereo) — ready for Premiere, Resolve, etc.');
+        })
+        .catch(function (e) {
+          console.error('Overprint beat export failed', e);
+          setBeatStat('Export failed.', true);
+        });
+    }
+
     function applyPreset(id) {
       var p = null;
       var i;
@@ -2638,12 +2342,14 @@
         }
       }
       if (!p || p.id === '_') return;
-      iface.querySelector('#ov-bpm').value = String(p.bpm);
+      var bpmIn = iface.querySelector('#ov-bpm');
+      bpmIn.value = String(p.bpm);
+      bpmIn.setAttribute('aria-valuenow', String(p.bpm));
+      var bpmV = iface.querySelector('#ov-bpm-val');
+      if (bpmV) bpmV.textContent = String(p.bpm);
       for (var r = 0; r < rows; r++) {
-        if (!basicMode) {
-          var rowSel = beatInner.querySelector('select[data-row="' + r + '"]');
-          if (rowSel) rowSel.value = p.instruments[r] || defaultInst[r];
-        }
+        var rowSel = beatInner.querySelector('select[data-row="' + r + '"]');
+        if (rowSel) rowSel.value = p.instruments[r] || defaultInst[r];
         for (var c = 0; c < cols; c++) {
           grid[r][c] = !!(p.pattern[r] && p.pattern[r][c]);
           paintCell(cellEls[r][c], r, grid[r][c]);
@@ -2708,7 +2414,7 @@
       for (r = 0; r < rows; r++) {
         if (!grid[r][col]) continue;
         var sel = beatInner.querySelector('select[data-row="' + r + '"]');
-        var id = basicMode ? CLASSIC_IDS[r] : (sel && sel.value) || defaultInst[r];
+        var id = (sel && sel.value) || defaultInst[r];
         var fn = playInstrument[id];
         if (fn) {
           try {
@@ -2777,6 +2483,10 @@
     }
 
     iface.querySelector('#ov-bpm').addEventListener('input', function () {
+      var inp = iface.querySelector('#ov-bpm');
+      var v = iface.querySelector('#ov-bpm-val');
+      if (v) v.textContent = inp.value;
+      inp.setAttribute('aria-valuenow', inp.value);
       if (playing) restartBeatScheduler();
     });
 
@@ -2788,7 +2498,7 @@
       try {
         var AC = window.AudioContext || window.webkitAudioContext;
         if (!AC) {
-          setBeatStat('Web Audio is not available here. Try Chrome, Safari, or Firefox.', true);
+          setBeatStat('Web Audio unavailable.', true);
           return;
         }
         if (!ctx) {
@@ -2796,6 +2506,7 @@
           master = ctx.createGain();
           master.gain.value = 0.65;
           master.connect(ctx.destination);
+          outGain = master;
         }
         primeBeatAudioSync(ctx);
         if (typeof ctx.resume === 'function') {
@@ -2803,18 +2514,23 @@
         }
         step = 0;
         playing = true;
-        noiseBuf = null;
         ensureNoise(ctx);
         restartBeatScheduler();
-        setBeatStat('Playing — turn up volume if you hear nothing.');
+        setBeatStat('');
         syncTransportButton();
       } catch (e) {
         console.error('Overprint beat: play failed', e);
-        setBeatStat('Could not start audio. Tap Play again (or reload).', true);
+        setBeatStat('Audio failed to start.', true);
       }
     });
 
     syncTransportButton();
+
+    var toolPage = iface.closest('.tool-page');
+    var exportBtn = toolPage && toolPage.querySelector('#ov-bexport');
+    if (exportBtn) {
+      exportBtn.addEventListener('click', exportBeatLoopWav);
+    }
 
     OV.addCleanup(function () {
       window.removeEventListener('resize', syncBeatPresetColumnToTransport);
@@ -2832,6 +2548,7 @@
       }
       syncBeatPresetColumnToTransport();
       master = null;
+      outGain = null;
       if (ctx) {
         try {
           ctx.close();
