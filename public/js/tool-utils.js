@@ -170,6 +170,63 @@
     );
   };
 
+  /** Synchronous PNG bytes from canvas (data URL → Uint8Array). */
+  OV.canvasToPngUint8Array = function (canvas) {
+    var dataUrl = canvas.toDataURL('image/png');
+    var i = dataUrl.indexOf(',');
+    var b64 = i >= 0 ? dataUrl.slice(i + 1) : '';
+    var bin = atob(b64);
+    var len = bin.length;
+    var out = new Uint8Array(len);
+    for (var j = 0; j < len; j++) out[j] = bin.charCodeAt(j);
+    return out;
+  };
+
+  /** Read width/height from PNG IHDR (big-endian). */
+  OV.readPngIhdrDimensions = function (u8) {
+    if (!u8 || u8.length < 24 || u8[0] !== 0x89) return { w: 16, h: 16 };
+    return {
+      w: (u8[16] << 24) | (u8[17] << 16) | (u8[18] << 8) | u8[19],
+      h: (u8[20] << 24) | (u8[21] << 16) | (u8[22] << 8) | u8[23],
+    };
+  };
+
+  /**
+   * Build a Windows .ico containing embedded PNG chunks (Vista+).
+   * @param {Uint8Array[]} pngBuffers — one raw PNG file per size (ascending order is fine).
+   */
+  OV.encodeIcoFromPngBuffers = function (pngBuffers) {
+    var n = pngBuffers.length;
+    var headerBytes = 6 + 16 * n;
+    var total = headerBytes;
+    var i;
+    for (i = 0; i < n; i++) total += pngBuffers[i].byteLength;
+    var out = new Uint8Array(total);
+    var dv = new DataView(out.buffer);
+    dv.setUint16(0, 0, true);
+    dv.setUint16(2, 1, true);
+    dv.setUint16(4, n, true);
+    var offset = headerBytes;
+    for (i = 0; i < n; i++) {
+      var png = pngBuffers[i];
+      var dim = OV.readPngIhdrDimensions(png);
+      var iw = dim.w >= 256 ? 0 : dim.w & 255;
+      var ih = dim.h >= 256 ? 0 : dim.h & 255;
+      var e = 6 + 16 * i;
+      out[e] = iw;
+      out[e + 1] = ih;
+      out[e + 2] = 0;
+      out[e + 3] = 0;
+      dv.setUint16(e + 4, 1, true);
+      dv.setUint16(e + 6, 32, true);
+      dv.setUint32(e + 8, png.byteLength, true);
+      dv.setUint32(e + 12, offset, true);
+      out.set(png, offset);
+      offset += png.byteLength;
+    }
+    return out;
+  };
+
   OV.copyText = function (text) {
     if (navigator.clipboard && navigator.clipboard.writeText) {
       return navigator.clipboard.writeText(text);
@@ -209,7 +266,8 @@
   };
 
   OV.CDN_JSZIP = 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js';
-  OV.CDN_QRCODE = 'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js';
+  /** Bundled UMD in `js/vendor/qrcode.min.js` (see index.html). CDN path was invalid for npm qrcode. */
+  OV.CDN_QRCODE = 'js/vendor/qrcode.min.js';
 
   OV.readFileText = function (file) {
     return new Promise(function (resolve, reject) {

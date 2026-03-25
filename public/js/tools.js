@@ -662,51 +662,154 @@
     iface.innerHTML =
       '<div class="tool-stack">' +
       '<div class="tool-field tool-field--grow"><span class="tool-label">Content (URL or text)</span>' +
-      '<input type="text" class="tool-input" id="qrt" value="https://example.com"></div>' +
+      '<input type="text" class="tool-input" id="qrt" value="" autocomplete="off" placeholder="https://example.com"></div>' +
       '<div class="tool-row">' +
       '<div class="tool-field"><span class="tool-label">FG</span><input type="color" class="tool-input" id="qrf" value="#08080c"></div>' +
       '<div class="tool-field"><span class="tool-label">BG</span><input type="color" class="tool-input" id="qrb" value="#ffffff"></div>' +
-      '<div class="tool-field"><span class="tool-label">Size</span><input type="number" class="tool-input" id="qrs" value="200" min="64" max="800"></div>' +
+      '<div class="tool-field"><span class="tool-label">Export size (px)</span><input type="number" class="tool-input" id="qrs" value="200" min="64" max="800"></div>' +
       '</div>' +
-      '<div style="display:flex;justify-content:center"><canvas id="qrc"></canvas></div>' +
+      '<div class="qr-preview">' +
+      '<div class="qr-preview-label">Preview</div>' +
+      '<div class="qr-preview-canvas"><canvas id="qrc" width="280" height="280" aria-label="QR code preview"></canvas></div>' +
+      '</div>' +
       '<div class="tool-row"><button type="button" class="tool-btn tool-btn--c" id="qrp">Download PNG</button></div>' +
-      '<p class="tool-out" id="qre"></p></div>';
+      '</div>';
     var canvas = iface.querySelector('#qrc');
-    var err = iface.querySelector('#qre');
-    function draw() {
-      err.textContent = 'Loading QR library (first time needs network)…';
-      OV.loadScriptOnce(OV.CDN_QRCODE, 'QRCode')
-        .then(function () {
-          err.textContent = '';
-          var text = iface.querySelector('#qrt').value || ' ';
-          var dark = iface.querySelector('#qrf').value;
-          var light = iface.querySelector('#qrb').value;
-          var size = +iface.querySelector('#qrs').value || 200;
-          if (typeof QRCode === 'undefined') {
-            err.textContent = 'QR library unavailable.';
-            return;
-          }
-          QRCode.toCanvas(
-            canvas,
-            text,
-            { width: size, margin: 2, color: { dark: dark, light: light } },
-            function (e) {
-              if (e) err.textContent = String(e.message || e);
-            }
-          );
-        })
-        .catch(function () {
-          err.textContent = 'Could not load QR library. Allow network for cdn.jsdelivr.net or try again.';
-        });
+    var QR = typeof QRCode !== 'undefined' ? QRCode : null;
+    function qrSplitAuthorityAndRest(s) {
+      var m = /^([^/?#]+)([/?#].*)?$/.exec(s);
+      if (!m) return { authority: '', rest: '' };
+      return { authority: m[1], rest: m[2] || '' };
+    }
+    function qrStripUserinfo(authority) {
+      var at = authority.indexOf('@');
+      if (at === -1) return authority;
+      return authority.slice(at + 1);
+    }
+    function qrHostPort(authority) {
+      authority = qrStripUserinfo(authority);
+      if (authority[0] === '[') {
+        var end = authority.indexOf(']');
+        if (end > 0) {
+          var rest = authority.slice(end + 1);
+          if (rest[0] === ':') return { host: authority.slice(0, end + 1), port: rest };
+          return { host: authority.slice(0, end + 1) };
+        }
+      }
+      var c = authority.lastIndexOf(':');
+      if (c > 0 && /^[0-9]+$/.test(authority.slice(c + 1))) {
+        return { host: authority.slice(0, c), port: authority.slice(c) };
+      }
+      return { host: authority };
+    }
+    function qrLooksLikeIpv4(host) {
+      if (!host || host.indexOf(':') >= 0) return false;
+      var p = host.split('.');
+      if (p.length !== 4) return false;
+      var i;
+      for (i = 0; i < 4; i++) {
+        var n = parseInt(p[i], 10);
+        if (!/^\d{1,3}$/.test(p[i]) || String(n) !== p[i] || n > 255) return false;
+      }
+      return true;
+    }
+    function qrDnsLabelOk(lab) {
+      if (!lab || lab.length > 63) return false;
+      if (lab.charAt(0) === '-' || lab.charAt(lab.length - 1) === '-') return false;
+      if (/^xn--/i.test(lab)) return /^xn--[a-z0-9-]+$/i.test(lab);
+      return /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/i.test(lab);
+    }
+    function qrTldLooksValid(tld) {
+      if (!tld || tld.length < 2 || tld.length > 63) return false;
+      if (/^\d+$/.test(tld)) return false;
+      if (!/[a-z]/i.test(tld)) return false;
+      return qrDnsLabelOk(tld);
+    }
+    function qrIsLikelyUrlWithoutScheme(s) {
+      if (/\s/.test(s)) return false;
+      var ar = qrSplitAuthorityAndRest(s);
+      var authority = ar.authority;
+      if (!authority) return false;
+      var hp = qrHostPort(authority);
+      var host = hp.host;
+      if (host.charAt(0) === '[') return true;
+      if (qrLooksLikeIpv4(host)) return true;
+      if (host.indexOf(':') >= 0 && host.indexOf('.') < 0) return true;
+      if (/^localhost$/i.test(host)) return true;
+      var labels = host.split('.');
+      if (labels.length < 2) return false;
+      var i;
+      for (i = 0; i < labels.length; i++) {
+        if (!qrDnsLabelOk(labels[i])) return false;
+      }
+      return qrTldLooksValid(labels[labels.length - 1]);
+    }
+    function normalizeQrContent(raw) {
+      var s = String(raw || '').trim();
+      if (!s) return ' ';
+      if (/^[a-z][a-z0-9+.-]*:/i.test(s)) return s;
+      if (/^\/\//.test(s)) return 'https:' + s;
+      if (/^www\./i.test(s)) return 'https://' + s;
+      if (qrIsLikelyUrlWithoutScheme(s)) return 'https://' + s;
+      return s;
+    }
+    function qrOpts(dark, light, width) {
+      return { width: width, margin: 2, color: { dark: dark, light: light } };
+    }
+    function drawPreview() {
+      if (!QR) {
+        console.warn('QRCode library not loaded (expected js/vendor/qrcode.min.js)');
+        return;
+      }
+      var raw = iface.querySelector('#qrt').value;
+      var dark = iface.querySelector('#qrf').value;
+      var light = iface.querySelector('#qrb').value;
+      var exportSize = +iface.querySelector('#qrs').value || 200;
+      var previewW = Math.min(Math.max(exportSize, 64), 280);
+      if (!String(raw || '').trim()) {
+        canvas.width = previewW;
+        canvas.height = previewW;
+        var ctx = canvas.getContext('2d');
+        ctx.fillStyle = light;
+        ctx.fillRect(0, 0, previewW, previewW);
+        return;
+      }
+      var text = normalizeQrContent(raw);
+      QR.toCanvas(canvas, text, qrOpts(dark, light, previewW), function (e) {
+        if (e) console.warn(e);
+      });
     }
     iface.querySelectorAll('#qrt,#qrf,#qrb,#qrs').forEach(function (x) {
-      x.addEventListener('input', draw);
-      x.addEventListener('change', draw);
+      x.addEventListener('input', drawPreview);
+      x.addEventListener('change', drawPreview);
+    });
+    iface.querySelector('#qrt').addEventListener('blur', function () {
+      var el = iface.querySelector('#qrt');
+      var cur = el.value.trim();
+      if (cur) {
+        var norm = normalizeQrContent(cur);
+        if (norm !== cur) el.value = norm;
+      }
+      drawPreview();
     });
     iface.querySelector('#qrp').addEventListener('click', function () {
-      OV.downloadCanvas(canvas, 'qrcode.png', 'image/png');
+      if (!QR) return;
+      var raw = iface.querySelector('#qrt').value;
+      if (!String(raw || '').trim()) return;
+      var text = normalizeQrContent(raw);
+      var dark = iface.querySelector('#qrf').value;
+      var light = iface.querySelector('#qrb').value;
+      var size = Math.min(800, Math.max(64, +iface.querySelector('#qrs').value || 200));
+      var dl = document.createElement('canvas');
+      QR.toCanvas(dl, text, qrOpts(dark, light, size), function (e) {
+        if (e) {
+          console.warn(e);
+          return;
+        }
+        OV.downloadCanvas(dl, 'qrcode.png', 'image/png');
+      });
     });
-    draw();
+    drawPreview();
   }
 
   /* —— Image toolbox —— */
@@ -1133,41 +1236,556 @@
 
   /* —— Favicon forge —— */
   function initFaviconForge(iface) {
+    var FCV_SIZES = [16, 24, 32, 48, 64];
+    /**
+     * Icon path `d` values: geometric marks are original; several paths derive from
+     * Heroicons (MIT) https://github.com/tailwindlabs/heroicons — rendered as vectors, not emoji.
+     */
+    var FCV_ICON_ORDER = [
+      'star',
+      'bolt',
+      'heart',
+      'check',
+      'xmark',
+      'sparkle',
+      'disc',
+      'target',
+      'square',
+      'triangle',
+      'diamond',
+    ];
+    var FCV_ICON_LABEL = {
+      star: 'Star',
+      bolt: 'Lightning',
+      heart: 'Heart',
+      check: 'Check mark',
+      xmark: 'Cross',
+      sparkle: 'Sparkle',
+      disc: 'Filled circle',
+      target: 'Target rings',
+      square: 'Square',
+      triangle: 'Triangle',
+      diamond: 'Diamond',
+    };
+    var FCV_ICON_SPEC = {
+      star: {
+        d: 'M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.056-.964 1.892-1.825 1.303L12 18.897l-4.834 2.367c-.861.589-1.831-.247-1.825-1.303l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.006Z',
+        rule: 'evenodd',
+      },
+      bolt: { d: 'M3.75 13.5 7.5 6.375h4.125L11.25 2.25l9 10.5h-4.125L15.75 22.5 3.75 13.5Z' },
+      heart: {
+        d: 'M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.007.003a.75.75 0 0 1-.704 0l-.007-.003Z',
+      },
+      check: {
+        d: 'M19.916 4.626a.75.75 0 0 1-.252.577l-11.857 10a.75.75 0 0 1-.98.07L4.02 12.322a.75.75 0 0 1-.02-1.08l1.5-1.5a.75.75 0 0 1 1.06 0l3.75 3.75 10.5-9.5a.75.75 0 0 1 1.08.154Z',
+      },
+      xmark: {
+        d: 'M5.47 5.47a.75.75 0 0 1 1.06 0L12 10.94l5.47-5.47a.75.75 0 1 1 1.06 1.06L13.06 12l5.47 5.47a.75.75 0 1 1-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 0 1-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 0 1 0-1.06Z',
+      },
+      sparkle: { d: 'M12 1.5l1.65 6.45 6.45 1.65-6.45 1.65L12 17.7l-1.65-6.45-6.45-1.65 6.45-1.65L12 1.5Z' },
+      square: { d: 'M5.25 5.25h13.5v13.5H5.25z' },
+      triangle: { d: 'M12 3.75L21.75 20.25H2.25L12 3.75Z' },
+      diamond: { d: 'M12 2.25L21.75 12 12 21.75 2.25 12 12 2.25Z' },
+      disc: { fn: 'disc' },
+      target: { fn: 'target' },
+    };
+    var FCV_EMOJI = [
+      [0x1f600, 'Grinning face'],
+      [0x1f603, 'Smiling face'],
+      [0x1f60d, 'Smiling face with heart eyes'],
+      [0x1f44d, 'Thumbs up'],
+      [0x1f525, 'Fire'],
+      [0x1f680, 'Rocket'],
+      [0x2728, 'Sparkles'],
+      [0x2705, 'Check mark button'],
+      [0x1f389, 'Party popper'],
+      [0x1f4a1, 'Light bulb'],
+      [0x26a1, 'High voltage'],
+      [0x1f331, 'Seedling'],
+      [0x1f3af, 'Direct hit'],
+      [0x2764, 'Red heart'],
+      [0x1f60e, 'Smiling face with sunglasses'],
+      [0x2b50, 'Star'],
+      [0x1f3ae, 'Video game'],
+      [0x2615, 'Hot beverage'],
+    ];
+    function codeToStr(cp) {
+      if (typeof String.fromCodePoint === 'function') return String.fromCodePoint(cp);
+      if (cp < 0x10000) return String.fromCharCode(cp);
+      var k = cp - 0x10000;
+      return String.fromCharCode(0xd800 + (k >> 10), 0xdc00 + (k & 0x3ff));
+    }
+    var FCV_FONTS = [
+      { id: 'syne', label: 'Syne', family: 'Syne' },
+      { id: 'inter', label: 'Inter', family: 'Inter' },
+      { id: 'oswald', label: 'Oswald', family: 'Oswald' },
+      { id: 'playfair', label: 'Playfair Display', family: 'Playfair Display' },
+      { id: 'jetbrains', label: 'JetBrains Mono', family: 'JetBrains Mono' },
+      { id: 'space', label: 'Space Grotesk', family: 'Space Grotesk' },
+      { id: 'fraunces', label: 'Fraunces', family: 'Fraunces' },
+      { id: 'bebas', label: 'Bebas Neue', family: 'Bebas Neue' },
+      { id: 'montserrat', label: 'Montserrat', family: 'Montserrat' },
+    ];
+    var fcvFontOpts = FCV_FONTS.map(function (f, i) {
+      return '<option value="' + f.id + '"' + (i === 0 ? ' selected' : '') + '>' + f.label + '</option>';
+    }).join('');
+    var fcvIconOpts = FCV_ICON_ORDER.map(function (id) {
+      return (
+        '<option value="' +
+        id +
+        '"' +
+        (id === 'star' ? ' selected' : '') +
+        '>' +
+        (FCV_ICON_LABEL[id] || id) +
+        '</option>'
+      );
+    }).join('');
+    var fcvEmojiOpts = FCV_EMOJI.map(function (row, i) {
+      var cp = row[0];
+      var ch = codeToStr(cp);
+      if (cp === 0x2764) ch += '\ufe0f';
+      var label = ch + ' ' + row[1];
+      return '<option value="' + i + '"' + (i === 0 ? ' selected' : '') + '>' + label + '</option>';
+    }).join('');
+
     iface.innerHTML =
-      '<div class="tool-stack">' +
-      '<div class="tool-row">' +
-      '<div class="tool-field"><span class="tool-label">Text (1–2)</span><input type="text" class="tool-input" id="ov-ft" maxlength="2" value="OP"></div>' +
-      '<div class="tool-field"><span class="tool-label">FG</span><input type="color" class="tool-input" id="ov-ffg" value="#08080c"></div>' +
-      '<div class="tool-field"><span class="tool-label">BG</span><input type="color" class="tool-input" id="ov-fbg" value="#00b4d8"></div>' +
-        '</div>' +
-      '<div class="tool-row"><button type="button" class="tool-btn" id="ov-f32">PNG 32</button>' +
-      '<button type="button" class="tool-btn" id="ov-f180">PNG 180</button></div>' +
-      '<canvas id="ov-fcv" width="180" height="180" style="border:1px solid var(--border);image-rendering:pixelated"></canvas></div>';
+      '<div class="tool-stack fcv-stack">' +
+      '<div class="fcv-shell">' +
+      '<div class="fcv-preview" aria-label="Preview">' +
+      '<div class="fcv-preview-inner">' +
+      '<div class="fcv-main-wrap">' +
+      '<div class="fcv-main">' +
+      '<canvas id="ov-fcv" width="180" height="180" class="fcv-canvas-main"></canvas>' +
+      '</div>' +
+      '<div class="fcv-scales" aria-label="Preview at common sizes">' +
+      FCV_SIZES.map(function (sz) {
+        return (
+          '<div class="fcv-scale">' +
+          '<canvas id="ov-fcv-p' +
+          sz +
+          '" width="' +
+          sz +
+          '" height="' +
+          sz +
+          '" class="fcv-canvas-scale"></canvas>' +
+          '<span class="fcv-scale-label">' +
+          sz +
+          'px</span></div>'
+        );
+      }).join('') +
+      '</div></div></div></div>' +
+      '<aside class="fcv-toolbar" aria-label="Favicon controls">' +
+      '<div class="fcv-toolbar-head">' +
+      '<div class="fcv-export-actions">' +
+      '<button type="button" class="tool-btn tool-btn--m" id="ov-fico">favicon.ico</button>' +
+      '<button type="button" class="tool-btn" id="ov-f32">PNG 32</button>' +
+      '<button type="button" class="tool-btn" id="ov-f180">PNG 180</button>' +
+      '</div></div>' +
+      '<div class="fcv-panels">' +
+      '<section class="fcv-section">' +
+      '<div class="fcv-section-title">Content</div>' +
+      '<div class="tool-field"><span class="tool-label">Mode</span>' +
+      '<select class="tool-select" id="ov-fmode" aria-label="Content type">' +
+      '<option value="letter">Letters</option>' +
+      '<option value="symbol">Icons and text</option>' +
+      '<option value="emoji">Emoji</option>' +
+      '</select></div>' +
+      '<div class="tool-field" id="ov-fwrap-letter"><span class="tool-label">Letters (1–2)</span>' +
+      '<input type="text" class="tool-input" id="ov-ft" maxlength="2" value="OP" autocomplete="off"></div>' +
+      '</section>' +
+      '<section class="fcv-section" id="ov-fwrap-symbol" hidden>' +
+      '<div class="fcv-section-title">Icon</div>' +
+      '<div class="tool-field"><span class="tool-label">Vector icon</span>' +
+      '<select class="tool-select" id="ov-ficon-select" aria-label="Vector icon">' +
+      fcvIconOpts +
+      '</select></div>' +
+      '<div class="tool-field fcv-custom-field">' +
+      '<span class="tool-label">Custom character (optional)</span>' +
+      '<input type="text" class="tool-input" id="ov-fsym-custom" maxlength="4" placeholder="e.g. π, @, ½" autocomplete="off">' +
+      '</div></section>' +
+      '<section class="fcv-section" id="ov-fwrap-emoji" hidden>' +
+      '<div class="fcv-section-title">Emoji</div>' +
+      '<div class="tool-field"><span class="tool-label">Preset</span>' +
+      '<select class="tool-select" id="ov-femoji-select" aria-label="Emoji preset">' +
+      fcvEmojiOpts +
+      '</select></div>' +
+      '<div class="tool-field fcv-custom-field">' +
+      '<span class="tool-label">Or paste / type</span>' +
+      '<input type="text" class="tool-input" id="ov-femoji-in" maxlength="8" autocomplete="off" placeholder="Paste any emoji">' +
+      '</div></section>' +
+      '<section class="fcv-section" id="fcv-section-type">' +
+      '<div class="fcv-section-title" id="fcv-typo-title">Typography</div>' +
+      '<p class="fcv-section-hint" id="fcv-type-hint"></p>' +
+      '<div class="tool-field" id="ov-fwrap-ffont"><span class="tool-label">Typeface</span>' +
+      '<select class="tool-select" id="ov-ffont" aria-label="Font family">' +
+      fcvFontOpts +
+      '</select></div>' +
+      '<div class="tool-field"><span class="tool-label">Weight</span>' +
+      '<select class="tool-select" id="ov-fweight" aria-label="Font weight">' +
+      '<option value="700" selected>Bold</option>' +
+      '<option value="400">Regular</option>' +
+      '</select></div>' +
+      '<div class="tool-field fcv-field-range">' +
+      '<span class="tool-label">Size <span id="ov-fsize-val" class="fcv-size-val">100</span>px</span>' +
+      '<input type="range" class="tool-input tool-input--range" id="ov-fsize" min="56" max="132" value="100" step="2" aria-valuemin="56" aria-valuemax="132" aria-valuenow="100">' +
+      '</div></section>' +
+      '<section class="fcv-section">' +
+      '<div class="fcv-section-title">Mask and color</div>' +
+      '<div class="tool-field"><span class="tool-label">Mask shape</span>' +
+      '<select class="tool-select" id="ov-fshape" aria-label="Outer mask shape">' +
+      '<option value="square">Square</option>' +
+      '<option value="rounded">Rounded square</option>' +
+      '<option value="circle">Circle</option>' +
+      '<option value="diamond">Diamond</option>' +
+      '<option value="triangle">Triangle</option>' +
+      '</select></div>' +
+      '<div class="tool-field"><span class="tool-label">Foreground</span>' +
+      '<div class="fcv-color-row">' +
+      '<input type="color" class="tool-input" id="ov-ffg" value="#08080c" aria-label="Foreground color">' +
+      '<label class="fcv-color-none"><input type="checkbox" id="ov-ffg-none"> None</label>' +
+      '</div></div>' +
+      '<div class="tool-field"><span class="tool-label">Background</span>' +
+      '<div class="fcv-color-row">' +
+      '<input type="color" class="tool-input" id="ov-fbg" value="#00b4d8" aria-label="Background color">' +
+      '<label class="fcv-color-none"><input type="checkbox" id="ov-fbg-none"> None</label>' +
+      '</div></div>' +
+      '</section>' +
+      '<section class="fcv-section fcv-section--presets">' +
+      '<div class="fcv-section-title">Swatches</div>' +
+      '<div class="fcv-presets" role="group" aria-label="Color presets">' +
+      '<button type="button" class="fcv-preset" data-fg="#08080c" data-bg="#00b4d8" title="Dark on cyan"></button>' +
+      '<button type="button" class="fcv-preset" data-fg="#f8fafc" data-bg="#0f172a" title="Light on slate"></button>' +
+      '<button type="button" class="fcv-preset" data-fg="#111827" data-bg="#fbbf24" title="Dark on amber"></button>' +
+      '<button type="button" class="fcv-preset" data-fg="#ffffff" data-bg="#dc2626" title="White on red"></button>' +
+      '<button type="button" class="fcv-preset" data-fg="#ecfdf5" data-bg="#059669" title="Mint on green"></button>' +
+      '<button type="button" class="fcv-preset" data-fg="#fef3c7" data-bg="#7c3aed" title="Cream on violet"></button>' +
+      '</div></section>' +
+      '</div></aside></div></div>';
+
+    var fcvFontLink = document.createElement('link');
+    fcvFontLink.rel = 'stylesheet';
+    document.head.appendChild(fcvFontLink);
+
+    function fcvFontFamilyCss() {
+      var v = iface.querySelector('#ov-ffont').value;
+      var fam = FCV_FONTS[0].family;
+      var fi;
+      for (fi = 0; fi < FCV_FONTS.length; fi++) {
+        if (FCV_FONTS[fi].id === v) {
+          fam = FCV_FONTS[fi].family;
+          break;
+        }
+      }
+      return fam;
+    }
+
+    function fcvGoogleFontHref(family) {
+      return (
+        'https://fonts.googleapis.com/css2?family=' +
+        encodeURIComponent(family).replace(/%20/g, '+') +
+        ':wght@400;700&display=swap'
+      );
+    }
+
+    function fcvTypeSizePx() {
+      var el = iface.querySelector('#ov-fsize');
+      var n = el ? parseInt(el.value, 10) : 100;
+      if (isNaN(n)) return 100;
+      return Math.max(48, Math.min(140, n));
+    }
+
+    function pathShape(ctx, w, h, shape) {
+      ctx.beginPath();
+      if (shape === 'circle') {
+        ctx.arc(w / 2, h / 2, Math.min(w, h) / 2, 0, Math.PI * 2);
+      } else if (shape === 'diamond') {
+        ctx.moveTo(w / 2, 0);
+        ctx.lineTo(w, h / 2);
+        ctx.lineTo(w / 2, h);
+        ctx.lineTo(0, h / 2);
+        ctx.closePath();
+      } else if (shape === 'triangle') {
+        ctx.moveTo(w / 2, 0);
+        ctx.lineTo(w, h);
+        ctx.lineTo(0, h);
+        ctx.closePath();
+      } else if (shape === 'rounded') {
+        var rr = Math.min(w, h) * 0.2;
+        if (typeof ctx.roundRect === 'function') {
+          ctx.roundRect(0, 0, w, h, rr);
+        } else {
+          var r = Math.min(rr, w / 2, h / 2);
+          ctx.moveTo(r, 0);
+          ctx.lineTo(w - r, 0);
+          ctx.quadraticCurveTo(w, 0, w, r);
+          ctx.lineTo(w, h - r);
+          ctx.quadraticCurveTo(w, h, w - r, h);
+          ctx.lineTo(r, h);
+          ctx.quadraticCurveTo(0, h, 0, h - r);
+          ctx.lineTo(0, r);
+          ctx.quadraticCurveTo(0, 0, r, 0);
+        }
+      } else {
+        ctx.rect(0, 0, w, h);
+      }
+    }
+
+    function drawVectorIcon(ctx, id) {
+      var spec = FCV_ICON_SPEC[id];
+      if (!spec) return;
+      if (spec.d) {
+        var p = new Path2D(spec.d);
+        ctx.fill(p, spec.rule || 'nonzero');
+        return;
+      }
+      ctx.beginPath();
+      if (spec.fn === 'disc') {
+        ctx.arc(12, 12, 9, 0, Math.PI * 2);
+      } else if (spec.fn === 'target') {
+        ctx.arc(12, 12, 10, 0, Math.PI * 2);
+        ctx.arc(12, 12, 4, 0, Math.PI * 2, true);
+        ctx.fill(spec.rule || 'evenodd');
+        return;
+      }
+      ctx.fill(spec.rule || 'nonzero');
+    }
+
+    function syncTypeHint() {
+      var hint = iface.querySelector('#fcv-type-hint');
+      if (!hint) return;
+      var mode = iface.querySelector('#ov-fmode').value;
+      if (mode === 'symbol') {
+        hint.textContent =
+          'Typeface applies to custom characters. Vector icons scale with the size slider.';
+      } else if (mode === 'emoji') {
+        hint.textContent = 'Size and weight adjust emoji. Typeface applies to letter mode.';
+      } else {
+        hint.textContent = 'Font, weight, and size apply to letters.';
+      }
+    }
+
+    function syncContentUi() {
+      var mode = iface.querySelector('#ov-fmode').value;
+      iface.querySelector('#ov-fwrap-letter').hidden = mode !== 'letter';
+      iface.querySelector('#ov-fwrap-symbol').hidden = mode !== 'symbol';
+      iface.querySelector('#ov-fwrap-emoji').hidden = mode !== 'emoji';
+      var wrapFont = iface.querySelector('#ov-fwrap-ffont');
+      if (wrapFont) wrapFont.hidden = mode === 'emoji';
+      var typoTitle = iface.querySelector('#fcv-typo-title');
+      if (typoTitle) {
+        if (mode === 'emoji') {
+          typoTitle.textContent = 'Emoji size';
+        } else {
+          typoTitle.textContent = 'Typography';
+        }
+      }
+      syncTypeHint();
+    }
+
+    function emojiGlyph() {
+      var paste = iface.querySelector('#ov-femoji-in').value.trim();
+      if (paste.length) return paste.slice(0, 8);
+      var es = iface.querySelector('#ov-femoji-select');
+      var ix = es ? parseInt(es.value, 10) : 0;
+      if (isNaN(ix) || ix < 0 || ix >= FCV_EMOJI.length) ix = 0;
+      var cp = FCV_EMOJI[ix][0];
+      var ch = codeToStr(cp);
+      if (cp === 0x2764) ch += '\ufe0f';
+      return ch;
+    }
+
+    function drawScales() {
+      var main = iface.querySelector('#ov-fcv');
+      var i;
+      for (i = 0; i < FCV_SIZES.length; i++) {
+        var sz = FCV_SIZES[i];
+        var el = iface.querySelector('#ov-fcv-p' + sz);
+        if (!el) continue;
+        el.width = sz;
+        el.height = sz;
+        var sx = el.getContext('2d');
+        sx.imageSmoothingEnabled = true;
+        sx.clearRect(0, 0, sz, sz);
+        sx.drawImage(main, 0, 0, 180, 180, 0, 0, sz, sz);
+      }
+    }
+
+    function syncFcvColorEnabled() {
+      var fgIn = iface.querySelector('#ov-ffg');
+      var bgIn = iface.querySelector('#ov-fbg');
+      var fgN = iface.querySelector('#ov-ffg-none');
+      var bgN = iface.querySelector('#ov-fbg-none');
+      if (fgIn && fgN) fgIn.disabled = fgN.checked;
+      if (bgIn && bgN) bgIn.disabled = bgN.checked;
+    }
+
     function draw() {
-      var t = iface.querySelector('#ov-ft').value || '?';
-      var fg = iface.querySelector('#ov-ffg').value;
-      var bg = iface.querySelector('#ov-fbg').value;
+      var w = 180;
+      var h = 180;
       var c = iface.querySelector('#ov-fcv');
       var x = c.getContext('2d');
-      x.fillStyle = bg;
-      x.fillRect(0, 0, 180, 180);
-      x.fillStyle = fg;
-      x.font = 'bold 100px Syne,sans-serif';
-      x.textAlign = 'center';
-      x.textBaseline = 'middle';
-      x.fillText(t.slice(0, 2).toUpperCase(), 90, 92);
+      var shape = iface.querySelector('#ov-fshape').value;
+      var mode = iface.querySelector('#ov-fmode').value;
+      var fg = iface.querySelector('#ov-ffg').value;
+      var bg = iface.querySelector('#ov-fbg').value;
+      var fgNone = iface.querySelector('#ov-ffg-none').checked;
+      var bgNone = iface.querySelector('#ov-fbg-none').checked;
+      x.clearRect(0, 0, w, h);
+      x.save();
+      pathShape(x, w, h, shape);
+      x.clip();
+      if (!bgNone) {
+        x.fillStyle = bg;
+        x.fillRect(0, 0, w, h);
+      }
+      if (!fgNone) {
+        x.fillStyle = fg;
+        x.textAlign = 'center';
+        x.textBaseline = 'middle';
+        var fsPx = fcvTypeSizePx();
+        var fwNum = iface.querySelector('#ov-fweight').value === '400' ? '400' : '700';
+        var fam = fcvFontFamilyCss();
+        if (mode === 'letter') {
+          var t = (iface.querySelector('#ov-ft').value || '?').slice(0, 2).toUpperCase();
+          x.font = fwNum + ' ' + fsPx + 'px "' + fam + '",sans-serif';
+          x.fillText(t, w / 2, h / 2 + 2);
+        } else if (mode === 'emoji') {
+          var eg = emojiGlyph();
+          x.font =
+            fwNum +
+            ' ' +
+            fsPx +
+            'px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+          x.textBaseline = 'alphabetic';
+          var em = x.measureText(eg);
+          var eAsc = em.actualBoundingBoxAscent;
+          var eDesc = em.actualBoundingBoxDescent;
+          var ey = h / 2;
+          if (
+            eAsc != null &&
+            eDesc != null &&
+            !isNaN(eAsc) &&
+            !isNaN(eDesc) &&
+            (eAsc > 0 || eDesc > 0)
+          ) {
+            ey = h / 2 + (eAsc - eDesc) / 2;
+          } else {
+            x.textBaseline = 'middle';
+            ey = h / 2 + Math.round(fsPx * 0.06);
+          }
+          x.fillText(eg, w / 2, ey);
+        } else {
+          var customSym = iface.querySelector('#ov-fsym-custom').value.trim();
+          if (customSym.length) {
+            x.font =
+              fwNum +
+              ' ' +
+              fsPx +
+              'px "' +
+              fam +
+              '",system-ui,"Segoe UI Symbol","Apple Symbols",sans-serif';
+            x.fillText(customSym.slice(0, 4), w / 2, h / 2 + 2);
+          } else {
+            x.save();
+            var u = (Math.min(w, h) * 0.72 * (fsPx / 100)) / 24;
+            x.translate(w / 2, h / 2);
+            x.scale(u, u);
+            x.translate(-12, -12);
+            drawVectorIcon(x, iface.querySelector('#ov-ficon-select').value);
+            x.restore();
+          }
+        }
+      }
+      x.restore();
+      drawScales();
     }
-    iface.querySelectorAll('#ov-ft,#ov-ffg,#ov-fbg').forEach(function (i) {
-      i.addEventListener('input', draw);
-    });
-    draw();
+
+    function applyFcvFont() {
+      fcvFontLink.href = fcvGoogleFontHref(fcvFontFamilyCss());
+      if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(function () {
+          draw();
+        });
+      } else {
+        fcvFontLink.onload = function () {
+          draw();
+        };
+      }
+    }
+
+    function bindInputs() {
+      iface.querySelectorAll('#ov-ft,#ov-ffg,#ov-fbg,#ov-fshape,#ov-fsym-custom').forEach(function (i) {
+        i.addEventListener('input', draw);
+      });
+      iface.querySelectorAll('#ov-ffg-none,#ov-fbg-none').forEach(function (cb) {
+        cb.addEventListener('change', function () {
+          syncFcvColorEnabled();
+          draw();
+        });
+      });
+      iface.querySelector('#ov-fsize').addEventListener('input', function () {
+        var lab = iface.querySelector('#ov-fsize-val');
+        if (lab) lab.textContent = this.value;
+        this.setAttribute('aria-valuenow', this.value);
+        draw();
+      });
+      iface.querySelector('#ov-ffont').addEventListener('change', applyFcvFont);
+      iface.querySelector('#ov-fweight').addEventListener('change', draw);
+      iface.querySelector('#ov-femoji-in').addEventListener('input', draw);
+      iface.querySelector('#ov-ficon-select').addEventListener('change', function () {
+        iface.querySelector('#ov-fsym-custom').value = '';
+        draw();
+      });
+      iface.querySelector('#ov-femoji-select').addEventListener('change', function () {
+        iface.querySelector('#ov-femoji-in').value = '';
+        draw();
+      });
+      iface.querySelector('#ov-fmode').addEventListener('change', function () {
+        syncContentUi();
+        draw();
+      });
+      iface.querySelectorAll('.fcv-preset').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          iface.querySelector('#ov-ffg').value = btn.getAttribute('data-fg') || '#000000';
+          iface.querySelector('#ov-fbg').value = btn.getAttribute('data-bg') || '#ffffff';
+          iface.querySelector('#ov-ffg-none').checked = false;
+          iface.querySelector('#ov-fbg-none').checked = false;
+          syncFcvColorEnabled();
+          draw();
+        });
+      });
+    }
+
+    syncContentUi();
+    bindInputs();
+    syncFcvColorEnabled();
+    applyFcvFont();
+
     function dl(size) {
-      var c = document.createElement('canvas');
-      c.width = c.height = size;
+      var out = document.createElement('canvas');
+      out.width = out.height = size;
       var src = iface.querySelector('#ov-fcv');
-      c.getContext('2d').drawImage(src, 0, 0, 180, 180, 0, 0, size, size);
-      OV.downloadCanvas(c, 'favicon-' + size + '.png', 'image/png');
+      out.getContext('2d').drawImage(src, 0, 0, 180, 180, 0, 0, size, size);
+      OV.downloadCanvas(out, 'favicon-' + size + '.png', 'image/png');
     }
+
+    function dlIco() {
+      var src = iface.querySelector('#ov-fcv');
+      var order = [48, 32, 16];
+      var pngs = [];
+      var i;
+      for (i = 0; i < order.length; i++) {
+        var sz = order[i];
+        var tmp = document.createElement('canvas');
+        tmp.width = tmp.height = sz;
+        tmp.getContext('2d').drawImage(src, 0, 0, 180, 180, 0, 0, sz, sz);
+        pngs.push(OV.canvasToPngUint8Array(tmp));
+      }
+      var ico = OV.encodeIcoFromPngBuffers(pngs);
+      OV.downloadBlob(new Blob([ico], { type: 'image/vnd.microsoft.icon' }), 'favicon.ico');
+    }
+
+    iface.querySelector('#ov-fico').addEventListener('click', dlIco);
     iface.querySelector('#ov-f32').addEventListener('click', function () {
       dl(32);
     });
@@ -1180,10 +1798,52 @@
   var FONT_PAIRS = [
     { h: 'Syne', b: 'IBM Plex Mono', id: 'syne+ibm-plex-mono' },
     { h: 'Playfair Display', b: 'Source Sans 3', id: 'playfair-display+source-sans-3' },
+    { h: 'Merriweather', b: 'Open Sans', id: 'merriweather+open-sans' },
     { h: 'Bebas Neue', b: 'Montserrat', id: 'bebas-neue+montserrat' },
-    { h: 'Oswald', b: 'Lato', id: 'oswald+lato' },
     { h: 'Space Grotesk', b: 'Inter', id: 'space-grotesk+inter' },
+    { h: 'DM Serif Display', b: 'DM Sans', id: 'dm-serif-display+dm-sans' },
+    { h: 'Poppins', b: 'Open Sans', id: 'poppins+open-sans' },
+    { h: 'Roboto Slab', b: 'Roboto', id: 'roboto-slab+roboto' },
+    { h: 'Oswald', b: 'Lato', id: 'oswald+lato' },
+    { h: 'Fraunces', b: 'Nunito', id: 'fraunces+nunito' },
+    { h: 'Libre Baskerville', b: 'Lato', id: 'libre-baskerville+lato' },
+    { h: 'EB Garamond', b: 'Lato', id: 'eb-garamond+lato' },
+    { h: 'Spectral', b: 'Karla', id: 'spectral+karla' },
+    { h: 'Bitter', b: 'Raleway', id: 'bitter+raleway' },
+    { h: 'PT Serif', b: 'PT Sans', id: 'pt-serif+pt-sans' },
+    { h: 'Noto Serif', b: 'Noto Sans', id: 'noto-serif+noto-sans' },
+    { h: 'Anton', b: 'Manrope', id: 'anton+manrope' },
+    { h: 'Archivo Black', b: 'Archivo', id: 'archivo-black+archivo' },
+    { h: 'Raleway', b: 'Lato', id: 'raleway+lato' },
+    { h: 'Montserrat', b: 'Open Sans', id: 'montserrat+open-sans' },
+    { h: 'Outfit', b: 'Source Sans 3', id: 'outfit+source-sans-3' },
+    { h: 'Sora', b: 'Inter', id: 'sora+inter' },
+    { h: 'Lexend', b: 'IBM Plex Sans', id: 'lexend+ibm-plex-sans' },
+    { h: 'Plus Jakarta Sans', b: 'Inter', id: 'plus-jakarta-sans+inter' },
+    { h: 'Figtree', b: 'Source Serif 4', id: 'figtree+source-serif-4' },
+    { h: 'Urbanist', b: 'IBM Plex Sans', id: 'urbanist+ibm-plex-sans' },
+    { h: 'Josefin Sans', b: 'Crimson Text', id: 'josefin-sans+crimson-text' },
+    { h: 'Yeseva One', b: 'Josefin Sans', id: 'yeseva-one+josefin-sans' },
+    { h: 'Cormorant Garamond', b: 'Proza Libre', id: 'cormorant-garamond+proza-libre' },
+    { h: 'Newsreader', b: 'Work Sans', id: 'newsreader+work-sans' },
+    { h: 'Zilla Slab', b: 'Nunito Sans', id: 'zilla-slab+nunito-sans' },
+    { h: 'Rubik', b: 'Karla', id: 'rubik+karla' },
+    { h: 'Barlow', b: 'Fira Sans', id: 'barlow+fira-sans' },
+    { h: 'Quicksand', b: 'Mulish', id: 'quicksand+mulish' },
+    { h: 'Literata', b: 'Rubik', id: 'literata+rubik' },
+    { h: 'Lora', b: 'Nunito Sans', id: 'lora+nunito-sans' },
+    { h: 'Cinzel', b: 'Mulish', id: 'cinzel+mulish' },
+    { h: 'Instrument Serif', b: 'Inter', id: 'instrument-serif+inter' },
+    { h: 'Bodoni Moda', b: 'Outfit', id: 'bodoni-moda+outfit' },
+    { h: 'Alegreya', b: 'Alegreya Sans', id: 'alegreya+alegreya-sans' },
+    { h: 'Catamaran', b: 'Martel', id: 'catamaran+martel' },
+    { h: 'DM Sans', b: 'DM Serif Display', id: 'dm-sans+dm-serif-display' },
+    { h: 'Caveat', b: 'Quicksand', id: 'caveat+quicksand' },
+    { h: 'Arvo', b: 'Open Sans', id: 'arvo+open-sans' },
+    { h: 'Ubuntu', b: 'Open Sans', id: 'ubuntu+open-sans' },
+    { h: 'Kanit', b: 'Prompt', id: 'kanit+prompt' },
   ];
+
 
   function initFontPair(iface) {
     function fpSvg(paths) {
@@ -1205,19 +1865,18 @@
       { id: 'type-scale', label: 'Type scale', svg: fpSvg('<path d="M4 6h16M4 10h12M4 14h14M4 18h10"/>') },
       { id: 'icons', label: 'Icons', svg: fpSvg('<circle cx="6" cy="6" r="1.5"/><circle cx="12" cy="6" r="1.5"/><circle cx="18" cy="6" r="1.5"/><circle cx="6" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="18" cy="12" r="1.5"/><circle cx="6" cy="18" r="1.5"/><circle cx="12" cy="18" r="1.5"/><circle cx="18" cy="18" r="1.5"/>') },
       { id: 'colors', label: 'Colors', svg: fpSvg('<path d="M4 6h16v4H4zM4 12h12v4H4zM4 18h10v4H4z"/>') },
-      { id: 'illustrations', label: 'Illustrations', svg: fpSvg('<rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/>') },
     ];
     var FP_CONTEXTS = [
-      { id: 'startup', label: 'Startup', head: 'Ship the vision.', body: 'Iterate in public. Pair a strong display face with a calm UI font for decks, product, and landing pages.', hint: 5 },
-      { id: 'work', label: 'Work / corporate', head: 'Clarity at scale.', body: 'Reports, dashboards, and docs need hierarchy without noise. Favor legible serifs or grotesks with a neutral sans.', hint: 1 },
-      { id: 'wedding', label: 'Wedding', head: 'Together.', body: 'Invitations and sites call for warmth. Script or high-contrast serif headlines with a light sans for details.', hint: 2 },
+      { id: 'startup', label: 'Startup', head: 'Ship the vision.', body: 'Iterate in public. Pair a strong display face with a calm UI font for decks, product, and landing pages.', hint: 4 },
+      { id: 'work', label: 'Work / corporate', head: 'Clarity at scale.', body: 'Reports, dashboards, and docs need hierarchy without noise. Favor legible serifs or grotesks with a neutral sans.', hint: 7 },
+      { id: 'wedding', label: 'Wedding', head: 'Together.', body: 'Invitations and sites call for warmth. Script or high-contrast serif headlines with a light sans for details.', hint: 1 },
       { id: 'birthday', label: 'Birthday / party', head: 'Make it pop.', body: 'Posters and invites can go bolder. Display + geometric sans keeps RSVP blocks readable.', hint: 3 },
-      { id: 'education', label: 'Education', head: 'Learn by doing.', body: 'Course hubs and readers need long-form comfort. A sturdy serif body with a friendly sans for nav works well.', hint: 1 },
-      { id: 'nonprofit', label: 'Non-profit', head: 'Every voice counts.', body: 'Mission sites balance emotion and trust. Pair an expressive headline with an accessible sans for stories and CTAs.', hint: 2 },
-      { id: 'ecommerce', label: 'E-commerce', head: 'New drop.', body: 'Shop the edit.', hint: 4 },
-      { id: 'church', label: 'Church', head: 'Gather.', body: 'Event schedules and sermons online: traditional serif headlines with a simple sans for times and links.', hint: 2 },
-      { id: 'fashion', label: 'Fashion', head: 'The line.', body: 'Lookbooks reward contrast—tight display typography and a minimal grotesk for sizes and care copy.', hint: 6 },
-      { id: 'healthcare', label: 'Healthcare', head: 'Care, explained.', body: 'Patient-facing UI favors neutral sans pairs with clear hierarchy; reserve display for hero moments only.', hint: 7 },
+      { id: 'education', label: 'Education', head: 'Learn by doing.', body: 'Course hubs and readers need long-form comfort. A sturdy serif body with a friendly sans for nav works well.', hint: 2 },
+      { id: 'nonprofit', label: 'Non-profit', head: 'Every voice counts.', body: 'Mission sites balance emotion and trust. Pair an expressive headline with an accessible sans for stories and CTAs.', hint: 1 },
+      { id: 'ecommerce', label: 'E-commerce', head: 'New drop.', body: 'Shop the edit.', hint: 5 },
+      { id: 'church', label: 'Church', head: 'Gather.', body: 'Event schedules and sermons online: traditional serif headlines with a simple sans for times and links.', hint: 11 },
+      { id: 'fashion', label: 'Fashion', head: 'The line.', body: 'Lookbooks reward contrast—tight display typography and a minimal grotesk for sizes and care copy.', hint: 8 },
+      { id: 'healthcare', label: 'Healthcare', head: 'Care, explained.', body: 'Patient-facing UI favors neutral sans pairs with clear hierarchy; reserve display for hero moments only.', hint: 6 },
       { id: 'realestate', label: 'Real estate', head: 'Your next address.', body: 'Listings and tours: confident headline + readable sans for specs, maps, and disclosures.', hint: 0 },
       { id: 'restaurant', label: 'Restaurant', head: 'Tonight’s menu.', body: 'Menus and sites: appetizing display for titles, clean sans for ingredients, hours, and reservations.', hint: 3 },
     ];
@@ -1245,28 +1904,45 @@
       FONT_PAIRS.map(function (p, i) {
         return '<option value="' + i + '">' + p.h + ' + ' + p.b + '</option>';
       }).join('');
-    var mediumBtns = FP_MEDIUMS.map(function (m, i) {
+    var FP_MEDIUM_DEFAULTS = {
+      website: {
+        head: 'Build beautiful products faster.',
+        body: 'Ship a calm, confident landing page with clear hierarchy and room to breathe.',
+      },
+      mobile: { head: 'Good morning', body: 'Tuesday · 3 updates waiting for you.' },
+      'ui-grid': { head: 'Dashboard', body: 'KPIs, activity, and files at a glance.' },
+      slides: { head: 'Q3 narrative', body: 'Three bullets your team will actually remember.' },
+      social: { head: 'Build. Ship. Scale.', body: 'Just launched our new feature! Check it out.' },
+      newsletter: {
+        head: 'Weekly brief',
+        body: 'The most important links and numbers from this week, in one scroll.',
+      },
+      'business-card': { head: 'Alex Rivera', body: 'Creative Director · studio.co' },
+      logo: { head: 'Overprint', body: 'Design utilities' },
+      'type-scale': { head: 'Display', body: 'Paragraph 01 · long-form rhythm for readers.' },
+      icons: { head: 'Icon sample', body: 'Glyph stress test at small sizes.' },
+      colors: { head: 'Palette', body: 'Overprint tokens and your accent preview.' },
+    };
+    var mediumOpts = FP_MEDIUMS.map(function (m, i) {
       return (
-        '<button type="button" class="fp-rail-item' +
-        (i === 0 ? ' is-active' : '') +
-        '" data-medium="' +
+        '<option value="' +
         m.id +
-        '">' +
-        m.svg +
-        '<span class="fp-rail-txt">' +
+        '"' +
+        (i === 0 ? ' selected' : '') +
+        '>' +
         m.label +
-        '</span></button>'
+        '</option>'
       );
     }).join('');
-    var contextBtns = FP_CONTEXTS.map(function (c, i) {
+    var contextOpts = FP_CONTEXTS.map(function (c, i) {
       return (
-        '<button type="button" class="fp-rail-item' +
-        (i === 0 ? ' is-active' : '') +
-        '" data-context="' +
+        '<option value="' +
         c.id +
-        '"><span class="fp-rail-txt">' +
+        '"' +
+        (i === 0 ? ' selected' : '') +
+        '>' +
         c.label +
-        '</span></button>'
+        '</option>'
       );
     }).join('');
     var accentHex = ['#00b4d8', '#e040a0', '#f0d020', '#f59e0b', '#22c55e', '#a78bfa'];
@@ -1285,44 +1961,264 @@
         );
       })
       .join('');
+    var svgDl =
+      '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 12l5 5 5-5"/><path d="M5 21h14"/></svg>';
+    var svgChev =
+      '<svg class="fp-xbtn__chev" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
+    var fpLayouts =
+      '<div class="fp-layout fp-layout--website">' +
+      '<div class="fp-browser">' +
+      '<div class="fp-browser-chrome">' +
+      '<span class="fp-browser-dots"><i></i><i></i><i></i></span>' +
+      '<span class="fp-t-b fp-editable fp-browser-url">yoursite.com</span>' +
+      '</div>' +
+      '<div class="fp-browser-body">' +
+      '<nav class="fp-web-nav">' +
+      '<span class="fp-t-h fp-editable fp-web-brand">Acme</span>' +
+      '<div class="fp-web-nav-links">' +
+      '<span class="fp-t-b fp-editable">Features</span>' +
+      '<span class="fp-t-b fp-editable">Pricing</span>' +
+      '<span class="fp-t-b fp-editable">Blog</span>' +
+      '<span class="fp-t-b fp-editable">About</span>' +
+      '</div>' +
+      '<span class="fp-t-h fp-editable fp-web-cta-chip">Get started</span>' +
+      '</nav>' +
+      '<section class="fp-web-hero">' +
+      '<h2 class="fp-t-h fp-editable" data-fp-role="headline">Build beautiful products faster</h2>' +
+      '<p class="fp-t-b fp-editable" data-fp-role="body">Ship a calm, confident landing page with clear hierarchy and room to breathe.</p>' +
+      '<div class="fp-web-hero-btns">' +
+      '<span class="fp-web-btn-pri fp-t-h fp-editable">Start free trial</span>' +
+      '<span class="fp-web-btn-sec fp-t-b fp-editable">Watch demo \\u2192</span>' +
+      '</div></section>' +
+      '<div class="fp-web-stats">' +
+      '<div class="fp-web-stat"><span class="fp-web-stat-num fp-t-h fp-editable">10k+</span><span class="fp-web-stat-label fp-t-b fp-editable">Users</span></div>' +
+      '<div class="fp-web-stat"><span class="fp-web-stat-num fp-t-h fp-editable">99.9%</span><span class="fp-web-stat-label fp-t-b fp-editable">Uptime</span></div>' +
+      '<div class="fp-web-stat"><span class="fp-web-stat-num fp-t-h fp-editable">4.9\\u2605</span><span class="fp-web-stat-label fp-t-b fp-editable">Rating</span></div>' +
+      '</div>' +
+      '<div class="fp-web-features">' +
+      '<article class="fp-web-feat"><div class="fp-web-feat-ico"></div><span class="fp-t-h fp-editable">Analytics</span><span class="fp-t-b fp-editable">Real-time dashboards with the metrics that matter most.</span></article>' +
+      '<article class="fp-web-feat"><div class="fp-web-feat-ico"></div><span class="fp-t-h fp-editable">Automation</span><span class="fp-t-b fp-editable">Workflows that save your team hours every single week.</span></article>' +
+      '<article class="fp-web-feat"><div class="fp-web-feat-ico"></div><span class="fp-t-h fp-editable">Integrations</span><span class="fp-t-b fp-editable">Connect the tools you already use and love in minutes.</span></article>' +
+      '</div>' +
+      '<div class="fp-web-mid">' +
+      '<h3 class="fp-t-h fp-editable">Ready to launch?</h3>' +
+      '<p class="fp-t-b fp-editable" style="font-size:10px;opacity:.65;margin:4px 0 10px">Join thousands of teams shipping faster.</p>' +
+      '<span class="fp-web-btn-pri fp-t-h fp-editable">Start your free trial</span>' +
+      '</div>' +
+      '<footer class="fp-web-footer">' +
+      '<div class="fp-web-footcol"><span class="fp-t-h fp-editable" style="font-size:11px;font-weight:800">Acme</span><span class="fp-t-b fp-editable">Build products people love.</span></div>' +
+      '<div class="fp-web-footcol"><span class="fp-t-h fp-editable">Product</span><span class="fp-t-b fp-editable">Features</span><span class="fp-t-b fp-editable">Pricing</span><span class="fp-t-b fp-editable">Changelog</span></div>' +
+      '<div class="fp-web-footcol"><span class="fp-t-h fp-editable">Company</span><span class="fp-t-b fp-editable">About</span><span class="fp-t-b fp-editable">Careers</span><span class="fp-t-b fp-editable">Blog</span></div>' +
+      '<div class="fp-web-footcol"><span class="fp-t-h fp-editable">Legal</span><span class="fp-t-b fp-editable">Privacy</span><span class="fp-t-b fp-editable">Terms</span></div>' +
+      '</footer></div></div></div>' +
+      '<div class="fp-layout fp-layout--mobile">' +
+      '<div class="fp-phone"><div class="fp-phone-bar"></div><div class="fp-phone-screen">' +
+      '<div class="fp-phone-status"><span class="fp-t-b">9:41</span><div class="fp-phone-status-right"><span class="fp-status-pill fp-t-b">\\u2022\\u2022\\u2022\\u2022</span><svg width="12" height="10" viewBox="0 0 16 12" fill="currentColor" opacity=".6"><path d="M1 8h2v4H1zM5 5h2v7H5zM9 2h2v10H9zM13 0h2v12h-2z"/></svg></div></div>' +
+      '<h2 class="fp-t-h fp-editable fp-mob-greet" data-fp-role="headline">Good morning</h2>' +
+      '<p class="fp-t-b fp-editable fp-mob-sub" data-fp-role="body">Tuesday \\u00b7 3 updates waiting for you</p>' +
+      '<div class="fp-mob-search"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span class="fp-t-b fp-editable">Search</span></div>' +
+      '<div class="fp-mob-actions">' +
+      '<div class="fp-mob-act"><i></i><span class="fp-t-b fp-editable">Send</span></div>' +
+      '<div class="fp-mob-act"><i></i><span class="fp-t-b fp-editable">Pay</span></div>' +
+      '<div class="fp-mob-act"><i></i><span class="fp-t-b fp-editable">Cards</span></div>' +
+      '<div class="fp-mob-act"><i></i><span class="fp-t-b fp-editable">More</span></div>' +
+      '</div>' +
+      '<div class="fp-mob-list-head fp-t-b fp-editable">Recent activity</div>' +
+      '<div class="fp-mob-row"><div class="fp-mob-av"></div><span class="fp-t-h fp-editable">Jada</span><span class="fp-t-b fp-editable">Invoice paid</span><span class="fp-mob-time fp-t-b">2m</span></div>' +
+      '<div class="fp-mob-row"><div class="fp-mob-av"></div><span class="fp-t-h fp-editable">Phil</span><span class="fp-t-b fp-editable">Comment on deck</span><span class="fp-mob-time fp-t-b">15m</span></div>' +
+      '<div class="fp-mob-row"><div class="fp-mob-av"></div><span class="fp-t-h fp-editable">Mia</span><span class="fp-t-b fp-editable">Shared a file</span><span class="fp-mob-time fp-t-b">1h</span></div>' +
+      '<nav class="fp-phone-tabbar">' +
+      '<div class="fp-phone-tab is-active"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span class="fp-t-b">Home</span></div>' +
+      '<div class="fp-phone-tab"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span class="fp-t-b">Search</span></div>' +
+      '<div class="fp-phone-tab"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="fp-t-b">Activity</span></div>' +
+      '<div class="fp-phone-tab"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span class="fp-t-b">Profile</span></div>' +
+      '</nav>' +
+      '</div></div></div>' +
+      '<div class="fp-layout fp-layout--social">' +
+      '<div class="fp-phone"><div class="fp-phone-bar"></div><div class="fp-phone-screen">' +
+      '<div class="fp-phone-status"><span class="fp-t-b">9:41</span><div class="fp-phone-status-right"><svg width="12" height="10" viewBox="0 0 16 12" fill="currentColor" opacity=".6"><path d="M1 8h2v4H1zM5 5h2v7H5zM9 2h2v10H9zM13 0h2v12h-2z"/></svg></div></div>' +
+      '<div class="fp-soc-stories">' +
+      '<div class="fp-soc-story"><i></i><span class="fp-t-b fp-editable">You</span></div>' +
+      '<div class="fp-soc-story"><i></i><span class="fp-t-b fp-editable">Mia</span></div>' +
+      '<div class="fp-soc-story"><i></i><span class="fp-t-b fp-editable">Leo</span></div>' +
+      '<div class="fp-soc-story"><i></i><span class="fp-t-b fp-editable">Ava</span></div>' +
+      '</div>' +
+      '<div class="fp-soc-post">' +
+      '<div class="fp-soc-post-top"><div class="fp-soc-av"></div><span class="fp-t-h fp-editable">studio.acme</span><span class="fp-soc-post-menu">\\u2022\\u2022\\u2022</span></div>' +
+      '<div class="fp-soc-photo"><span class="fp-t-h fp-editable" data-fp-role="headline">Build. Ship. Scale.</span></div>' +
+      '<div class="fp-soc-actions"><svg class="fp-soc-action" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg><svg class="fp-soc-action" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><svg class="fp-soc-action" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg><svg class="fp-soc-action fp-soc-action--save" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></div>' +
+      '<div class="fp-soc-likes fp-t-h fp-editable">1,847 likes</div>' +
+      '<div class="fp-soc-caption"><strong class="fp-t-h fp-editable">studio.acme</strong> <span class="fp-t-b fp-editable" data-fp-role="body">Just launched our new feature! Check it out \\u2728</span></div>' +
+      '<div class="fp-soc-time fp-t-b fp-editable">2 hours ago</div>' +
+      '</div></div></div></div>' +
+      '<div class="fp-layout fp-layout--ui-grid">' +
+      '<div class="fp-browser">' +
+      '<div class="fp-browser-chrome">' +
+      '<span class="fp-browser-dots"><i></i><i></i><i></i></span>' +
+      '<span class="fp-t-b fp-editable fp-browser-url">app.acme.com/dashboard</span>' +
+      '</div>' +
+      '<div class="fp-browser-body fp-dash-body">' +
+      '<div class="fp-dash-sidebar">' +
+      '<span class="fp-dash-logo fp-t-h fp-editable" style="font-weight:800;font-size:11px;margin-bottom:16px;display:block">Acme</span>' +
+      '<span class="fp-dash-nav-item fp-t-b fp-editable is-active">Dashboard</span>' +
+      '<span class="fp-dash-nav-item fp-t-b fp-editable">Projects</span>' +
+      '<span class="fp-dash-nav-item fp-t-b fp-editable">Team</span>' +
+      '<span class="fp-dash-nav-item fp-t-b fp-editable">Settings</span>' +
+      '</div>' +
+      '<div class="fp-dash-main">' +
+      '<h2 class="fp-t-h fp-editable fp-dash-title" data-fp-role="headline">Dashboard</h2>' +
+      '<p class="fp-t-b fp-editable fp-dash-lead" data-fp-role="body">KPIs, activity, and files at a glance.</p>' +
+      '<div class="fp-dash-stats">' +
+      '<div class="fp-dash-stat"><span class="fp-dash-stat-num fp-t-h fp-editable">2,847</span><span class="fp-dash-stat-label fp-t-b fp-editable">Total users</span><span class="fp-dash-stat-trend fp-t-b">+12.5%</span></div>' +
+      '<div class="fp-dash-stat"><span class="fp-dash-stat-num fp-t-h fp-editable">$48.2k</span><span class="fp-dash-stat-label fp-t-b fp-editable">Revenue</span><span class="fp-dash-stat-trend fp-t-b">+8.1%</span></div>' +
+      '<div class="fp-dash-stat"><span class="fp-dash-stat-num fp-t-h fp-editable">94.2%</span><span class="fp-dash-stat-label fp-t-b fp-editable">Satisfaction</span><span class="fp-dash-stat-trend fp-t-b">+2.3%</span></div>' +
+      '<div class="fp-dash-stat"><span class="fp-dash-stat-num fp-t-h fp-editable">1,204</span><span class="fp-dash-stat-label fp-t-b fp-editable">Active now</span><span class="fp-dash-stat-trend fp-dash-stat-trend--live fp-t-b">\\u2022 Live</span></div>' +
+      '</div>' +
+      '<div class="fp-dash-activity">' +
+      '<span class="fp-dash-section-head fp-t-h fp-editable">Recent activity</span>' +
+      '<div class="fp-dash-row"><span class="fp-dash-row-dot"></span><span class="fp-t-b fp-editable">New signup from <strong>alex@company.co</strong></span><span class="fp-dash-row-time fp-t-b">2m ago</span></div>' +
+      '<div class="fp-dash-row"><span class="fp-dash-row-dot"></span><span class="fp-t-b fp-editable">Invoice #1042 paid \\u2014 $2,400</span><span class="fp-dash-row-time fp-t-b">15m ago</span></div>' +
+      '<div class="fp-dash-row"><span class="fp-dash-row-dot"></span><span class="fp-t-b fp-editable">Deploy v2.4.1 completed successfully</span><span class="fp-dash-row-time fp-t-b">1h ago</span></div>' +
+      '</div>' +
+      '</div></div></div></div>' +
+      '<div class="fp-layout fp-layout--slides">' +
+      '<div class="fp-slide">' +
+      '<div class="fp-slide-bar"></div>' +
+      '<h2 class="fp-t-h fp-editable" data-fp-role="headline">Q3 narrative</h2>' +
+      '<p class="fp-t-b fp-editable fp-slide-lead" data-fp-role="body">One line that frames the slide before the bullets.</p>' +
+      '<ul class="fp-slide-list">' +
+      '<li class="fp-t-b fp-editable">North star metric up 18% week over week</li>' +
+      '<li class="fp-t-b fp-editable">Shipped onboarding v2 to 40% of users</li>' +
+      '<li class="fp-t-b fp-editable">Hiring: 2 senior product designers</li>' +
+      '</ul>' +
+      '<div class="fp-slide-footer"><span class="fp-slide-num fp-t-b fp-editable">03</span><div class="fp-slide-dots"><span class="fp-slide-dot"></span><span class="fp-slide-dot"></span><span class="fp-slide-dot is-active"></span><span class="fp-slide-dot"></span><span class="fp-slide-dot"></span></div><span class="fp-slide-nav fp-t-b">\\u2192</span></div>' +
+      '</div></div>' +
+      '<div class="fp-layout fp-layout--newsletter">' +
+      '<div class="fp-email">' +
+      '<div class="fp-email-header"><div class="fp-email-mark"></div><span class="fp-t-h fp-editable fp-email-pub">The Weekly</span></div>' +
+      '<div class="fp-email-meta fp-t-b fp-editable">Issue 12 \\u00b7 September 2024</div>' +
+      '<h2 class="fp-t-h fp-editable" data-fp-role="headline">Weekly brief</h2>' +
+      '<p class="fp-t-b fp-editable" data-fp-role="body">The most important links and numbers from this week, in one scroll. Curated for builders.</p>' +
+      '<span class="fp-email-cta fp-t-h fp-editable">Read the full story</span>' +
+      '<div class="fp-email-divider"></div>' +
+      '<div class="fp-email-block fp-t-b fp-editable">In other news \\u2014 we shipped three features, opened two roles, and hosted a community AMA.</div>' +
+      '<div class="fp-email-footer fp-t-b fp-editable">Unsubscribe \\u00b7 Manage preferences \\u00b7 View in browser</div>' +
+      '</div></div>' +
+      '<div class="fp-layout fp-layout--business-card">' +
+      '<div class="fp-bc-card">' +
+      '<div class="fp-bc-accent"></div>' +
+      '<div class="fp-bc-layout">' +
+      '<div class="fp-bc-info">' +
+      '<h2 class="fp-t-h fp-editable" data-fp-role="headline">Alex Rivera</h2>' +
+      '<p class="fp-t-b fp-editable" data-fp-role="body">Creative Director</p>' +
+      '</div>' +
+      '<div class="fp-bc-mark"></div>' +
+      '</div>' +
+      '<div class="fp-bc-divider"></div>' +
+      '<div class="fp-bc-details">' +
+      '<div class="fp-bc-detail"><span class="fp-bc-detail-dot"></span><span class="fp-t-b fp-editable">alex@studio.co</span></div>' +
+      '<div class="fp-bc-detail"><span class="fp-bc-detail-dot"></span><span class="fp-t-b fp-editable">+1 (555) 000-0000</span></div>' +
+      '<div class="fp-bc-detail"><span class="fp-bc-detail-dot"></span><span class="fp-t-b fp-editable">studio.co</span></div>' +
+      '</div>' +
+      '</div></div>' +
+      '<div class="fp-layout fp-layout--logo">' +
+      '<div class="fp-logo-lockup">' +
+      '<div class="fp-logo-mark"></div>' +
+      '<h2 class="fp-t-h fp-editable" data-fp-role="headline">Overprint</h2>' +
+      '<div class="fp-logo-rule"></div>' +
+      '<p class="fp-t-b fp-editable" data-fp-role="body">Design utilities</p>' +
+      '<span class="fp-logo-est fp-t-b fp-editable">Est. 2024</span>' +
+      '</div></div>' +
+      '<div class="fp-layout fp-layout--type-scale">' +
+      '<div class="fp-ts">' +
+      '<div class="fp-ts-row fp-t-h fp-editable fp-ts-d1" data-fp-role="headline">Display</div>' +
+      '<hr class="fp-ts-hr"/>' +
+      '<div class="fp-ts-row fp-t-h fp-editable fp-ts-d2">Heading 1</div>' +
+      '<div class="fp-ts-row fp-t-h fp-editable fp-ts-d3">Heading 2</div>' +
+      '<div class="fp-ts-row fp-t-h fp-editable fp-ts-d4">Heading 3</div>' +
+      '<div class="fp-ts-row fp-t-h fp-editable fp-ts-d5">Heading 4</div>' +
+      '<hr class="fp-ts-hr"/>' +
+      '<div class="fp-ts-row fp-t-b fp-editable fp-ts-p1" data-fp-role="body">Paragraph 01 \\u00b7 long-form rhythm for readers and article body text.</div>' +
+      '<div class="fp-ts-row fp-t-b fp-editable fp-ts-p2">Paragraph 02 \\u00b7 secondary copy for supporting descriptions.</div>' +
+      '<div class="fp-ts-row fp-t-b fp-editable fp-ts-p3">Paragraph 03 \\u00b7 captions, meta lines, and timestamps.</div>' +
+      '<div class="fp-ts-row fp-t-b fp-editable fp-ts-p4">Paragraph 04 \\u00b7 fine print, legal, and footnotes.</div>' +
+      '</div></div>' +
+      '<div class="fp-layout fp-layout--icons">' +
+      '<div class="fp-icons-head">' +
+      '<h3 class="fp-t-h fp-editable" data-fp-role="headline">Icon sample</h3>' +
+      '<p class="fp-t-b fp-editable" data-fp-role="body">Glyph stress test at small sizes.</p></div>' +
+      '<div class="fp-icondemo">' +
+      '<span class="fp-t-h fp-editable">Aa</span>' +
+      '<span class="fp-t-h fp-editable">Bb</span>' +
+      '<span class="fp-t-h fp-editable">Gg</span>' +
+      '<span class="fp-t-h fp-editable">Qq</span>' +
+      '<span class="fp-t-h fp-editable">Rr</span>' +
+      '<span class="fp-t-h fp-editable">\\u03c0</span>' +
+      '<span class="fp-t-h fp-editable">\\u00a7</span>' +
+      '<span class="fp-t-h fp-editable">01</span>' +
+      '<span class="fp-t-h fp-editable">&amp;</span>' +
+      '<span class="fp-t-h fp-editable">@</span>' +
+      '</div></div>' +
+      '<div class="fp-layout fp-layout--colors">' +
+      '<div class="fp-colors-head">' +
+      '<h3 class="fp-t-h fp-editable" data-fp-role="headline">Palette</h3>' +
+      '<p class="fp-t-b fp-editable" data-fp-role="body">Overprint tokens and your accent preview.</p></div>' +
+      '<div class="fp-palette" id="fp-palette" aria-label="Color tokens">' +
+      '<div class="fp-palette-row" data-fp-var="--bg" style="background:var(--bg)">' +
+      '<span class="fp-palette-row__label fp-t-h">Background</span>' +
+      '<div class="fp-palette-row__meta"><span class="fp-palette-line fp-palette-hex fp-mono"></span><span class="fp-palette-line fp-palette-rgb fp-mono"></span><span class="fp-palette-line fp-palette-cmyk fp-mono"></span></div></div>' +
+      '<div class="fp-palette-row" data-fp-var="--s1" style="background:var(--s1)">' +
+      '<span class="fp-palette-row__label fp-t-h">Surface</span>' +
+      '<div class="fp-palette-row__meta"><span class="fp-palette-line fp-palette-hex fp-mono"></span><span class="fp-palette-line fp-palette-rgb fp-mono"></span><span class="fp-palette-line fp-palette-cmyk fp-mono"></span></div></div>' +
+      '<div class="fp-palette-row" data-fp-var="--text-hi" style="background:var(--text-hi)">' +
+      '<span class="fp-palette-row__label fp-t-h">Text</span>' +
+      '<div class="fp-palette-row__meta"><span class="fp-palette-line fp-palette-hex fp-mono"></span><span class="fp-palette-line fp-palette-rgb fp-mono"></span><span class="fp-palette-line fp-palette-cmyk fp-mono"></span></div></div>' +
+      '<div class="fp-palette-row" data-fp-var="--border" style="background:var(--border)">' +
+      '<span class="fp-palette-row__label fp-t-h">Border</span>' +
+      '<div class="fp-palette-row__meta"><span class="fp-palette-line fp-palette-hex fp-mono"></span><span class="fp-palette-line fp-palette-rgb fp-mono"></span><span class="fp-palette-line fp-palette-cmyk fp-mono"></span></div></div>' +
+      '<div class="fp-palette-row" data-fp-var="--C" style="background:var(--C)">' +
+      '<span class="fp-palette-row__label fp-t-h">Cyan</span>' +
+      '<div class="fp-palette-row__meta"><span class="fp-palette-line fp-palette-hex fp-mono"></span><span class="fp-palette-line fp-palette-rgb fp-mono"></span><span class="fp-palette-line fp-palette-cmyk fp-mono"></span></div></div>' +
+      '<div class="fp-palette-row fp-palette-row--accent" data-fp-var="--fp-accent" style="background:var(--fp-accent,var(--C))">' +
+      '<span class="fp-palette-row__label fp-t-h">Accent</span>' +
+      '<div class="fp-palette-row__meta"><span class="fp-palette-line fp-palette-hex fp-mono"></span><span class="fp-palette-line fp-palette-rgb fp-mono"></span><span class="fp-palette-line fp-palette-cmyk fp-mono"></span></div></div>' +
+      '</div></div>';
     iface.innerHTML =
       '<div class="tool-stack fp-workbench">' +
       '<div class="fp-shell">' +
-      '<aside class="fp-rail fp-rail--left" aria-label="Medium">' +
-      '<div class="fp-rail-head">Medium</div>' +
-      '<div class="fp-rail-scroll">' +
-      mediumBtns +
-      '</div></aside>' +
+      '<div class="fp-work">' +
+      '<header class="fp-topbar">' +
+      '<div class="fp-topbar__pickers">' +
+      '<label class="fp-dd fp-dd--medium">' +
+      FP_MEDIUMS[0].svg +
+      '<select id="fp-medium" class="fp-dd__select" aria-label="Medium">' +
+      mediumOpts +
+      '</select></label>' +
+      '<label class="fp-dd fp-dd--context">' +
+      '<select id="fp-context" class="fp-dd__select" aria-label="Context">' +
+      contextOpts +
+      '</select></label>' +
+      '</div>' +
+      '<div class="fp-topbar__export">' +
+      '<div class="fp-export-wrap" id="fp-export-wrap">' +
+      '<button type="button" class="fp-xbtn fp-xbtn--export" id="fp-export-toggle" aria-expanded="false" aria-haspopup="true">' +
+      svgDl +
+      '<span>Export code</span>' +
+      svgChev +
+      '</button>' +
+      '<div class="fp-export-menu" id="fp-export-menu" hidden>' +
+      '<button type="button" id="fp-exp-copy">Copy CSS</button>' +
+      '<button type="button" id="fp-exp-dl">Download .css file</button>' +
+      '</div></div>' +
+      '<button type="button" class="fp-xbtn fp-xbtn--brand" id="fp-brand-kit">' +
+      svgDl +
+      '<span>Brand Kit</span>' +
+      '</button>' +
+      '</div></header>' +
       '<main class="fp-canvas" aria-label="Preview">' +
       '<div class="fp-stage" id="fp-stage" data-medium="website">' +
-      '<div class="fp-card">' +
-      '<div class="fp-card-accent"></div>' +
-      '<div class="fp-scale" id="fp-scale">' +
-      '<div class="fp-sc fp-editable" id="fp-sc1" contenteditable="plaintext-only" spellcheck="false">Display</div>' +
-      '<div class="fp-sc fp-editable" id="fp-sc2" contenteditable="plaintext-only" spellcheck="false">Heading</div>' +
-      '<div class="fp-sc fp-editable" id="fp-sc3" contenteditable="plaintext-only" spellcheck="false">Subhead</div>' +
-      '<div class="fp-sc fp-editable" id="fp-sc4" contenteditable="plaintext-only" spellcheck="false">Caption</div>' +
-      '</div>' +
-      '<h2 class="fp-h fp-editable" id="fp-h" contenteditable="plaintext-only" spellcheck="false">Ship the vision.</h2>' +
-      '<p class="fp-b fp-editable" id="fp-b" contenteditable="plaintext-only" spellcheck="false">Iterate in public. Pair a strong display face with a calm UI font for decks, product, and landing pages.</p>' +
-      '<div class="fp-uigrid" id="fp-uigrid">' +
-      '<div class="fp-uic"><span class="fp-line-h fp-editable" contenteditable="plaintext-only" spellcheck="false">Overview</span><span class="fp-line-b fp-editable" contenteditable="plaintext-only" spellcheck="false">Status, owners, and timeline in one glance.</span></div>' +
-      '<div class="fp-uic"><span class="fp-line-h fp-editable" contenteditable="plaintext-only" spellcheck="false">Activity</span><span class="fp-line-b fp-editable" contenteditable="plaintext-only" spellcheck="false">Latest comments sync across the team.</span></div>' +
-      '<div class="fp-uic"><span class="fp-line-h fp-editable" contenteditable="plaintext-only" spellcheck="false">Files</span><span class="fp-line-b fp-editable" contenteditable="plaintext-only" spellcheck="false">Assets stay versioned beside the brief.</span></div>' +
-      '<div class="fp-uic"><span class="fp-line-h fp-editable" contenteditable="plaintext-only" spellcheck="false">Settings</span><span class="fp-line-b fp-editable" contenteditable="plaintext-only" spellcheck="false">Roles, exports, and brand tokens.</span></div>' +
-      '</div>' +
-      '<div class="fp-icondemo" id="fp-icondemo">' +
-      '<span class="fp-editable" contenteditable="plaintext-only" spellcheck="false">Aa</span>' +
-      '<span class="fp-editable" contenteditable="plaintext-only" spellcheck="false">Bb</span>' +
-      '<span class="fp-editable" contenteditable="plaintext-only" spellcheck="false">Ag</span>' +
-      '<span class="fp-editable" contenteditable="plaintext-only" spellcheck="false">π</span>' +
-      '<span class="fp-editable" contenteditable="plaintext-only" spellcheck="false">01</span>' +
-      '</div>' +
-      '<div class="fp-swatches" id="fp-swatches">' +
-      '<i style="background:#0c0c10"></i><i style="background:#fafafa"></i><i style="background:var(--fp-accent,var(--C))"></i><i style="background:#444"></i>' +
-      '</div>' +
-      '<div class="fp-illu" id="fp-illu"><div></div><div></div><div></div><div></div></div>' +
-      '</div></div></main>' +
+      fpLayouts +
+      '</div></main></div>' +
       '<aside class="fp-rail fp-rail--right fp-rail--props" aria-label="Properties">' +
       '<div class="fp-props-tabs" role="tablist">' +
       '<button type="button" class="fp-tab is-active" role="tab" aria-selected="true" data-tab="design" id="fp-tab-design">Design</button>' +
@@ -1330,11 +2226,6 @@
       '</div>' +
       '<div class="fp-props-scroll">' +
       '<div class="fp-props-panel" id="fp-panel-design" role="tabpanel" aria-labelledby="fp-tab-design">' +
-      '<div class="fp-prop-section">' +
-      '<div class="fp-prop-section__head">Context</div>' +
-      '<div class="fp-context-list">' +
-      contextBtns +
-      '</div></div>' +
       '<div class="fp-prop-section">' +
       '<div class="fp-prop-section__head">Typography</div>' +
       '<div class="tool-field"><span class="tool-label">Curated set</span>' +
@@ -1364,17 +2255,40 @@
     link.rel = 'stylesheet';
     document.head.appendChild(link);
     var stage = iface.querySelector('#fp-stage');
-    var elH = iface.querySelector('#fp-h');
-    var elB = iface.querySelector('#fp-b');
+    (function enableFpStageEditables() {
+      var probe = document.createElement('div');
+      probe.contentEditable = 'plaintext-only';
+      var usePlain = probe.contentEditable === 'plaintext-only';
+      stage.querySelectorAll('.fp-editable').forEach(function (n) {
+        n.setAttribute('spellcheck', 'false');
+        n.contentEditable = usePlain ? 'plaintext-only' : 'true';
+      });
+    })();
+    var selMedium = iface.querySelector('#fp-medium');
+    var selContext = iface.querySelector('#fp-context');
     var selCur = iface.querySelector('#fp-curated');
     var selHead = iface.querySelector('#fp-head');
     var selBody = iface.querySelector('#fp-body');
     var preCss = iface.querySelector('#fp-css');
-    var sc1 = iface.querySelector('#fp-sc1');
-    var sc2 = iface.querySelector('#fp-sc2');
-    var sc3 = iface.querySelector('#fp-sc3');
-    var sc4 = iface.querySelector('#fp-sc4');
+    var exportMenu = iface.querySelector('#fp-export-menu');
+    var exportToggle = iface.querySelector('#fp-export-toggle');
+    var exportWrap = iface.querySelector('#fp-export-wrap');
     var currentAccent = '#f59e0b';
+    function primaryEls(medium) {
+      var L = stage.querySelector('.fp-layout--' + medium);
+      if (!L) return { h: null, b: null };
+      return {
+        h: L.querySelector('[data-fp-role="headline"]'),
+        b: L.querySelector('[data-fp-role="body"]'),
+      };
+    }
+    function setPrimaryFromDefaults(medium) {
+      var d = FP_MEDIUM_DEFAULTS[medium];
+      if (!d) return;
+      var P = primaryEls(medium);
+      if (P.h) P.h.textContent = d.head;
+      if (P.b) P.b.textContent = d.body;
+    }
     function setAccent(hex) {
       currentAccent = hex;
       stage.style.setProperty('--fp-accent', hex);
@@ -1402,35 +2316,78 @@
       }
       selCur.value = '-1';
     }
+    function fpParseRgb(s) {
+      var m = (s || '').match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+      if (!m) return { r: 0, g: 0, b: 0 };
+      return { r: +m[1], g: +m[2], b: +m[3] };
+    }
+    function fpRgbToHex(r, g, b) {
+      return (
+        '#' +
+        [r, g, b]
+          .map(function (x) {
+            var h = x.toString(16);
+            return h.length === 1 ? '0' + h : h;
+          })
+          .join('')
+      );
+    }
+    function fpRgbToCmyk(r, g, b) {
+      var rr = r / 255;
+      var gg = g / 255;
+      var bb = b / 255;
+      var k = 1 - Math.max(rr, gg, bb);
+      if (k >= 0.999) return { c: 0, m: 0, y: 0, k: 100 };
+      var c = (1 - rr - k) / (1 - k);
+      var m = (1 - gg - k) / (1 - k);
+      var y = (1 - bb - k) / (1 - k);
+      return {
+        c: Math.round(c * 100),
+        m: Math.round(m * 100),
+        y: Math.round(y * 100),
+        k: Math.round(k * 100),
+      };
+    }
+    function fpRelLum(r, g, b) {
+      var a = [r, g, b].map(function (v) {
+        v /= 255;
+        return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+      });
+      return 0.2126 * a[0] + 0.7152 * a[1] + 0.0722 * a[2];
+    }
+    function refreshFpPalette() {
+      var pal = stage.querySelector('#fp-palette');
+      if (!pal) return;
+      pal.querySelectorAll('.fp-palette-row').forEach(function (row) {
+        var rgbStr = getComputedStyle(row).backgroundColor;
+        var rgb = fpParseRgb(rgbStr);
+        var hex = fpRgbToHex(rgb.r, rgb.g, rgb.b);
+        var cm = fpRgbToCmyk(rgb.r, rgb.g, rgb.b);
+        var h = row.querySelector('.fp-palette-hex');
+        var rb = row.querySelector('.fp-palette-rgb');
+        var ck = row.querySelector('.fp-palette-cmyk');
+        if (h) h.textContent = 'HEX · ' + hex.toUpperCase();
+        if (rb) rb.textContent = 'RGB · ' + rgb.r + ' · ' + rgb.g + ' · ' + rgb.b;
+        if (ck) ck.textContent = 'CMYK · ' + cm.c + '% · ' + cm.m + '% · ' + cm.y + '% · ' + cm.k + '%';
+        var lum = fpRelLum(rgb.r, rgb.g, rgb.b);
+        row.style.color = lum > 0.55 ? '#0a0a10' : '#f4f4f8';
+      });
+    }
+
     function paint() {
       var hName = selHead.value;
       var bName = selBody.value;
       link.href =
         'https://fonts.googleapis.com/css2?family=' +
         encodeURIComponent(hName.replace(/ /g, '+')) +
-        ':wght@400;600;700&family=' +
+        ':wght@300;400;500;600;700&family=' +
         encodeURIComponent(bName.replace(/ /g, '+')) +
-        ':wght@400;500;600&display=swap';
-      elH.style.fontFamily = '"' + hName + '",sans-serif';
-      elB.style.fontFamily = '"' + bName + '",sans-serif';
-      elH.style.fontSize = '';
-      sc1.style.fontFamily = '"' + hName + '",sans-serif';
-      sc2.style.fontFamily = '"' + hName + '",sans-serif';
-      sc3.style.fontFamily = '"' + hName + '",sans-serif';
-      sc4.style.fontFamily = '"' + bName + '",sans-serif';
-      sc1.style.fontSize = 'clamp(1.75rem,4vw,2.25rem)';
-      sc2.style.fontSize = '1.35rem';
-      sc3.style.fontSize = '1.05rem';
-      sc4.style.fontSize = '0.8rem';
-      sc4.style.color = 'var(--text-lo)';
-      iface.querySelectorAll('.fp-uic .fp-line-h').forEach(function (n) {
+        ':wght@300;400;500;600;700&display=swap';
+      stage.querySelectorAll('.fp-t-h').forEach(function (n) {
         n.style.fontFamily = '"' + hName + '",sans-serif';
       });
-      iface.querySelectorAll('.fp-uic .fp-line-b').forEach(function (n) {
+      stage.querySelectorAll('.fp-t-b').forEach(function (n) {
         n.style.fontFamily = '"' + bName + '",sans-serif';
-      });
-      iface.querySelectorAll('.fp-icondemo span').forEach(function (n) {
-        n.style.fontFamily = '"' + hName + '",sans-serif';
       });
       preCss.textContent =
         '@import url("' +
@@ -1442,6 +2399,7 @@
         '", sans-serif; font-weight: 700; }\n.body { font-family: "' +
         bName +
         '", sans-serif; }\n.accent { color: var(--accent); }\n';
+      refreshFpPalette();
     }
     function applyContext(id) {
       var c = null;
@@ -1453,15 +2411,68 @@
         }
       }
       if (!c) return;
-      elH.textContent = c.head;
-      elB.textContent = c.body;
+      var med = stage.getAttribute('data-medium') || 'website';
+      var P = primaryEls(med);
+      if (P.h) P.h.textContent = c.head;
+      if (P.b) P.b.textContent = c.body;
       if (typeof c.hint === 'number' && FONT_PAIRS[c.hint]) {
         selCur.value = String(c.hint);
         applyPairIndex(c.hint);
       }
       paint();
     }
-    applyPairIndex(0);
+    function buildBrandKit() {
+      return (
+        'OVERPRINT · BRAND KIT (Font Pair)\n' +
+        '================================\n\n' +
+        'Google Fonts URL:\n' +
+        link.href +
+        '\n\n' +
+        'Headline font: ' +
+        selHead.value +
+        '\nBody font: ' +
+        selBody.value +
+        '\nAccent: ' +
+        currentAccent +
+        '\nMedium: ' +
+        selMedium.value +
+        '\nContext: ' +
+        selContext.value +
+        '\n\n:root {\n  --font-head: "' +
+        selHead.value +
+        '", sans-serif;\n  --font-body: "' +
+        selBody.value +
+        '", sans-serif;\n  --accent: ' +
+        currentAccent +
+        ';\n}\n'
+      );
+    }
+    var mediumDd = iface.querySelector('.fp-dd--medium');
+    function syncMediumIcon() {
+      var id = selMedium.value;
+      var svgStr = '';
+      var mi;
+      for (mi = 0; mi < FP_MEDIUMS.length; mi++) {
+        if (FP_MEDIUMS[mi].id === id) {
+          svgStr = FP_MEDIUMS[mi].svg;
+          break;
+        }
+      }
+      if (!svgStr || !mediumDd) return;
+      var oldIco = mediumDd.querySelector('.fp-ico');
+      if (oldIco) oldIco.remove();
+      selMedium.insertAdjacentHTML('beforebegin', svgStr);
+    }
+    selMedium.addEventListener('change', function () {
+      var m = selMedium.value;
+      stage.setAttribute('data-medium', m);
+      setPrimaryFromDefaults(m);
+      syncMediumIcon();
+      paint();
+    });
+    selContext.addEventListener('change', function () {
+      applyContext(selContext.value);
+    });
     selCur.addEventListener('change', function () {
       var v = +selCur.value;
       if (v < 0) return;
@@ -1495,25 +2506,39 @@
     tabCss.addEventListener('click', function () {
       setPropsTab('css');
     });
-    iface.querySelectorAll('.fp-rail--left .fp-rail-item').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        iface.querySelectorAll('.fp-rail--left .fp-rail-item').forEach(function (b) {
-          b.classList.remove('is-active');
-        });
-        btn.classList.add('is-active');
-        stage.setAttribute('data-medium', btn.getAttribute('data-medium'));
-        paint();
-      });
+    exportToggle.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var open = exportMenu.hidden;
+      exportMenu.hidden = !open;
+      exportToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
     });
-    iface.querySelectorAll('.fp-rail--right .fp-rail-item').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        iface.querySelectorAll('.fp-rail--right .fp-rail-item').forEach(function (b) {
-          b.classList.remove('is-active');
-        });
-        btn.classList.add('is-active');
-        applyContext(btn.getAttribute('data-context'));
-      });
+    iface.querySelector('#fp-exp-copy').addEventListener('click', function () {
+      OV.copyText(preCss.textContent);
+      exportMenu.hidden = true;
+      exportToggle.setAttribute('aria-expanded', 'false');
     });
+    iface.querySelector('#fp-exp-dl').addEventListener('click', function () {
+      OV.downloadBlob(
+        new Blob([preCss.textContent], { type: 'text/css;charset=utf-8' }),
+        'overprint-font-pair.css'
+      );
+      exportMenu.hidden = true;
+      exportToggle.setAttribute('aria-expanded', 'false');
+    });
+    iface.querySelector('#fp-brand-kit').addEventListener('click', function () {
+      paint();
+      OV.downloadBlob(
+        new Blob([buildBrandKit()], { type: 'text/plain;charset=utf-8' }),
+        'overprint-brand-kit.txt'
+      );
+    });
+    function closeExportMenu(ev) {
+      if (!exportWrap.contains(ev.target)) {
+        exportMenu.hidden = true;
+        exportToggle.setAttribute('aria-expanded', 'false');
+      }
+    }
+    document.addEventListener('click', closeExportMenu);
     iface.querySelector('#fp-accents').addEventListener('click', function (e) {
       var t = e.target.closest('.fp-chip');
       if (!t) return;
@@ -1526,14 +2551,15 @@
       paint();
     });
     OV.addCleanup(function () {
+      document.removeEventListener('click', closeExportMenu);
       if (link.parentNode) link.parentNode.removeChild(link);
     });
     setAccent(currentAccent);
-    paint();
-    copyRow(iface, 'Copy CSS snippet', function () {
-      return preCss.textContent;
-    });
+    applyPairIndex(0);
+    applyContext(selContext.value);
+    syncMediumIcon();
   }
+
 
   /* —— Beat maker —— (Web Audio; timeline + instruments + genre presets) */
   function initBeatMaker(iface) {
@@ -1783,7 +2809,8 @@
       playlineEl.style.bottom = 'auto';
     }
 
-    function setPlayhead(col) {
+    /** Discrete playhead (paused / scrub sync). */
+    function setPlayheadDiscrete(col) {
       if (col >= 0) lastBeatCol = col;
       for (var rr = 0; rr < rows; rr++) {
         for (var cc = 0; cc < cols; cc++) {
@@ -1810,13 +2837,42 @@
       }
     }
 
+    /** Continuous playhead: linear phase from beatAnchorTime (smooth at steady BPM). Re-anchor when step length changes so BPM edits stay smooth. */
+    function updatePlayheadSmooth() {
+      if (!playing || !ctx || !playlineEl || !cellEls[0] || !cellEls[0][0]) return;
+      var now = ctx.currentTime;
+      var sp = effectiveSecondsPerStep();
+      if (playheadLastSp > 0 && Math.abs(sp - playheadLastSp) > 1e-7) {
+        var phaseStepsOld = (now - beatAnchorTime) / playheadLastSp;
+        var fracKeep = phaseStepsOld - Math.floor(phaseStepsOld / cols) * cols;
+        beatAnchorTime = now - fracKeep * sp;
+      }
+      playheadLastSp = sp;
+      var phaseSteps = (now - beatAnchorTime) / sp;
+      var fracInBar = phaseSteps - Math.floor(phaseSteps / cols) * cols;
+      lastBeatCol = Math.min(cols - 1, Math.max(0, Math.floor(fracInBar)));
+      syncPlaylineVertical();
+      var rowEl = cellEls[0][0].parentElement;
+      var c0 = cellEls[0][0];
+      var cLast = cellEls[0][cols - 1];
+      var gridLeft = rowEl.offsetLeft + c0.offsetLeft;
+      var gridRight = rowEl.offsetLeft + cLast.offsetLeft + cLast.offsetWidth;
+      var totalWidth = gridRight - gridLeft;
+      var half = 1.5;
+      var cx = gridLeft + ((fracInBar + 0.5) / cols) * totalWidth;
+      cx = Math.max(gridLeft + half, Math.min(gridRight - half, cx));
+      playlineEl.style.opacity = '1';
+      playlineEl.style.left = cx + 'px';
+    }
+
     function clearPlayhead() {
       lastBeatCol = -1;
-      setPlayhead(-1);
+      setPlayheadDiscrete(-1);
     }
 
     wrap.addEventListener('scroll', function () {
-      if (lastBeatCol >= 0) setPlayhead(lastBeatCol);
+      if (playing && ctx) updatePlayheadSmooth();
+      else if (lastBeatCol >= 0) setPlayheadDiscrete(lastBeatCol);
       else syncPlaylineVertical();
     });
 
@@ -2345,8 +3401,10 @@
       var bpmIn = iface.querySelector('#ov-bpm');
       bpmIn.value = String(p.bpm);
       bpmIn.setAttribute('aria-valuenow', String(p.bpm));
+      targetBpm = clampBpm(p.bpm);
+      effectiveBpm = targetBpm;
       var bpmV = iface.querySelector('#ov-bpm-val');
-      if (bpmV) bpmV.textContent = String(p.bpm);
+      if (bpmV) bpmV.textContent = String(Math.round(targetBpm));
       for (var r = 0; r < rows; r++) {
         var rowSel = beatInner.querySelector('select[data-row="' + r + '"]');
         if (rowSel) rowSel.value = p.instruments[r] || defaultInst[r];
@@ -2354,6 +3412,12 @@
           grid[r][c] = !!(p.pattern[r] && p.pattern[r][c]);
           paintCell(cellEls[r][c], r, grid[r][c]);
         }
+      }
+      if (playing && ctx) {
+        beatAnchorTime = ctx.currentTime;
+        step = 0;
+        nextNoteTime = ctx.currentTime;
+        playheadLastSp = 0;
       }
     }
 
@@ -2377,11 +3441,31 @@
     var nextNoteTime = 0;
     var rafId = null;
     var statEl = null;
+    /** Audio-time anchor for bar phase (smooth playhead + stable BPM math). */
+    var beatAnchorTime = 0;
+    /** Slider / preset target; effectiveBpm ramps toward this while playing. */
+    var targetBpm = 110;
+    /** Live tempo used for scheduling and playhead (lerped while playing). */
+    var effectiveBpm = 110;
+    var lastBeatRafTime = 0;
+    /** Last step length used for playhead re-anchor when tempo changes. */
+    var playheadLastSp = 0;
+
+    function clampBpm(n) {
+      var b = +n;
+      if (!isFinite(b) || b < 40) b = 110;
+      if (b > 240) b = 240;
+      return b;
+    }
 
     function beatSecondsPerStep() {
-      var bpm = +iface.querySelector('#ov-bpm').value || 110;
-      if (!isFinite(bpm) || bpm < 40) bpm = 110;
-      if (bpm > 240) bpm = 240;
+      var bpm = clampBpm(iface.querySelector('#ov-bpm').value);
+      var s = (60 / bpm) / 4;
+      return s > 0.05 ? s : 0.05;
+    }
+
+    function effectiveSecondsPerStep() {
+      var bpm = clampBpm(effectiveBpm);
       var s = (60 / bpm) / 4;
       return s > 0.05 ? s : 0.05;
     }
@@ -2408,7 +3492,6 @@
     function scheduleBeatColumn(beatAt) {
       if (!ctx || !playing) return;
       var col = step;
-      setPlayhead(col);
       var tSound = beatAt + 0.02;
       var r;
       for (r = 0; r < rows; r++) {
@@ -2427,15 +3510,24 @@
       step = (step + 1) % cols;
     }
 
-    function beatSchedulerLoop() {
+    function beatSchedulerLoop(now) {
       if (!playing || !ctx) return;
-      var sp = beatSecondsPerStep();
+      var t = typeof now === 'number' ? now : performance.now();
+      var dt = lastBeatRafTime > 0 ? Math.min(0.064, (t - lastBeatRafTime) / 1000) : 1 / 60;
+      lastBeatRafTime = t;
+      var tgt = clampBpm(targetBpm);
+      var tauSec = 0.085;
+      var k = 1 - Math.exp(-dt / tauSec);
+      effectiveBpm += (tgt - effectiveBpm) * k;
+      if (Math.abs(tgt - effectiveBpm) < 0.06) effectiveBpm = tgt;
+      var sp = effectiveSecondsPerStep();
       var lookAhead = 0.12;
-      var guard = 24;
+      var guard = 32;
       while (guard-- > 0 && nextNoteTime < ctx.currentTime + lookAhead) {
         scheduleBeatColumn(nextNoteTime);
         nextNoteTime += sp;
       }
+      updatePlayheadSmooth();
       rafId = window.requestAnimationFrame(beatSchedulerLoop);
     }
 
@@ -2445,7 +3537,13 @@
         rafId = null;
       }
       if (!playing || !ctx) return;
-      nextNoteTime = ctx.currentTime + beatSecondsPerStep() * 0.35;
+      targetBpm = clampBpm(iface.querySelector('#ov-bpm').value);
+      effectiveBpm = targetBpm;
+      lastBeatRafTime = 0;
+      beatAnchorTime = ctx.currentTime;
+      step = 0;
+      nextNoteTime = beatAnchorTime;
+      playheadLastSp = effectiveSecondsPerStep();
       beatSchedulerLoop();
     }
 
@@ -2472,6 +3570,8 @@
 
     function stopBeatPlayback() {
       playing = false;
+      lastBeatRafTime = 0;
+      playheadLastSp = 0;
       if (rafId !== null) {
         window.cancelAnimationFrame(rafId);
         rafId = null;
@@ -2482,13 +3582,16 @@
       syncTransportButton();
     }
 
-    iface.querySelector('#ov-bpm').addEventListener('input', function () {
+    function syncBpmUiFromSlider() {
       var inp = iface.querySelector('#ov-bpm');
       var v = iface.querySelector('#ov-bpm-val');
-      if (v) v.textContent = inp.value;
+      targetBpm = clampBpm(inp.value);
+      if (v) v.textContent = String(Math.round(targetBpm));
       inp.setAttribute('aria-valuenow', inp.value);
-      if (playing) restartBeatScheduler();
-    });
+      if (!playing) effectiveBpm = targetBpm;
+    }
+    iface.querySelector('#ov-bpm').addEventListener('input', syncBpmUiFromSlider);
+    syncBpmUiFromSlider();
 
     transportBtn.addEventListener('click', function () {
       if (playing) {
