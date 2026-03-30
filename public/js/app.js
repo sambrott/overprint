@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', function () {
   initBeatPreview();
   initFilters();
+  initAvatarCardPreview();
 
   (function initThemeToggle() {
     var root = document.documentElement;
@@ -20,7 +21,19 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     applyTheme(root.classList.contains('theme-light'));
     input.addEventListener('change', function () {
-      applyTheme(input.checked);
+      var next = input.checked;
+      function go() {
+        applyTheme(next);
+      }
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        go();
+        return;
+      }
+      if (typeof document.startViewTransition === 'function') {
+        document.startViewTransition(go);
+      } else {
+        go();
+      }
     });
   })();
 
@@ -99,6 +112,57 @@ document.addEventListener('DOMContentLoaded', function () {
     card.setAttribute('tabindex', '0');
     card.setAttribute('role', 'link');
   });
+
+  function initAvatarCardPreview() {
+    var AP = typeof OVAvatarPixel !== 'undefined' ? OVAvatarPixel : null;
+    if (!AP) return;
+    var canvas = document.querySelector('.tool-card[data-slug="avatar-generator"] .p-av-canvas');
+    if (!canvas || !canvas.getContext) return;
+    var ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+    var styles = AP.STYLES;
+    var seeds = [0x9e3779b1, 0xdeadbeef, 0xcafebabe, 0xabcdef01];
+    function mulberry32(a) {
+      return function () {
+        a |= 0;
+        a = (a + 0x6d2b79f5) | 0;
+        var t = Math.imul(a ^ (a >>> 15), 1 | a);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+    function renderAt(i) {
+      var rnd = mulberry32(seeds[i]);
+      AP.draw(ctx, styles[i], rnd);
+    }
+    var idx = 0;
+    renderAt(0);
+    var card = canvas.closest('.tool-card');
+    if (!card) return;
+    var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var canHover = !window.matchMedia || window.matchMedia('(hover: hover)').matches;
+    if (reduceMotion || !canHover) return;
+    var tick = null;
+    function onEnter() {
+      idx = 0;
+      renderAt(0);
+      if (tick) clearInterval(tick);
+      tick = setInterval(function () {
+        idx = (idx + 1) % styles.length;
+        renderAt(idx);
+      }, 100);
+    }
+    function onLeave() {
+      if (tick) {
+        clearInterval(tick);
+        tick = null;
+      }
+      idx = 0;
+      renderAt(0);
+    }
+    card.addEventListener('mouseenter', onEnter);
+    card.addEventListener('mouseleave', onLeave);
+  }
 
   try {
     initRouter();

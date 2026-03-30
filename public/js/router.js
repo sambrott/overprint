@@ -1,4 +1,4 @@
-/* Hash SPA: #/ #/tools #/about #/tools/:slug — smooth route transitions */
+/* Hash SPA: #/ #/tools #/about #/tools/:slug; smooth route transitions */
 
 /**
  * Folder that contains about.html + tools/ (the static root), derived from script URLs.
@@ -134,7 +134,7 @@ async function renderRoute() {
     return;
   }
 
-  /* —— Subpage (about / tool) —— */
+  /* Subpage (about / tool) */
   var hadHome = !dashboard.classList.contains('is-hidden');
   var hadSubPage = pageView.classList.contains('is-visible');
 
@@ -163,6 +163,12 @@ async function renderRoute() {
     } catch (e) {}
     route.slug = 'image-optimizer';
   }
+  if (route.type === 'tool' && route.slug === 'placeholder-hub') {
+    try {
+      history.replaceState(null, '', '#/tools/avatar-generator');
+    } catch (e) {}
+    route.slug = 'avatar-generator';
+  }
 
   var html = '';
   var titleSuffix = 'Overprint';
@@ -173,7 +179,7 @@ async function renderRoute() {
       var res = await fetchAppAsset('about.html');
       if (!res.ok) throw new Error('about fetch failed');
       html = await res.text();
-      titleSuffix = 'About — Overprint';
+      titleSuffix = 'About - Overprint';
       routeContentOk = true;
     } else if (route.type === 'tool') {
       var tres = await fetchAppAsset('tools/' + route.slug + '.html');
@@ -182,7 +188,7 @@ async function renderRoute() {
       var tmp = document.createElement('div');
       tmp.innerHTML = html;
       var nameEl = tmp.querySelector('.tool-header-name');
-      titleSuffix = (nameEl ? nameEl.textContent.trim() : route.slug) + ' — Overprint';
+      titleSuffix = (nameEl ? nameEl.textContent.trim() : route.slug) + ' | Overprint';
       routeContentOk = true;
     } else {
       routeContentOk = true;
@@ -194,7 +200,7 @@ async function renderRoute() {
       '<div class="tool-interface"><p class="tool-placeholder">Could not load this page. If you opened <code>index.html</code> from disk (<code>file://</code>), use a local server instead:</p>' +
       '<pre class="tool-pre-wrap">cd public && python3 -m http.server 8080\n# then open http://localhost:8080/#/</pre>' +
       '<p class="tool-placeholder">Also check the browser console for network errors.</p></div></div>';
-    titleSuffix = 'Not found — Overprint';
+    titleSuffix = 'Not found | Overprint';
   }
 
   if (myGen !== routeGeneration) return;

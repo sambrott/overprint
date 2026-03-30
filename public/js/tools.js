@@ -1,4 +1,4 @@
-/* Overprint — functional tool UIs (mounted into .tool-interface). Client-side only. */
+/* Overprint: functional tool UIs (mounted into .tool-interface). Client-side only. */
 (function () {
   var OV = window.OV || {};
   window.OV = OV;
@@ -29,6 +29,31 @@
     return d.firstElementChild;
   }
 
+  /** Preview left, controls right (same chrome as QR / Favicon). */
+  function toolShellSplit(previewHtml, toolbarHtml) {
+    return (
+      '<div class="tool-shell tool-shell--split">' +
+      '<div class="tool-preview-pane" aria-label="Preview">' +
+      previewHtml +
+      '</div>' +
+      '<aside class="tool-toolbar-pane" aria-label="Controls">' +
+      toolbarHtml +
+      '</aside>' +
+      '</div>'
+    );
+  }
+
+  /** Single full-width pane (no right toolbar). */
+  function toolShellSingle(previewHtml) {
+    return (
+      '<div class="tool-shell tool-shell--single">' +
+      '<div class="tool-preview-pane" aria-label="Preview">' +
+      previewHtml +
+      '</div>' +
+      '</div>'
+    );
+  }
+
   /** Beat-maker style: range + `.tool-bpm-val`; optional `fmt(n)` for decimals / units. */
   function bindToolSliderValue(root, rangeSel, valSel, fmt) {
     var r = root.querySelector(rangeSel);
@@ -43,7 +68,45 @@
     sync();
   }
 
-  function tabs(iface, names, renderers) {
+  function tabs(iface, names, renderers, options) {
+    options = options || {};
+    if (options.split) {
+      iface.innerHTML = toolShellSplit(
+        '<div class="tool-tab-previews"></div>',
+        '<div class="tool-tab-toolbar-inner"></div>'
+      );
+      var prevRoot = iface.querySelector('.tool-tab-previews');
+      var tbInner = iface.querySelector('.tool-tab-toolbar-inner');
+      var nav = el('<div class="tool-tabs"></div>');
+      var stack = el('<div class="tool-panel-stack"></div>');
+      tbInner.appendChild(nav);
+      tbInner.appendChild(stack);
+      names.forEach(function (name, i) {
+        var t = el('<button type="button" class="tool-tab">' + name + '</button>');
+        if (i === 0) t.classList.add('is-active');
+        nav.appendChild(t);
+        var pPrev = el('<div class="tool-panel' + (i === 0 ? ' is-active' : '') + '"></div>');
+        var pCtrl = el('<div class="tool-panel' + (i === 0 ? ' is-active' : '') + '"></div>');
+        renderers[i](pPrev, pCtrl);
+        prevRoot.appendChild(pPrev);
+        stack.appendChild(pCtrl);
+        t.addEventListener('click', function () {
+          nav.querySelectorAll('.tool-tab').forEach(function (x) {
+            x.classList.remove('is-active');
+          });
+          prevRoot.querySelectorAll('.tool-panel').forEach(function (x) {
+            x.classList.remove('is-active');
+          });
+          stack.querySelectorAll('.tool-panel').forEach(function (x) {
+            x.classList.remove('is-active');
+          });
+          t.classList.add('is-active');
+          pPrev.classList.add('is-active');
+          pCtrl.classList.add('is-active');
+        });
+      });
+      return;
+    }
     var wrap = el('<div class="tool-stack"></div>');
     var nav = el('<div class="tool-tabs"></div>');
     var panels = [];
@@ -88,41 +151,71 @@
     iface.appendChild(row);
   }
 
-  /* —— Contrast checker —— */
+  /* Contrast checker */
   function initContrastChecker(iface) {
-    iface.innerHTML =
-      '<div class="tool-stack">' +
-      '<div class="tool-row">' +
-      '<div class="tool-field"><span class="tool-label">Foreground</span><input type="color" class="tool-input" id="ov-fg" value="#e4e4ea"></div>' +
-      '<div class="tool-field"><span class="tool-label">Background</span><input type="color" class="tool-input" id="ov-bg" value="#08080c"></div>' +
-      '</div>' +
-      '<div class="tool-row">' +
-      '<div class="tool-field tool-field--grow"><span class="tool-label">Hex FG</span><input type="text" class="tool-input" id="ov-fgx" value="#e4e4ea"></div>' +
-      '<div class="tool-field tool-field--grow"><span class="tool-label">Hex BG</span><input type="text" class="tool-input" id="ov-bgx" value="#08080c"></div>' +
-      '</div>' +
-      '<div class="tool-preview-box" id="ov-cprev" style="color:#e4e4ea;background:#08080c">' +
-      '<p style="font-size:14px;margin-bottom:8px">Sample body text for reading.</p>' +
-      '<p style="font-size:18px;font-weight:700">Large bold heading text</p>' +
-      '</div>' +
-      '<p class="tool-out" id="ov-cratio"></p>' +
-      '<div id="ov-badges"></div>' +
-      '<div class="tool-row"><button type="button" class="tool-btn tool-btn--y" id="ov-suggest">Suggest passing FG</button></div>' +
-      '</div>';
+    iface.innerHTML = toolShellSingle(
+      '<div class="tool-stack cc-tool">' +
+        '<div class="cc-swatch-row">' +
+        '<div class="tool-field cc-swatch-col">' +
+        '<span class="tool-label">Color 1</span>' +
+        '<div class="cc-swatch-wrap">' +
+        '<div class="cc-swatch" id="ov-fill1" style="background:#0b1117"></div>' +
+        '<input type="color" class="cc-swatch-input" id="ov-fg" value="#0b1117" aria-label="Pick color 1">' +
+        '</div></div>' +
+        '<div class="tool-field cc-swatch-col">' +
+        '<span class="tool-label">Color 2</span>' +
+        '<div class="cc-swatch-wrap">' +
+        '<div class="cc-swatch" id="ov-fill2" style="background:#acc8e5"></div>' +
+        '<input type="color" class="cc-swatch-input" id="ov-bg" value="#acc8e5" aria-label="Pick color 2">' +
+        '</div></div>' +
+        '</div>' +
+        '<div class="cc-hex-row">' +
+        '<div class="cc-hex-field">' +
+        '<input type="text" class="tool-input cc-hex-input" id="ov-fgx" value="#0b1117" autocomplete="off" spellcheck="false" placeholder="#000000" aria-label="Color 1 hex, paste or type">' +
+        '</div>' +
+        '<div class="cc-hex-field">' +
+        '<input type="text" class="tool-input cc-hex-input" id="ov-bgx" value="#acc8e5" autocomplete="off" spellcheck="false" placeholder="#ffffff" aria-label="Color 2 hex, paste or type">' +
+        '</div></div>' +
+        '<div class="cc-score-block">' +
+        '<div class="cc-score-label">Contrast quality</div>' +
+        '<div class="cc-score-main" id="ov-cscore">0.0<span class="cc-score-denom"> / 10</span></div>' +
+        '</div></div>'
+    );
 
     var fg = iface.querySelector('#ov-fg');
     var bg = iface.querySelector('#ov-bg');
     var fgx = iface.querySelector('#ov-fgx');
     var bgx = iface.querySelector('#ov-bgx');
-    var prev = iface.querySelector('#ov-cprev');
-    var ratioEl = iface.querySelector('#ov-cratio');
-    var badges = iface.querySelector('#ov-badges');
+    var fill1 = iface.querySelector('#ov-fill1');
+    var fill2 = iface.querySelector('#ov-fill2');
+    var scoreEl = iface.querySelector('#ov-cscore');
 
     function rgbFromInputs() {
       var a = OV.parseHex(fgx.value) || OV.parseHex(fg.value);
       var b = OV.parseHex(bgx.value) || OV.parseHex(bg.value);
-      if (!a) a = { r: 228, g: 228, b: 234 };
-      if (!b) b = { r: 8, g: 8, b: 12 };
+      if (!a) a = { r: 11, g: 17, b: 23 };
+      if (!b) b = { r: 172, g: 200, b: 229 };
       return { fg: a, bg: b };
+    }
+
+    function syncHexFromColor1() {
+      var p = OV.parseHex(fg.value);
+      if (p) fgx.value = OV.rgbToHex(p.r, p.g, p.b);
+    }
+
+    function syncHexFromColor2() {
+      var p = OV.parseHex(bg.value);
+      if (p) bgx.value = OV.rgbToHex(p.r, p.g, p.b);
+    }
+
+    function syncColorFromHex1() {
+      var p = OV.parseHex(fgx.value);
+      if (p) fg.value = OV.rgbToHex(p.r, p.g, p.b);
+    }
+
+    function syncColorFromHex2() {
+      var p = OV.parseHex(bgx.value);
+      if (p) bg.value = OV.rgbToHex(p.r, p.g, p.b);
     }
 
     function paint() {
@@ -133,99 +226,62 @@
       bg.value = bh;
       fgx.value = fh;
       bgx.value = bh;
-      prev.style.color = fh;
-      prev.style.background = bh;
+      fill1.style.background = fh;
+      fill2.style.background = bh;
       var r = OV.contrastRatio(o.fg, o.bg);
-      ratioEl.textContent = 'Contrast ratio: ' + r.toFixed(2) + ':1';
-      function pass(level, large) {
-        return large ? r >= level + 2 : r >= level;
-      }
-      badges.innerHTML =
-        '<span class="tool-badge ' + (pass(4.5, false) ? 'tool-badge--ok' : 'tool-badge--bad') + '">AA text ' +
-        (pass(4.5, false) ? 'PASS' : 'FAIL') +
-        '</span>' +
-        '<span class="tool-badge ' + (pass(3, true) ? 'tool-badge--ok' : 'tool-badge--bad') + '">AA large ' +
-        (pass(3, true) ? 'PASS' : 'FAIL') +
-        '</span>' +
-        '<span class="tool-badge ' + (pass(7, false) ? 'tool-badge--ok' : 'tool-badge--bad') + '">AAA text ' +
-        (pass(7, false) ? 'PASS' : 'FAIL') +
-        '</span>' +
-        '<span class="tool-badge ' + (pass(4.5, true) ? 'tool-badge--ok' : 'tool-badge--bad') + '">AAA large ' +
-        (pass(4.5, true) ? 'PASS' : 'FAIL') +
-        '</span>';
+      var q = OV.contrastQuality10(r);
+      scoreEl.innerHTML =
+        q.toFixed(1) + '<span class="cc-score-denom"> / 10</span>';
+      scoreEl.classList.remove('cc-score-main--good', 'cc-score-main--mid', 'cc-score-main--bad');
+      if (r >= 4.5) scoreEl.classList.add('cc-score-main--good');
+      else if (r >= 3) scoreEl.classList.add('cc-score-main--mid');
+      else scoreEl.classList.add('cc-score-main--bad');
     }
 
     ['input', 'change'].forEach(function (ev) {
-      fg.addEventListener(ev, paint);
-      bg.addEventListener(ev, paint);
+      fg.addEventListener(ev, function () {
+        syncHexFromColor1();
+        paint();
+      });
+      bg.addEventListener(ev, function () {
+        syncHexFromColor2();
+        paint();
+      });
     });
-    fgx.addEventListener('input', paint);
-    bgx.addEventListener('input', paint);
-    iface.querySelector('#ov-suggest').addEventListener('click', function () {
-      var o = rgbFromInputs();
-      var target = 4.51;
-      var Lb = OV.relativeLuminance(o.bg.r, o.bg.g, o.bg.b);
-      var best = o.fg;
-      var bestR = OV.contrastRatio(o.fg, o.bg);
-      for (var i = 0; i < 512; i++) {
-        var t = i / 511;
-        var cand = {
-          r: Math.round(o.bg.r + (255 * t - o.bg.r) * 0.5),
-          g: Math.round(o.bg.g + (255 * t - o.bg.g) * 0.5),
-          b: Math.round(o.bg.b + (255 * t - o.bg.b) * 0.5),
-        };
-        var Lf = OV.relativeLuminance(cand.r, cand.g, cand.b);
-        var rr = Lf > Lb ? (Lf + 0.05) / (Lb + 0.05) : (Lb + 0.05) / (Lf + 0.05);
-        if (rr >= target && rr < bestR + 20) {
-          best = cand;
-          bestR = rr;
-          break;
-        }
-      }
-      if (bestR < target) {
-        for (i = 0; i < 512; i++) {
-          t = i / 511;
-          cand = {
-            r: Math.round(255 * t),
-            g: Math.round(255 * t),
-            b: Math.round(255 * t),
-          };
-          Lf = OV.relativeLuminance(cand.r, cand.g, cand.b);
-          rr = Lf > Lb ? (Lf + 0.05) / (Lb + 0.05) : (Lb + 0.05) / (Lf + 0.05);
-          if (rr >= target) {
-            best = cand;
-            break;
-          }
-        }
-      }
-      var hx = OV.rgbToHex(best.r, best.g, best.b);
-      fg.value = hx;
-      fgx.value = hx;
+    fgx.addEventListener('input', function () {
+      syncColorFromHex1();
+      paint();
+    });
+    bgx.addEventListener('input', function () {
+      syncColorFromHex2();
       paint();
     });
     paint();
   }
 
-  /* —— Aspect ratio —— */
+  /* Aspect ratio */
   function initAspectRatioCalc(iface) {
     iface.innerHTML =
-      '<div class="tool-stack">' +
-      '<div class="tool-row">' +
-      '<div class="tool-field"><span class="tool-label">Width</span><input type="number" class="tool-input" id="ov-aw" value="1920" min="1"></div>' +
-      '<div class="tool-field"><span class="tool-label">Height</span><input type="number" class="tool-input" id="ov-ah" value="1080" min="1"></div>' +
-      '</div>' +
-      '<p class="tool-out" id="ov-arout"></p>' +
-      '<div class="tool-row">' +
-      '<div class="tool-field"><span class="tool-label">Scale to W</span><input type="number" class="tool-input" id="ov-sw" placeholder="px"></div>' +
-      '<div class="tool-field"><span class="tool-label">Scale to H</span><input type="number" class="tool-input" id="ov-sh" placeholder="px"></div>' +
-      '</div>' +
-      '<p class="tool-out" id="ov-scaleout"></p>' +
-      '<div class="tool-row tool-row--top">' +
-      '<span class="tool-label" style="width:100%">Presets</span></div>' +
-      '<div class="tool-row" id="ov-presets"></div>' +
-      '<div class="tool-preview-box" id="ov-rect" style="max-width:280px;height:120px;margin:0 auto;display:flex;align-items:center;justify-content:center;border:1px solid var(--border)">' +
-      '<div id="ov-rect-inner" style="background:var(--C);opacity:.6;border:1px solid var(--C)"></div></div>' +
-      '</div>';
+      toolShellSplit(
+        '<div class="tool-stack ar-tool-preview">' +
+          '<div id="ov-rect-inner" class="ar-tool-preview-shape" style="background:var(--C);opacity:.6;border:1px solid var(--C)"></div>' +
+          '</div>',
+        '<div class="tool-stack ar-toolbox">' +
+          '<div class="tool-row tool-row--top">' +
+          '<span class="tool-label" style="width:100%">Presets</span></div>' +
+          '<div class="tool-row ar-tool-presets" id="ov-presets"></div>' +
+          '<div class="tool-row">' +
+          '<div class="tool-field"><span class="tool-label">Width</span><input type="number" class="tool-input" id="ov-aw" value="1920" min="1"></div>' +
+          '<div class="tool-field"><span class="tool-label">Height</span><input type="number" class="tool-input" id="ov-ah" value="1080" min="1"></div>' +
+          '</div>' +
+          '<p class="tool-out" id="ov-arout"></p>' +
+          '<div class="tool-row">' +
+          '<div class="tool-field"><span class="tool-label">Scale to W</span><input type="number" class="tool-input" id="ov-sw" placeholder="px"></div>' +
+          '<div class="tool-field"><span class="tool-label">Scale to H</span><input type="number" class="tool-input" id="ov-sh" placeholder="px"></div>' +
+          '</div>' +
+          '<p class="tool-out" id="ov-scaleout"></p>' +
+          '</div>'
+      );
 
     var aw = iface.querySelector('#ov-aw');
     var ah = iface.querySelector('#ov-ah');
@@ -279,15 +335,16 @@
         sout.textContent = 'Matching width for height ' + rh + 'px → ' + nw + 'px';
       } else sout.textContent = '';
 
-      var max = 100;
+      var previewMax = 450;
+      var previewBase = 360;
       var ir = w / h;
       var bw, bh;
-      if (ir > max / 80) {
-        bw = max;
-        bh = max / ir;
+      if (ir > previewMax / previewBase) {
+        bw = previewMax;
+        bh = previewMax / ir;
       } else {
-        bh = 80;
-        bw = 80 * ir;
+        bh = previewBase;
+        bw = previewBase * ir;
       }
       inner.style.width = bw + 'px';
       inner.style.height = bh + 'px';
@@ -299,401 +356,337 @@
     calc();
   }
 
-  /* —— Placeholder hub —— */
-  function initPlaceholderHub(iface) {
-    tabs(iface, ['Lorem', 'Fake data', 'Placeholder image', 'Avatar'], [
-      function (p) {
-        p.innerHTML =
-          '<div class="tool-stack">' +
-          '<div class="tool-row">' +
-          '<div class="tool-field tool-field--slider">' +
-          '<span class="tool-label">Paragraphs</span>' +
-          '<div class="tool-bpm-slider-row">' +
-          '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ov-lo-n" min="1" max="20" step="1" value="3" aria-valuemin="1" aria-valuemax="20" aria-valuenow="3">' +
-          '<span class="tool-bpm-val" id="ov-lo-n-val">3</span></div></div>' +
-          '</div>' +
-          '<textarea class="tool-textarea" id="ov-lo-t" readonly></textarea>' +
-          '</div>';
-        var lo =
-          'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.';
-        function gen() {
-          var n = +p.querySelector('#ov-lo-n').value || 3;
-          var parts = [];
-          for (var i = 0; i < n; i++) parts.push(lo);
-          p.querySelector('#ov-lo-t').value = parts.join('\n\n');
-        }
-        p.querySelector('#ov-lo-n').addEventListener('input', gen);
-        bindToolSliderValue(p, '#ov-lo-n', '#ov-lo-n-val');
-        gen();
-        copyRow(p, 'Copy text', function () {
-          return p.querySelector('#ov-lo-t').value;
-        });
-      },
-      function (p) {
-        p.innerHTML =
-          '<textarea class="tool-textarea" id="ov-fake" readonly></textarea>';
-        var first = ['Alex', 'Jordan', 'Sam', 'Riley', 'Casey', 'Morgan'];
-        var last = ['Nguyen', 'Smith', 'Garcia', 'Kim', 'Patel', 'Brown'];
-        function gen() {
-          var rows = [];
-          for (var i = 0; i < 8; i++) {
-            var fn = first[Math.floor(Math.random() * first.length)];
-            var ln = last[Math.floor(Math.random() * last.length)];
-            var em = (fn + '.' + ln + '@example.com').toLowerCase().replace(/[^a-z0-9.@]/g, '');
-            rows.push(fn + ' ' + ln + '\t' + em + '\t+1-555-' + (1000 + Math.floor(Math.random() * 9000)));
-          }
-          p.querySelector('#ov-fake').value = 'Name\tEmail\tPhone\n' + rows.join('\n');
-        }
-        gen();
-        var row = el('<div class="tool-row"><button type="button" class="tool-btn tool-btn--m">Regenerate</button></div>');
-        row.querySelector('button').addEventListener('click', gen);
-        p.insertBefore(row, p.firstChild);
-        copyRow(p, 'Copy TSV', function () {
-          return p.querySelector('#ov-fake').value;
-        });
-      },
-      function (p) {
-        p.innerHTML =
-          '<div class="tool-row">' +
-          '<div class="tool-field tool-field--slider">' +
-          '<span class="tool-label">W</span>' +
-          '<div class="tool-bpm-slider-row">' +
-          '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ov-ph-w" min="100" max="2400" step="10" value="800" aria-valuemin="100" aria-valuemax="2400" aria-valuenow="800">' +
-          '<span class="tool-bpm-val" id="ov-ph-w-val">800</span></div></div>' +
-          '<div class="tool-field tool-field--slider">' +
-          '<span class="tool-label">H</span>' +
-          '<div class="tool-bpm-slider-row">' +
-          '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ov-ph-h" min="100" max="2400" step="10" value="450" aria-valuemin="100" aria-valuemax="2400" aria-valuenow="450">' +
-          '<span class="tool-bpm-val" id="ov-ph-h-val">450</span></div></div>' +
-          '<div class="tool-field"><span class="tool-label">Label</span><input type="text" class="tool-input" id="ov-ph-l" value="Placeholder"></div>' +
-          '</div>' +
-          '<div class="tool-row"><button type="button" class="tool-btn tool-btn--c" id="ov-ph-dl">Download PNG</button></div>';
-        p.querySelector('#ov-ph-dl').addEventListener('click', function () {
-          var w = +p.querySelector('#ov-ph-w').value || 400;
-          var h = +p.querySelector('#ov-ph-h').value || 300;
-          var c = document.createElement('canvas');
-          c.width = w;
-          c.height = h;
-          var x = c.getContext('2d');
-          x.fillStyle = '#1e1e26';
-          x.fillRect(0, 0, w, h);
-          x.strokeStyle = '#00b4d8';
-          x.lineWidth = 2;
-          x.strokeRect(1, 1, w - 2, h - 2);
-          x.fillStyle = '#7e7e8e';
-          x.font = '600 16px "IBM Plex Mono",monospace';
-          x.textAlign = 'center';
-          x.textBaseline = 'middle';
-          var t = p.querySelector('#ov-ph-l').value || 'Placeholder';
-          x.fillText(t, w / 2, h / 2 - 10);
-          x.font = '12px "IBM Plex Mono",monospace';
-          x.fillText(w + ' × ' + h, w / 2, h / 2 + 14);
-          OV.downloadCanvas(c, 'placeholder.png', 'image/png');
-        });
-        bindToolSliderValue(p, '#ov-ph-w', '#ov-ph-w-val');
-        bindToolSliderValue(p, '#ov-ph-h', '#ov-ph-h-val');
-      },
-      function (p) {
-        p.innerHTML =
-          '<div class="tool-row"><button type="button" class="tool-btn tool-btn--m" id="ov-av-gen">New avatar</button>' +
-          '<button type="button" class="tool-btn tool-btn--c" id="ov-av-dl">Download PNG</button></div>' +
-          '<div style="margin-top:12px" id="ov-av-h"></div>';
-        var holder = p.querySelector('#ov-av-h');
-        var canvas;
-        function gen() {
-          holder.innerHTML = '';
-          canvas = document.createElement('canvas');
-          canvas.width = 200;
-          canvas.height = 200;
-          var x = canvas.getContext('2d');
-          var cols = 8,
-            rows = 8,
-            cell = 25;
-          var hue = Math.floor(Math.random() * 360);
-          for (var i = 0; i < cols; i++) {
-            for (var j = 0; j < rows; j++) {
-              if (Math.random() > 0.5) {
-                x.fillStyle = 'hsl(' + hue + ',' + (40 + Math.random() * 40) + '%,' + (35 + Math.random() * 35) + '%)';
-                x.fillRect(i * cell, j * cell, cell, cell);
-                x.fillRect((cols - 1 - i) * cell, j * cell, cell, cell);
-              }
-            }
-          }
-          holder.appendChild(canvas);
-        }
-        gen();
-        p.querySelector('#ov-av-gen').addEventListener('click', gen);
-        p.querySelector('#ov-av-dl').addEventListener('click', function () {
-          if (canvas) OV.downloadCanvas(canvas, 'avatar.png', 'image/png');
-        });
-      },
-    ]);
-  }
-
-  /* —— CSS generator —— */
-  function initCssGenerator(iface) {
-    tabs(iface, ['Gradient', 'Shadow', 'Radius', 'Glass', 'Noise'], [
-      function (p) {
-        p.innerHTML =
-          '<div class="tool-row">' +
-          '<div class="tool-field"><span class="tool-label">C1</span><input type="color" class="tool-input" id="g1" value="#00b4d8"></div>' +
-          '<div class="tool-field"><span class="tool-label">C2</span><input type="color" class="tool-input" id="g2" value="#e040a0"></div>' +
-          '<div class="tool-field tool-field--slider">' +
-          '<span class="tool-label">Angle</span>' +
-          '<div class="tool-bpm-slider-row">' +
-          '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ga" min="0" max="360" step="1" value="135" aria-valuemin="0" aria-valuemax="360" aria-valuenow="135">' +
-          '<span class="tool-bpm-val" id="ga-val">135</span></div></div>' +
-          '</div>' +
-          '<div id="gp" style="height:80px;border:1px solid var(--border);border-radius:2px"></div>' +
-          '<pre class="tool-pre-wrap" id="go"></pre>';
-        function u() {
-          var a = p.querySelector('#ga').value || 135;
-          var c1 = p.querySelector('#g1').value;
-          var c2 = p.querySelector('#g2').value;
-          var css = 'linear-gradient(' + a + 'deg, ' + c1 + ', ' + c2 + ')';
-          p.querySelector('#gp').style.background = css;
-          p.querySelector('#go').textContent = 'background: ' + css + ';';
-        }
-        ['g1', 'g2', 'ga'].forEach(function (id) {
-          p.querySelector('#' + id).addEventListener('input', u);
-        });
-        bindToolSliderValue(p, '#ga', '#ga-val');
-        u();
-        copyRow(p, 'Copy CSS', function () {
-          return p.querySelector('#go').textContent;
-        });
-      },
-      function (p) {
-        p.innerHTML =
-          '<div class="tool-row">' +
-          '<div class="tool-field tool-field--slider">' +
-          '<span class="tool-label">X</span>' +
-          '<div class="tool-bpm-slider-row">' +
-          '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="sx" min="-40" max="40" step="1" value="4" aria-valuenow="4">' +
-          '<span class="tool-bpm-val" id="sx-val">4</span></div></div>' +
-          '<div class="tool-field tool-field--slider">' +
-          '<span class="tool-label">Y</span>' +
-          '<div class="tool-bpm-slider-row">' +
-          '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="sy" min="-40" max="40" step="1" value="8" aria-valuenow="8">' +
-          '<span class="tool-bpm-val" id="sy-val">8</span></div></div>' +
-          '<div class="tool-field tool-field--slider">' +
-          '<span class="tool-label">Blur</span>' +
-          '<div class="tool-bpm-slider-row">' +
-          '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="sb" min="0" max="80" step="1" value="24" aria-valuenow="24">' +
-          '<span class="tool-bpm-val" id="sb-val">24</span></div></div>' +
-          '<div class="tool-field tool-field--slider">' +
-          '<span class="tool-label">Spread</span>' +
-          '<div class="tool-bpm-slider-row">' +
-          '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ss" min="-32" max="32" step="1" value="0" aria-valuenow="0">' +
-          '<span class="tool-bpm-val" id="ss-val">0</span></div></div>' +
-          '</div>' +
-          '<div class="tool-field"><span class="tool-label">Color</span><input type="color" class="tool-input" id="sc" value="#000000"></div>' +
-          '<div id="sp" style="width:120px;height:80px;background:var(--s2);margin:12px auto;border:1px solid var(--border)"></div>' +
-          '<pre class="tool-pre-wrap" id="so"></pre>';
-        function u() {
-          var x = +p.querySelector('#sx').value || 0;
-          var y = +p.querySelector('#sy').value || 0;
-          var b = +p.querySelector('#sb').value || 0;
-          var s = +p.querySelector('#ss').value || 0;
-          var c = p.querySelector('#sc').value;
-          var css = x + 'px ' + y + 'px ' + b + 'px ' + s + 'px ' + c;
-          p.querySelector('#sp').style.boxShadow = css;
-          p.querySelector('#so').textContent = 'box-shadow: ' + css + ';';
-        }
-        p.querySelectorAll('.tool-input').forEach(function (i) {
-          i.addEventListener('input', u);
-        });
-        bindToolSliderValue(p, '#sx', '#sx-val');
-        bindToolSliderValue(p, '#sy', '#sy-val');
-        bindToolSliderValue(p, '#sb', '#sb-val');
-        bindToolSliderValue(p, '#ss', '#ss-val');
-        u();
-        copyRow(p, 'Copy CSS', function () {
-          return p.querySelector('#so').textContent;
-        });
-      },
-      function (p) {
-        p.innerHTML =
-          '<div class="tool-row">' +
-          '<div class="tool-field tool-field--slider">' +
-          '<span class="tool-label">All</span>' +
-          '<div class="tool-bpm-slider-row">' +
-          '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ra" min="0" max="64" step="1" value="12" aria-valuenow="12">' +
-          '<span class="tool-bpm-val" id="ra-val">12</span></div></div>' +
-          '</div>' +
-          '<div id="rp" style="width:140px;height:90px;background:var(--C-dim);border:2px solid var(--C);margin:12px auto"></div>' +
-          '<pre class="tool-pre-wrap" id="ro"></pre>';
-        function u() {
-          var r = (+p.querySelector('#ra').value || 0) + 'px';
-          p.querySelector('#rp').style.borderRadius = r;
-          p.querySelector('#ro').textContent = 'border-radius: ' + r + ';';
-        }
-        p.querySelector('#ra').addEventListener('input', u);
-        bindToolSliderValue(p, '#ra', '#ra-val');
-        u();
-        copyRow(p, 'Copy CSS', function () {
-          return p.querySelector('#ro').textContent;
-        });
-      },
-      function (p) {
-        p.innerHTML =
-          '<div id="glp" style="padding:24px;background:rgba(20,20,28,.55);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.12);border-radius:8px;max-width:260px;margin:12px auto;text-align:center;color:var(--text-hi)">Glass card</div>' +
-          '<pre class="tool-pre-wrap" id="glo"></pre>';
-        var css =
-          'background: rgba(20,20,28,0.55);\n' +
-          'backdrop-filter: blur(12px);\n' +
-          '-webkit-backdrop-filter: blur(12px);\n' +
-          'border: 1px solid rgba(255,255,255,0.12);\n' +
-          'border-radius: 8px;';
-        p.querySelector('#glo').textContent = css;
-        copyRow(p, 'Copy CSS', function () {
-          return p.querySelector('#glo').textContent;
-        });
-      },
-      function (p) {
-        p.innerHTML =
-          '<pre class="tool-pre-wrap" id="nsvg"></pre>' +
-          '<div class="tool-row"><button type="button" class="tool-btn tool-btn--c" id="ndl">Download SVG</button></div>';
-        var svg =
-          '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200">' +
-          '<filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="4" stitchTiles="stitch"/></filter>' +
-          '<rect width="100%" height="100%" filter="url(#n)" opacity="0.35"/></svg>';
-        p.querySelector('#nsvg').textContent = svg.replace(/></g, '>\n<');
-        p.querySelector('#ndl').addEventListener('click', function () {
-          var blob = new Blob([svg], { type: 'image/svg+xml' });
-          OV.downloadBlob(blob, 'noise.svg');
-        });
-        copyRow(p, 'Copy SVG', function () {
-          return svg;
-        });
-      },
-    ]);
-  }
-
-  /* —— Color lab —— */
-  function initColorLab(iface) {
-    tabs(iface, ['Harmonies', 'Formats', 'Gradient'], [
-      function (p) {
-        p.innerHTML =
-          '<div class="tool-field"><span class="tool-label">Base hex</span><input type="text" class="tool-input" id="chx" value="#00b4d8"></div>' +
-          '<div class="tool-row" id="chsw" style="gap:8px;margin-top:12px"></div>' +
-          '<p class="tool-out" id="chn"></p>';
-        function paint() {
-          var rgb = OV.parseHex(p.querySelector('#chx').value) || { r: 0, g: 180, b: 216 };
-          var hsl = OV.rgbToHsl(rgb.r, rgb.g, rgb.b);
-          var w = p.querySelector('#chsw');
-          w.innerHTML = '';
-          var rules = [
-            ['Base', rgb],
-            ['Complement', OV.hslToRgb((hsl.h + 180) % 360, hsl.s, hsl.l)],
-            ['Analogous +', OV.hslToRgb((hsl.h + 30) % 360, hsl.s, hsl.l)],
-            ['Analogous −', OV.hslToRgb((hsl.h - 30 + 360) % 360, hsl.s, hsl.l)],
-            ['Triad 1', OV.hslToRgb((hsl.h + 120) % 360, hsl.s, hsl.l)],
-            ['Triad 2', OV.hslToRgb((hsl.h + 240) % 360, hsl.s, hsl.l)],
-          ];
-          rules.forEach(function (r) {
-            var d = el('<div style="width:56px;height:56px;border:1px solid var(--border);border-radius:2px" title="' + r[0] + '"></div>');
-            var hx = OV.rgbToHex(r[1].r, r[1].g, r[1].b);
-            d.style.background = hx;
-            w.appendChild(d);
-          });
-          p.querySelector('#chn').textContent =
-            'HSL ' + hsl.h.toFixed(0) + '°, ' + hsl.s.toFixed(0) + '%, ' + hsl.l.toFixed(0) + '%';
-        }
-        p.querySelector('#chx').addEventListener('input', paint);
-        paint();
-      },
-      function (p) {
-        p.innerHTML =
-          '<div class="tool-field"><span class="tool-label">Hex</span><input type="text" class="tool-input" id="cfh" value="#f0d020"></div>' +
-          '<pre class="tool-pre-wrap" id="cfo"></pre>';
-        function u() {
-          var rgb = OV.parseHex(p.querySelector('#cfh').value);
-          if (!rgb) {
-            p.querySelector('#cfo').textContent = 'Invalid hex';
-            return;
-          }
-          var hsl = OV.rgbToHsl(rgb.r, rgb.g, rgb.b);
-          p.querySelector('#cfo').textContent =
-            'HEX ' +
-            OV.rgbToHex(rgb.r, rgb.g, rgb.b) +
-            '\nRGB ' +
-            rgb.r +
-            ', ' +
-            rgb.g +
-            ', ' +
-            rgb.b +
-            '\nHSL ' +
-            hsl.h.toFixed(1) +
-            ', ' +
-            hsl.s.toFixed(1) +
-            '%, ' +
-            hsl.l.toFixed(1) +
-            '%';
-        }
-        p.querySelector('#cfh').addEventListener('input', u);
-        u();
-        copyRow(p, 'Copy', function () {
-          return p.querySelector('#cfo').textContent;
-        });
-      },
-      function (p) {
-        p.innerHTML =
-          '<div class="tool-row">' +
-          '<div class="tool-field"><span class="tool-label">A</span><input type="color" class="tool-input" id="cg1" value="#00b4d8"></div>' +
-          '<div class="tool-field"><span class="tool-label">B</span><input type="color" class="tool-input" id="cg2" value="#f0d020"></div>' +
-          '<div class="tool-field tool-field--slider">' +
-          '<span class="tool-label">°</span>' +
-          '<div class="tool-bpm-slider-row">' +
-          '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="cga" min="0" max="360" step="1" value="90" aria-valuenow="90">' +
-          '<span class="tool-bpm-val" id="cga-val">90</span></div></div>' +
-          '</div>' +
-          '<div id="cgp" style="height:72px;border:1px solid var(--border)"></div>' +
-          '<pre class="tool-pre-wrap" id="cgo"></pre>';
-        function u() {
-          var a = p.querySelector('#cg1').value;
-          var b = p.querySelector('#cg2').value;
-          var ang = p.querySelector('#cga').value || 90;
-          var css = 'linear-gradient(' + ang + 'deg,' + a + ',' + b + ')';
-          p.querySelector('#cgp').style.background = css;
-          p.querySelector('#cgo').textContent = 'background: ' + css + ';';
-        }
-        p.querySelectorAll('#cg1,#cg2,#cga').forEach(function (x) {
-          x.addEventListener('input', u);
-        });
-        bindToolSliderValue(p, '#cga', '#cga-val');
-        u();
-        copyRow(p, 'Copy CSS', function () {
-          return p.querySelector('#cgo').textContent;
-        });
-      },
-    ]);
-  }
-
-  /* —— Noise texture —— */
-  function initNoiseTexture(iface) {
+  /* Avatar generator (pixel) */
+  function initAvatarGenerator(iface) {
     iface.innerHTML =
+      toolShellSplit(
+        '<div class="av-avatar-wrap" id="ov-av-h"></div>',
+        '<div class="tool-stack av-tool">' +
+          '<div class="tool-row">' +
+          '<div class="tool-field tool-field--grow">' +
+          '<span class="tool-label">Avatar style</span>' +
+          '<select class="tool-select" id="ov-av-type" aria-label="Avatar style">' +
+          '<option value="identicon">Identicon: symmetric noise</option>' +
+          '<option value="face">Pixel face</option>' +
+          '<option value="robot">Robot</option>' +
+          '<option value="cat">Cat</option>' +
+          '</select></div></div>' +
+          '<div class="tool-row av-tool-actions">' +
+          '<button type="button" class="tool-btn tool-btn--m" id="ov-av-gen">New avatar</button>' +
+          '<button type="button" class="tool-btn tool-btn--c" id="ov-av-dl">Download PNG</button></div>' +
+          '</div>'
+      );
+
+    var holder = iface.querySelector('#ov-av-h');
+    var sel = iface.querySelector('#ov-av-type');
+    var canvas;
+
+    function gen() {
+      holder.innerHTML = '';
+      canvas = document.createElement('canvas');
+      canvas.width = OVAvatarPixel.CANVAS;
+      canvas.height = OVAvatarPixel.CANVAS;
+      canvas.className = 'av-canvas';
+      var ctx = canvas.getContext('2d');
+      ctx.imageSmoothingEnabled = false;
+      OVAvatarPixel.draw(ctx, sel.value || 'identicon', Math.random);
+      holder.appendChild(canvas);
+    }
+
+    gen();
+    iface.querySelector('#ov-av-gen').addEventListener('click', gen);
+    sel.addEventListener('change', gen);
+    iface.querySelector('#ov-av-dl').addEventListener('click', function () {
+      if (canvas) OV.downloadCanvas(canvas, 'avatar.png', 'image/png');
+    });
+  }
+
+  /* CSS generator */
+  function initCssGenerator(iface) {
+    tabs(
+      iface,
+      ['Gradient', 'Shadow', 'Radius', 'Glass', 'Noise'],
+      [
+        function (pPrev, pCtrl) {
+          pPrev.innerHTML =
+            '<div id="gp" style="height:80px;border:1px solid var(--border);border-radius:2px"></div>';
+          pCtrl.innerHTML =
+            '<div class="tool-row">' +
+            '<div class="tool-field"><span class="tool-label">C1</span><input type="color" class="tool-input" id="g1" value="#00b4d8"></div>' +
+            '<div class="tool-field"><span class="tool-label">C2</span><input type="color" class="tool-input" id="g2" value="#e040a0"></div>' +
+            '<div class="tool-field tool-field--slider">' +
+            '<span class="tool-label">Angle</span>' +
+            '<div class="tool-bpm-slider-row">' +
+            '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ga" min="0" max="360" step="1" value="135" aria-valuemin="0" aria-valuemax="360" aria-valuenow="135">' +
+            '<span class="tool-bpm-val" id="ga-val">135</span></div></div>' +
+            '</div>' +
+            '<pre class="tool-pre-wrap" id="go"></pre>';
+          function u() {
+            var a = pCtrl.querySelector('#ga').value || 135;
+            var c1 = pCtrl.querySelector('#g1').value;
+            var c2 = pCtrl.querySelector('#g2').value;
+            var css = 'linear-gradient(' + a + 'deg, ' + c1 + ', ' + c2 + ')';
+            pPrev.querySelector('#gp').style.background = css;
+            pCtrl.querySelector('#go').textContent = 'background: ' + css + ';';
+          }
+          ['g1', 'g2', 'ga'].forEach(function (id) {
+            pCtrl.querySelector('#' + id).addEventListener('input', u);
+          });
+          bindToolSliderValue(pCtrl, '#ga', '#ga-val');
+          u();
+          copyRow(pCtrl, 'Copy CSS', function () {
+            return pCtrl.querySelector('#go').textContent;
+          });
+        },
+        function (pPrev, pCtrl) {
+          pPrev.innerHTML =
+            '<div id="sp" style="width:120px;height:80px;background:var(--s2);margin:12px auto;border:1px solid var(--border)"></div>';
+          pCtrl.innerHTML =
+            '<div class="tool-row">' +
+            '<div class="tool-field tool-field--slider">' +
+            '<span class="tool-label">X</span>' +
+            '<div class="tool-bpm-slider-row">' +
+            '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="sx" min="-40" max="40" step="1" value="4" aria-valuenow="4">' +
+            '<span class="tool-bpm-val" id="sx-val">4</span></div></div>' +
+            '<div class="tool-field tool-field--slider">' +
+            '<span class="tool-label">Y</span>' +
+            '<div class="tool-bpm-slider-row">' +
+            '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="sy" min="-40" max="40" step="1" value="8" aria-valuenow="8">' +
+            '<span class="tool-bpm-val" id="sy-val">8</span></div></div>' +
+            '<div class="tool-field tool-field--slider">' +
+            '<span class="tool-label">Blur</span>' +
+            '<div class="tool-bpm-slider-row">' +
+            '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="sb" min="0" max="80" step="1" value="24" aria-valuenow="24">' +
+            '<span class="tool-bpm-val" id="sb-val">24</span></div></div>' +
+            '<div class="tool-field tool-field--slider">' +
+            '<span class="tool-label">Spread</span>' +
+            '<div class="tool-bpm-slider-row">' +
+            '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ss" min="-32" max="32" step="1" value="0" aria-valuenow="0">' +
+            '<span class="tool-bpm-val" id="ss-val">0</span></div></div>' +
+            '</div>' +
+            '<div class="tool-field"><span class="tool-label">Color</span><input type="color" class="tool-input" id="sc" value="#000000"></div>' +
+            '<pre class="tool-pre-wrap" id="so"></pre>';
+          function u() {
+            var x = +pCtrl.querySelector('#sx').value || 0;
+            var y = +pCtrl.querySelector('#sy').value || 0;
+            var b = +pCtrl.querySelector('#sb').value || 0;
+            var s = +pCtrl.querySelector('#ss').value || 0;
+            var c = pCtrl.querySelector('#sc').value;
+            var css = x + 'px ' + y + 'px ' + b + 'px ' + s + 'px ' + c;
+            pPrev.querySelector('#sp').style.boxShadow = css;
+            pCtrl.querySelector('#so').textContent = 'box-shadow: ' + css + ';';
+          }
+          pCtrl.querySelectorAll('.tool-input').forEach(function (i) {
+            i.addEventListener('input', u);
+          });
+          bindToolSliderValue(pCtrl, '#sx', '#sx-val');
+          bindToolSliderValue(pCtrl, '#sy', '#sy-val');
+          bindToolSliderValue(pCtrl, '#sb', '#sb-val');
+          bindToolSliderValue(pCtrl, '#ss', '#ss-val');
+          u();
+          copyRow(pCtrl, 'Copy CSS', function () {
+            return pCtrl.querySelector('#so').textContent;
+          });
+        },
+        function (pPrev, pCtrl) {
+          pPrev.innerHTML =
+            '<div id="rp" style="width:140px;height:90px;background:var(--C-dim);border:2px solid var(--C);margin:12px auto"></div>';
+          pCtrl.innerHTML =
+            '<div class="tool-row">' +
+            '<div class="tool-field tool-field--slider">' +
+            '<span class="tool-label">All</span>' +
+            '<div class="tool-bpm-slider-row">' +
+            '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ra" min="0" max="64" step="1" value="12" aria-valuenow="12">' +
+            '<span class="tool-bpm-val" id="ra-val">12</span></div></div>' +
+            '</div>' +
+            '<pre class="tool-pre-wrap" id="ro"></pre>';
+          function u() {
+            var r = (+pCtrl.querySelector('#ra').value || 0) + 'px';
+            pPrev.querySelector('#rp').style.borderRadius = r;
+            pCtrl.querySelector('#ro').textContent = 'border-radius: ' + r + ';';
+          }
+          pCtrl.querySelector('#ra').addEventListener('input', u);
+          bindToolSliderValue(pCtrl, '#ra', '#ra-val');
+          u();
+          copyRow(pCtrl, 'Copy CSS', function () {
+            return pCtrl.querySelector('#ro').textContent;
+          });
+        },
+        function (pPrev, pCtrl) {
+          pPrev.innerHTML =
+            '<div id="glp" style="padding:24px;background:rgba(20,20,28,.55);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.12);border-radius:8px;max-width:260px;margin:12px auto;text-align:center;color:var(--text-hi)">Glass card</div>';
+          pCtrl.innerHTML = '<pre class="tool-pre-wrap" id="glo"></pre>';
+          var css =
+            'background: rgba(20,20,28,0.55);\n' +
+            'backdrop-filter: blur(12px);\n' +
+            '-webkit-backdrop-filter: blur(12px);\n' +
+            'border: 1px solid rgba(255,255,255,0.12);\n' +
+            'border-radius: 8px;';
+          pCtrl.querySelector('#glo').textContent = css;
+          copyRow(pCtrl, 'Copy CSS', function () {
+            return pCtrl.querySelector('#glo').textContent;
+          });
+        },
+        function (pPrev, pCtrl) {
+          var svg =
+            '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200">' +
+            '<filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="4" stitchTiles="stitch"/></filter>' +
+            '<rect width="100%" height="100%" filter="url(#n)" opacity="0.35"/></svg>';
+          pPrev.innerHTML = '<div id="nvis" style="max-width:200px;margin:0 auto;border:1px solid var(--border)"></div>';
+          pPrev.querySelector('#nvis').innerHTML = svg;
+          pCtrl.innerHTML =
+            '<pre class="tool-pre-wrap" id="nsvg"></pre>' +
+            '<div class="tool-row"><button type="button" class="tool-btn tool-btn--c" id="ndl">Download SVG</button></div>';
+          pCtrl.querySelector('#nsvg').textContent = svg.replace(/></g, '>\n<');
+          pCtrl.querySelector('#ndl').addEventListener('click', function () {
+            var blob = new Blob([svg], { type: 'image/svg+xml' });
+            OV.downloadBlob(blob, 'noise.svg');
+          });
+          copyRow(pCtrl, 'Copy SVG', function () {
+            return svg;
+          });
+        },
+      ],
+      { split: true }
+    );
+  }
+
+  /* Color lab */
+  function initColorLab(iface) {
+    tabs(
+      iface,
+      ['Harmonies', 'Formats', 'Gradient'],
+      [
+        function (pPrev, pCtrl) {
+          pPrev.innerHTML =
+            '<div class="tool-row" id="chsw" style="gap:8px;margin-top:12px;flex-wrap:wrap"></div>' +
+            '<p class="tool-out" id="chn"></p>';
+          pCtrl.innerHTML =
+            '<div class="tool-field"><span class="tool-label">Base hex</span><input type="text" class="tool-input" id="chx" value="#00b4d8"></div>';
+          function paint() {
+            var rgb = OV.parseHex(pCtrl.querySelector('#chx').value) || { r: 0, g: 180, b: 216 };
+            var hsl = OV.rgbToHsl(rgb.r, rgb.g, rgb.b);
+            var w = pPrev.querySelector('#chsw');
+            w.innerHTML = '';
+            var rules = [
+              ['Base', rgb],
+              ['Complement', OV.hslToRgb((hsl.h + 180) % 360, hsl.s, hsl.l)],
+              ['Analogous +', OV.hslToRgb((hsl.h + 30) % 360, hsl.s, hsl.l)],
+              ['Analogous −', OV.hslToRgb((hsl.h - 30 + 360) % 360, hsl.s, hsl.l)],
+              ['Triad 1', OV.hslToRgb((hsl.h + 120) % 360, hsl.s, hsl.l)],
+              ['Triad 2', OV.hslToRgb((hsl.h + 240) % 360, hsl.s, hsl.l)],
+            ];
+            rules.forEach(function (r) {
+              var d = el('<div style="width:56px;height:56px;border:1px solid var(--border);border-radius:2px" title="' + r[0] + '"></div>');
+              var hx = OV.rgbToHex(r[1].r, r[1].g, r[1].b);
+              d.style.background = hx;
+              w.appendChild(d);
+            });
+            pPrev.querySelector('#chn').textContent =
+              'HSL ' + hsl.h.toFixed(0) + '°, ' + hsl.s.toFixed(0) + '%, ' + hsl.l.toFixed(0) + '%';
+          }
+          pCtrl.querySelector('#chx').addEventListener('input', paint);
+          paint();
+        },
+        function (pPrev, pCtrl) {
+          pPrev.innerHTML =
+            '<div class="tool-out" style="margin:0;font-size:10px;color:var(--text-faint);letter-spacing:1px;text-transform:uppercase">Output</div>';
+          pCtrl.innerHTML =
+            '<div class="tool-field"><span class="tool-label">Hex</span><input type="text" class="tool-input" id="cfh" value="#f0d020"></div>' +
+            '<pre class="tool-pre-wrap" id="cfo"></pre>';
+          function u() {
+            var rgb = OV.parseHex(pCtrl.querySelector('#cfh').value);
+            if (!rgb) {
+              pCtrl.querySelector('#cfo').textContent = 'Invalid hex';
+              return;
+            }
+            var hsl = OV.rgbToHsl(rgb.r, rgb.g, rgb.b);
+            pCtrl.querySelector('#cfo').textContent =
+              'HEX ' +
+              OV.rgbToHex(rgb.r, rgb.g, rgb.b) +
+              '\nRGB ' +
+              rgb.r +
+              ', ' +
+              rgb.g +
+              ', ' +
+              rgb.b +
+              '\nHSL ' +
+              hsl.h.toFixed(1) +
+              ', ' +
+              hsl.s.toFixed(1) +
+              '%, ' +
+              hsl.l.toFixed(1) +
+              '%';
+          }
+          pCtrl.querySelector('#cfh').addEventListener('input', u);
+          u();
+          copyRow(pCtrl, 'Copy', function () {
+            return pCtrl.querySelector('#cfo').textContent;
+          });
+        },
+        function (pPrev, pCtrl) {
+          pPrev.innerHTML =
+            '<div id="cgp" style="height:72px;border:1px solid var(--border)"></div>';
+          pCtrl.innerHTML =
+            '<div class="tool-row">' +
+            '<div class="tool-field"><span class="tool-label">A</span><input type="color" class="tool-input" id="cg1" value="#00b4d8"></div>' +
+            '<div class="tool-field"><span class="tool-label">B</span><input type="color" class="tool-input" id="cg2" value="#f0d020"></div>' +
+            '<div class="tool-field tool-field--slider">' +
+            '<span class="tool-label">°</span>' +
+            '<div class="tool-bpm-slider-row">' +
+            '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="cga" min="0" max="360" step="1" value="90" aria-valuenow="90">' +
+            '<span class="tool-bpm-val" id="cga-val">90</span></div></div>' +
+            '</div>' +
+            '<pre class="tool-pre-wrap" id="cgo"></pre>';
+          function u() {
+            var a = pCtrl.querySelector('#cg1').value;
+            var b = pCtrl.querySelector('#cg2').value;
+            var ang = pCtrl.querySelector('#cga').value || 90;
+            var css = 'linear-gradient(' + ang + 'deg,' + a + ',' + b + ')';
+            pPrev.querySelector('#cgp').style.background = css;
+            pCtrl.querySelector('#cgo').textContent = 'background: ' + css + ';';
+          }
+          pCtrl.querySelectorAll('#cg1,#cg2,#cga').forEach(function (x) {
+            x.addEventListener('input', u);
+          });
+          bindToolSliderValue(pCtrl, '#cga', '#cga-val');
+          u();
+          copyRow(pCtrl, 'Copy CSS', function () {
+            return pCtrl.querySelector('#cgo').textContent;
+          });
+        },
+      ],
+      { split: true }
+    );
+  }
+
+  /* Noise texture */
+  function initNoiseTexture(iface) {
+    iface.innerHTML = toolShellSplit(
+      '<div id="nv" style="width:100%;max-width:320px;min-height:200px;border:1px solid var(--border);background:var(--bg)"></div>',
       '<div class="tool-stack">' +
-      '<div class="tool-row">' +
-      '<div class="tool-field tool-field--slider">' +
-      '<span class="tool-label">Frequency</span>' +
-      '<div class="tool-bpm-slider-row">' +
-      '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="nf" min="0.2" max="2.5" step="0.05" value="0.65" aria-valuenow="0.65">' +
-      '<span class="tool-bpm-val" id="nf-val">0.65</span></div></div>' +
-      '<div class="tool-field tool-field--slider">' +
-      '<span class="tool-label">Octaves</span>' +
-      '<div class="tool-bpm-slider-row">' +
-      '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="no" min="1" max="6" step="1" value="4" aria-valuenow="4">' +
-      '<span class="tool-bpm-val" id="no-val">4</span></div></div>' +
-      '</div>' +
-      '<div id="nv" style="max-width:320px;border:1px solid var(--border);background:var(--bg)"></div>' +
-      '<div class="tool-row"><button type="button" class="tool-btn tool-btn--c" id="nsv">Download SVG</button>' +
-      '<button type="button" class="tool-btn tool-btn--m" id="npn">Download PNG</button></div>' +
-      '</div>';
+        '<div class="tool-row">' +
+        '<div class="tool-field tool-field--slider">' +
+        '<span class="tool-label">Frequency</span>' +
+        '<div class="tool-bpm-slider-row">' +
+        '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="nf" min="0.2" max="2.5" step="0.05" value="0.65" aria-valuenow="0.65">' +
+        '<span class="tool-bpm-val" id="nf-val">0.65</span></div></div>' +
+        '<div class="tool-field tool-field--slider">' +
+        '<span class="tool-label">Octaves</span>' +
+        '<div class="tool-bpm-slider-row">' +
+        '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="no" min="1" max="6" step="1" value="4" aria-valuenow="4">' +
+        '<span class="tool-bpm-val" id="no-val">4</span></div></div>' +
+        '</div>' +
+        '<div class="tool-row">' +
+        '<button type="button" class="tool-btn tool-btn--c" id="nsv">Download SVG</button>' +
+        '<button type="button" class="tool-btn tool-btn--m" id="npn">Download PNG</button></div>' +
+        '</div>'
+    );
+    var tb = iface.querySelector('.tool-toolbar-pane');
     var v = iface.querySelector('#nv');
     function svgStr() {
-      var f = iface.querySelector('#nf').value;
-      var o = iface.querySelector('#no').value || 4;
+      var f = tb.querySelector('#nf').value;
+      var o = tb.querySelector('#no').value || 4;
       return (
         '<svg xmlns="http://www.w3.org/2000/svg" width="320" height="200">' +
         '<filter id="t"><feTurbulence type="fractalNoise" baseFrequency="' +
@@ -707,17 +700,17 @@
     function render() {
       v.innerHTML = svgStr();
     }
-    iface.querySelector('#nf').addEventListener('input', render);
-    iface.querySelector('#no').addEventListener('input', render);
-    bindToolSliderValue(iface, '#nf', '#nf-val', function (n) {
+    tb.querySelector('#nf').addEventListener('input', render);
+    tb.querySelector('#no').addEventListener('input', render);
+    bindToolSliderValue(tb, '#nf', '#nf-val', function (n) {
       return n.toFixed(2);
     });
-    bindToolSliderValue(iface, '#no', '#no-val');
-    iface.querySelector('#nsv').addEventListener('click', function () {
+    bindToolSliderValue(tb, '#no', '#no-val');
+    tb.querySelector('#nsv').addEventListener('click', function () {
       var blob = new Blob([svgStr()], { type: 'image/svg+xml' });
       OV.downloadBlob(blob, 'texture.svg');
     });
-    iface.querySelector('#npn').addEventListener('click', function () {
+    tb.querySelector('#npn').addEventListener('click', function () {
       var img = new Image();
       var u = URL.createObjectURL(new Blob([svgStr()], { type: 'image/svg+xml' }));
       img.onload = function () {
@@ -733,7 +726,7 @@
     render();
   }
 
-  /* —— QR —— */
+  /* QR */
   function initQrCodeGenerator(iface) {
     iface.innerHTML =
       '<div class="tool-shell tool-shell--split">' +
@@ -743,9 +736,17 @@
       '<aside class="tool-toolbar-pane" aria-label="QR options">' +
       '<div class="tool-field tool-field--grow"><span class="tool-label">Content (URL or text)</span>' +
       '<input type="text" class="tool-input" id="qrt" value="" autocomplete="off" placeholder="https://example.com"></div>' +
-      '<div class="tool-row">' +
+      '<div class="tool-row qr-row-colors">' +
+      '<div class="qr-colors-inputs">' +
       '<div class="tool-field"><span class="tool-label">FG</span><input type="color" class="tool-input" id="qrf" value="#08080c"></div>' +
       '<div class="tool-field"><span class="tool-label">BG</span><input type="color" class="tool-input" id="qrb" value="#ffffff"></div>' +
+      '</div>' +
+      '<div class="qr-contrast-panel" id="qr-cc" role="status" aria-live="polite" title="Readability score from luminance contrast (0–10). Higher helps scanners read the code.">' +
+      '<div class="qr-contrast-panel__label">Contrast quality</div>' +
+      '<div class="qr-contrast-panel__score" id="qr-cc-score">' +
+      '<span class="qr-contrast-panel__num" id="qr-cc-n">-</span><span class="qr-contrast-panel__denom" aria-hidden="true"> / 10</span>' +
+      '</div>' +
+      '</div>' +
       '</div>' +
       '<div class="tool-field tool-field--slider">' +
       '<span class="tool-label">Export size (px)</span>' +
@@ -837,6 +838,29 @@
     function qrOpts(dark, light, width) {
       return { width: width, margin: 2, color: { dark: dark, light: light } };
     }
+    function syncQrContrast() {
+      var nEl = iface.querySelector('#qr-cc-n');
+      var scoreEl = iface.querySelector('#qr-cc-score');
+      if (!nEl || !scoreEl) return;
+      var fg = OV.parseHex(iface.querySelector('#qrf').value);
+      var bg = OV.parseHex(iface.querySelector('#qrb').value);
+      scoreEl.className = 'qr-contrast-panel__score';
+      if (!fg || !bg) {
+        nEl.textContent = '-';
+        scoreEl.classList.add('qr-contrast-panel__score--empty');
+        var wrap0 = iface.querySelector('#qr-cc');
+        if (wrap0) wrap0.setAttribute('aria-label', 'Contrast quality');
+        return;
+      }
+      var ratio = OV.contrastRatio(fg, bg);
+      var q = OV.contrastQuality10(ratio);
+      nEl.textContent = q.toFixed(1);
+      if (ratio >= 4.5) scoreEl.classList.add('qr-contrast-panel__score--good');
+      else if (ratio >= 3) scoreEl.classList.add('qr-contrast-panel__score--mid');
+      else scoreEl.classList.add('qr-contrast-panel__score--bad');
+      var wrap = iface.querySelector('#qr-cc');
+      if (wrap) wrap.setAttribute('aria-label', 'Contrast quality ' + q.toFixed(1) + ' out of 10');
+    }
     function drawPreview() {
       if (!QR) {
         console.warn('QRCode library not loaded (expected js/vendor/qrcode.min.js)');
@@ -853,12 +877,14 @@
         var ctx = canvas.getContext('2d');
         ctx.fillStyle = light;
         ctx.fillRect(0, 0, previewW, previewW);
+        syncQrContrast();
         return;
       }
       var text = normalizeQrContent(raw);
       QR.toCanvas(canvas, text, qrOpts(dark, light, previewW), function (e) {
         if (e) console.warn(e);
       });
+      syncQrContrast();
     }
     iface.querySelectorAll('#qrt,#qrf,#qrb,#qrs').forEach(function (x) {
       x.addEventListener('input', drawPreview);
@@ -894,35 +920,40 @@
     drawPreview();
   }
 
-  /* —— Image toolbox —— */
+  /* Image toolbox */
   function initImageToolbox(iface) {
     var input = el('<input type="file" accept="image/*" style="display:none">');
+    iface.innerHTML =
+      toolShellSplit(
+        '<div class="tool-stack tool-media-pane" style="width:100%;max-width:100%;align-items:center">' +
+          '<div class="drop-zone" id="ov-it-zone" tabindex="0">Drop an image or click to browse</div>' +
+          '<div id="ov-it-canvas-wrap" style="display:none;width:100%;margin-top:12px">' +
+          '<canvas id="ov-itc" style="max-width:100%;border:1px solid var(--border)"></canvas>' +
+          '</div></div>',
+        '<div class="tool-stack" id="ov-itp">' +
+          '<div class="tool-row">' +
+          '<div class="tool-field tool-field--slider">' +
+          '<span class="tool-label">Quality</span>' +
+          '<div class="tool-bpm-slider-row">' +
+          '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ov-iq" min="0.5" max="1" step="0.05" value="0.92" aria-valuenow="0.92">' +
+          '<span class="tool-bpm-val" id="ov-iq-val">92%</span></div></div>' +
+          '<div class="tool-field tool-field--slider">' +
+          '<span class="tool-label">Scale %</span>' +
+          '<div class="tool-bpm-slider-row">' +
+          '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ov-isc" min="5" max="200" step="1" value="100" aria-valuenow="100">' +
+          '<span class="tool-bpm-val" id="ov-isc-val">100</span></div></div>' +
+          '<div class="tool-field"><span class="tool-label">Format</span><select class="tool-select" id="ov-ifmt"><option value="image/png">PNG</option><option value="image/jpeg">JPEG</option><option value="image/webp">WebP</option></select></div>' +
+          '</div>' +
+          '<div class="tool-row">' +
+          '<button type="button" class="tool-btn" id="ov-ir90">Rotate 90°</button>' +
+          '<button type="button" class="tool-btn" id="ov-iflip">Flip H</button>' +
+          '<button type="button" class="tool-btn tool-btn--c" id="ov-idl">Download</button></div>' +
+          '</div>'
+      ) + '';
     iface.appendChild(input);
-    var zone = el(
-      '<div class="drop-zone" tabindex="0">Drop an image or click to browse</div>'
-    );
-    iface.appendChild(zone);
-    var panel = el('<div class="tool-stack" style="display:none" id="ov-itp"></div>');
-    panel.innerHTML =
-      '<canvas id="ov-itc" style="max-width:100%;border:1px solid var(--border)"></canvas>' +
-      '<div class="tool-row">' +
-      '<div class="tool-field tool-field--slider">' +
-      '<span class="tool-label">Quality</span>' +
-      '<div class="tool-bpm-slider-row">' +
-      '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ov-iq" min="0.5" max="1" step="0.05" value="0.92" aria-valuenow="0.92">' +
-      '<span class="tool-bpm-val" id="ov-iq-val">92%</span></div></div>' +
-      '<div class="tool-field tool-field--slider">' +
-      '<span class="tool-label">Scale %</span>' +
-      '<div class="tool-bpm-slider-row">' +
-      '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ov-isc" min="5" max="200" step="1" value="100" aria-valuenow="100">' +
-      '<span class="tool-bpm-val" id="ov-isc-val">100</span></div></div>' +
-      '<div class="tool-field"><span class="tool-label">Format</span><select class="tool-select" id="ov-ifmt"><option value="image/png">PNG</option><option value="image/jpeg">JPEG</option><option value="image/webp">WebP</option></select></div>' +
-      '</div>' +
-      '<div class="tool-row">' +
-      '<button type="button" class="tool-btn" id="ov-ir90">Rotate 90°</button>' +
-      '<button type="button" class="tool-btn" id="ov-iflip">Flip H</button>' +
-      '<button type="button" class="tool-btn tool-btn--c" id="ov-idl">Download</button></div>';
-    iface.appendChild(panel);
+    var zone = iface.querySelector('#ov-it-zone');
+    var canvasWrap = iface.querySelector('#ov-it-canvas-wrap');
+    var panel = iface.querySelector('#ov-itp');
     bindToolSliderValue(panel, '#ov-iq', '#ov-iq-val', function (n) {
       return Math.round(n * 100) + '%';
     });
@@ -953,7 +984,7 @@
         flip = 1;
         c = panel.querySelector('#ov-itc');
         ctx = c.getContext('2d');
-        panel.style.display = '';
+        canvasWrap.style.display = '';
         applyCanvas();
       });
     }
@@ -976,14 +1007,19 @@
     });
   }
 
-  /* —— Image optimizer —— */
+  /* Image optimizer */
   function initImageOptimizer(iface) {
     var input = el('<input type="file" accept="image/*" multiple style="display:none">');
+    iface.innerHTML = toolShellSplit(
+      '<div class="tool-stack tool-media-pane ov-iop-list-wrap" id="ov-iop-wrap" style="width:100%;min-height:0">' +
+        '<div class="tool-stack" id="ov-iop"></div></div>',
+      '<div class="tool-stack">' +
+        '<div class="drop-zone" id="ov-iop-zone">Drop images or click to batch optimize</div>' +
+        '<p class="tool-out" style="margin-top:10px">Each row: preview, quality, format, export.</p></div>'
+    );
     iface.appendChild(input);
-    var zone = el('<div class="drop-zone">Drop images or click — batch optimize</div>');
-    var list = el('<div class="tool-stack" id="ov-iop"></div>');
-    iface.appendChild(zone);
-    iface.appendChild(list);
+    var zone = iface.querySelector('#ov-iop-zone');
+    var list = iface.querySelector('#ov-iop');
     function handle(files) {
       Array.prototype.forEach.call(files, function (file) {
         if (!file.type.match(/^image\//)) return;
@@ -1032,7 +1068,7 @@
     OV.bindDropZone(zone, input, handle);
   }
 
-  /* —— Social sizer —— */
+  /* Social sizer */
   var SOCIAL = [
     { n: 'IG Portrait', w: 1080, h: 1350 },
     { n: 'IG Square', w: 1080, h: 1080 },
@@ -1045,15 +1081,16 @@
 
   function initSocialSizer(iface) {
     var input = el('<input type="file" accept="image/*" style="display:none">');
-    iface.appendChild(input);
-    var zone = el('<div class="drop-zone">Drop one image</div>');
-    var grid = el('<div class="tool-grid-preview" id="ov-sg"></div>');
-    var btn = el(
-      '<div class="tool-row"><button type="button" class="tool-btn tool-btn--c" id="ov-sz-all">Download all (ZIP)</button></div>'
+    iface.innerHTML = toolShellSplit(
+      '<div class="tool-stack tool-media-pane" style="width:100%;min-height:0;align-items:stretch">' +
+        '<div class="tool-grid-preview" id="ov-sg"></div></div>',
+      '<div class="tool-stack">' +
+        '<div class="drop-zone" id="ov-sz-zone">Drop one image</div>' +
+        '<div class="tool-row"><button type="button" class="tool-btn tool-btn--c" id="ov-sz-all">Download all (ZIP)</button></div></div>'
     );
-    iface.appendChild(zone);
-    iface.appendChild(btn);
-    iface.appendChild(grid);
+    iface.appendChild(input);
+    var zone = iface.querySelector('#ov-sz-zone');
+    var grid = iface.querySelector('#ov-sg');
     var source = null;
     function render() {
       if (!source) return;
@@ -1102,13 +1139,14 @@
     });
   }
 
-  /* —— Grid crop —— */
+  /* Grid crop */
   function initGridCrop(iface) {
     var input = el('<input type="file" accept="image/*" multiple style="display:none">');
-    iface.appendChild(input);
-    iface.appendChild(el('<div class="drop-zone" id="ov-gz">Drop 1–20 images</div>'));
-    var controls = el(
-      '<div class="tool-stack" style="margin-top:16px">' +
+    iface.innerHTML = toolShellSplit(
+      '<div class="tool-stack tool-media-pane" style="width:100%;min-height:0;align-items:stretch">' +
+        '<div class="tool-grid-preview" id="ov-gprev"></div></div>',
+      '<div class="tool-stack">' +
+        '<div class="drop-zone" id="ov-gz">Drop 1–20 images</div>' +
         '<div class="tool-row">' +
         '<div class="tool-field"><span class="tool-label">Aspect W:H</span><select class="tool-select" id="ov-gr">' +
         '<option value="4/5">4:5</option><option value="1/1">1:1</option><option value="16/9">16:9</option><option value="9/16">9:16</option></select></div>' +
@@ -1118,10 +1156,9 @@
         '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ov-gm" min="200" max="4096" step="10" value="1080" aria-valuenow="1080">' +
         '<span class="tool-bpm-val" id="ov-gm-val">1080</span></div></div>' +
         '</div>' +
-        '<div class="tool-row"><button type="button" class="tool-btn tool-btn--c" id="ov-gzip">ZIP all</button></div>' +
-        '<div class="tool-grid-preview" id="ov-gprev"></div></div>'
+        '<div class="tool-row"><button type="button" class="tool-btn tool-btn--c" id="ov-gzip">ZIP all</button></div></div>'
     );
-    iface.appendChild(controls);
+    iface.appendChild(input);
     bindToolSliderValue(iface, '#ov-gm', '#ov-gm-val');
     var files = [];
     function refreshGridPreview() {
@@ -1203,24 +1240,25 @@
     });
   }
 
-  /* —— Carousel maker —— */
+  /* Carousel maker */
   function initCarouselMaker(iface) {
     var input = el('<input type="file" accept="image/*" style="display:none">');
-    iface.appendChild(input);
-    iface.appendChild(el('<div class="drop-zone" id="ov-cz">Drop one wide image</div>'));
-    var row = el(
-      '<div class="tool-row">' +
+    iface.innerHTML = toolShellSplit(
+      '<div class="tool-stack tool-media-pane" style="width:100%;min-height:0;align-items:stretch">' +
+        '<div class="tool-grid-preview" id="ov-cprev"></div></div>',
+      '<div class="tool-stack">' +
+        '<div class="drop-zone" id="ov-cz">Drop one wide image</div>' +
+        '<div class="tool-row">' +
         '<div class="tool-field tool-field--slider">' +
         '<span class="tool-label">Panels</span>' +
         '<div class="tool-bpm-slider-row">' +
         '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ov-cn" min="2" max="10" step="1" value="3" aria-valuenow="3">' +
         '<span class="tool-bpm-val" id="ov-cn-val">3</span></div></div>' +
-        '<button type="button" class="tool-btn tool-btn--c" id="ov-cdl">Download ZIP</button></div>'
+        '<button type="button" class="tool-btn tool-btn--c" id="ov-cdl">Download ZIP</button></div></div>'
     );
-    iface.appendChild(row);
+    iface.appendChild(input);
     bindToolSliderValue(iface, '#ov-cn', '#ov-cn-val');
-    var wrap = el('<div class="tool-grid-preview" id="ov-cprev"></div>');
-    iface.appendChild(wrap);
+    var wrap = iface.querySelector('#ov-cprev');
     var srcImg = null;
     OV.bindDropZone(iface.querySelector('#ov-cz'), input, function (fs) {
       if (!fs[0]) return;
@@ -1279,13 +1317,14 @@
     });
   }
 
-  /* —— Screenshot beautifier —— */
+  /* Screenshot beautifier */
   function initScreenshotBeautifier(iface) {
     var input = el('<input type="file" accept="image/*" style="display:none">');
-    iface.appendChild(input);
-    iface.appendChild(el('<div class="drop-zone" id="ov-ssz">Drop screenshot</div>'));
-    var ui = el(
-      '<div class="tool-stack" style="margin-top:12px">' +
+    iface.innerHTML = toolShellSplit(
+      '<div class="tool-stack tool-media-pane ss-beaut-media" style="width:100%;min-height:0;align-items:stretch">' +
+        '<div class="drop-zone" id="ov-ssz">Drop screenshot</div>' +
+        '<canvas id="ov-spc" class="ss-beaut-canvas" style="display:none;max-width:100%;border:1px solid var(--border)"></canvas></div>',
+      '<div class="tool-stack">' +
         '<div class="tool-row">' +
         '<div class="tool-field tool-field--slider">' +
         '<span class="tool-label">Padding</span>' +
@@ -1299,15 +1338,27 @@
         '<span class="tool-bpm-val" id="ov-srd-val">12</span></div></div>' +
         '<div class="tool-field"><span class="tool-label">BG</span><input type="color" class="tool-input" id="ov-sbg" value="#131318"></div>' +
         '</div>' +
-        '<div class="tool-row"><button type="button" class="tool-btn tool-btn--c" id="ov-sdl">Export PNG</button></div>' +
-        '<canvas id="ov-spc" style="max-width:100%;border:1px solid var(--border)"></canvas></div>'
+        '<div class="tool-row"><button type="button" class="tool-btn tool-btn--c" id="ov-sdl">Export PNG</button></div></div>'
     );
-    iface.appendChild(ui);
+    iface.appendChild(input);
     bindToolSliderValue(iface, '#ov-spad', '#ov-spad-val');
     bindToolSliderValue(iface, '#ov-srd', '#ov-srd-val');
     var shot = null;
+    function syncBeautMediaUi() {
+      var dz = iface.querySelector('#ov-ssz');
+      var c = iface.querySelector('#ov-spc');
+      if (!dz || !c) return;
+      if (shot) {
+        dz.style.display = 'none';
+        c.style.display = 'block';
+      } else {
+        dz.style.display = '';
+        c.style.display = 'none';
+      }
+    }
     function compose() {
       if (!shot) return;
+      syncBeautMediaUi();
       var pad = +iface.querySelector('#ov-spad').value || 40;
       var rad = +iface.querySelector('#ov-srd').value || 0;
       var bg = iface.querySelector('#ov-sbg').value;
@@ -1355,12 +1406,12 @@
     });
   }
 
-  /* —— Favicon forge —— */
+  /* Favicon forge */
   function initFaviconForge(iface) {
     var FCV_SIZES = [16, 24, 32, 48, 64];
     /**
      * Icon path `d` values: geometric marks are original; several paths derive from
-     * Heroicons (MIT) https://github.com/tailwindlabs/heroicons — rendered as vectors, not emoji.
+     * Heroicons (MIT) https://github.com/tailwindlabs/heroicons; rendered as vectors, not emoji.
      */
     var FCV_ICON_ORDER = [
       'star',
@@ -1446,6 +1497,28 @@
       { id: 'fraunces', label: 'Fraunces', family: 'Fraunces' },
       { id: 'bebas', label: 'Bebas Neue', family: 'Bebas Neue' },
       { id: 'montserrat', label: 'Montserrat', family: 'Montserrat' },
+      { id: 'dm-sans', label: 'DM Sans', family: 'DM Sans' },
+      { id: 'figtree', label: 'Figtree', family: 'Figtree' },
+      {
+        id: 'helvetica',
+        label: 'Helvetica',
+        system: true,
+        family: 'Helvetica Neue',
+        canvasStack: 'Helvetica Neue, Helvetica, Arial, sans-serif',
+      },
+      { id: 'ibm-plex-sans', label: 'IBM Plex Sans', family: 'IBM Plex Sans' },
+      { id: 'lexend', label: 'Lexend', family: 'Lexend' },
+      { id: 'lora', label: 'Lora', family: 'Lora' },
+      { id: 'merriweather', label: 'Merriweather', family: 'Merriweather' },
+      { id: 'nunito', label: 'Nunito', family: 'Nunito' },
+      { id: 'outfit', label: 'Outfit', family: 'Outfit' },
+      { id: 'plus-jakarta', label: 'Plus Jakarta Sans', family: 'Plus Jakarta Sans' },
+      { id: 'poppins', label: 'Poppins', family: 'Poppins' },
+      { id: 'raleway', label: 'Raleway', family: 'Raleway' },
+      { id: 'roboto', label: 'Roboto', family: 'Roboto' },
+      { id: 'rubik', label: 'Rubik', family: 'Rubik' },
+      { id: 'source-sans', label: 'Source Sans 3', family: 'Source Sans 3' },
+      { id: 'work-sans', label: 'Work Sans', family: 'Work Sans' },
     ];
     var fcvFontOpts = FCV_FONTS.map(function (f, i) {
       return '<option value="' + f.id + '"' + (i === 0 ? ' selected' : '') + '>' + f.label + '</option>';
@@ -1474,7 +1547,7 @@
       '<div class="fcv-shell">' +
       '<div class="fcv-preview" aria-label="Preview">' +
       '<div class="fcv-preview-inner">' +
-      '<div class="fcv-main-wrap">' +
+      '<div class="fcv-main-wrap" id="fcv-main-wrap">' +
       '<div class="fcv-main">' +
       '<canvas id="ov-fcv" width="180" height="180" class="fcv-canvas-main"></canvas>' +
       '</div>' +
@@ -1587,17 +1660,20 @@
     fcvFontLink.rel = 'stylesheet';
     document.head.appendChild(fcvFontLink);
 
-    function fcvFontFamilyCss() {
+    function fcvGetFontEntry() {
       var v = iface.querySelector('#ov-ffont').value;
-      var fam = FCV_FONTS[0].family;
       var fi;
       for (fi = 0; fi < FCV_FONTS.length; fi++) {
-        if (FCV_FONTS[fi].id === v) {
-          fam = FCV_FONTS[fi].family;
-          break;
-        }
+        if (FCV_FONTS[fi].id === v) return FCV_FONTS[fi];
       }
-      return fam;
+      return FCV_FONTS[0];
+    }
+
+    /** Full font list segment for canvas (quoted webfont name or system stack). */
+    function fcvFontCanvasFace() {
+      var e = fcvGetFontEntry();
+      if (e.system && e.canvasStack) return e.canvasStack;
+      return '"' + e.family + '",sans-serif';
     }
 
     function fcvGoogleFontHref(family) {
@@ -1725,6 +1801,13 @@
       if (bgIn && bgN) bgIn.disabled = bgN.checked;
     }
 
+    function syncFcvTransparentBgUi() {
+      var wrap = iface.querySelector('#fcv-main-wrap');
+      var bgN = iface.querySelector('#ov-fbg-none');
+      var on = bgN && bgN.checked;
+      if (wrap) wrap.classList.toggle('fcv-main-wrap--transparent-bg', !!on);
+    }
+
     function draw() {
       var w = 180;
       var h = 180;
@@ -1750,10 +1833,10 @@
         x.textBaseline = 'middle';
         var fsPx = fcvTypeSizePx();
         var fwNum = iface.querySelector('#ov-fweight').value === '400' ? '400' : '700';
-        var fam = fcvFontFamilyCss();
+        var fontFace = fcvFontCanvasFace();
         if (mode === 'letter') {
           var t = (iface.querySelector('#ov-ft').value || '?').slice(0, 2).toUpperCase();
-          x.font = fwNum + ' ' + fsPx + 'px "' + fam + '",sans-serif';
+          x.font = fwNum + ' ' + fsPx + 'px ' + fontFace;
           x.fillText(t, w / 2, h / 2 + 2);
         } else if (mode === 'emoji') {
           var eg = emojiGlyph();
@@ -1784,12 +1867,7 @@
           var customSym = iface.querySelector('#ov-fsym-custom').value.trim();
           if (customSym.length) {
             x.font =
-              fwNum +
-              ' ' +
-              fsPx +
-              'px "' +
-              fam +
-              '",system-ui,"Segoe UI Symbol","Apple Symbols",sans-serif';
+              fwNum + ' ' + fsPx + 'px ' + fontFace + ',system-ui,"Segoe UI Symbol","Apple Symbols",sans-serif';
             x.fillText(customSym.slice(0, 4), w / 2, h / 2 + 2);
           } else {
             x.save();
@@ -1804,10 +1882,18 @@
       }
       x.restore();
       drawScales();
+      syncFcvTransparentBgUi();
     }
 
     function applyFcvFont() {
-      fcvFontLink.href = fcvGoogleFontHref(fcvFontFamilyCss());
+      var e = fcvGetFontEntry();
+      if (e.system) {
+        fcvFontLink.removeAttribute('href');
+        fcvFontLink.onload = null;
+        draw();
+        return;
+      }
+      fcvFontLink.href = fcvGoogleFontHref(e.family);
       if (document.fonts && document.fonts.ready) {
         document.fonts.ready.then(function () {
           draw();
@@ -1861,6 +1947,7 @@
     syncContentUi();
     bindInputs();
     syncFcvColorEnabled();
+    syncFcvTransparentBgUi();
     applyFcvFont();
 
     function dl(size) {
@@ -1896,7 +1983,7 @@
     });
   }
 
-  /* —— Font pair —— */
+  /* Font pair */
   var FONT_PAIRS = [
     { h: 'Syne', b: 'IBM Plex Mono', id: 'syne+ibm-plex-mono' },
     { h: 'Playfair Display', b: 'Source Sans 3', id: 'playfair-display+source-sans-3' },
@@ -1977,7 +2064,7 @@
       { id: 'nonprofit', label: 'Non-profit', head: 'Every voice counts.', body: 'Mission sites balance emotion and trust. Pair an expressive headline with an accessible sans for stories and CTAs.', hint: 1 },
       { id: 'ecommerce', label: 'E-commerce', head: 'New drop.', body: 'Shop the edit.', hint: 5 },
       { id: 'church', label: 'Church', head: 'Gather.', body: 'Event schedules and sermons online: traditional serif headlines with a simple sans for times and links.', hint: 11 },
-      { id: 'fashion', label: 'Fashion', head: 'The line.', body: 'Lookbooks reward contrast—tight display typography and a minimal grotesk for sizes and care copy.', hint: 8 },
+      { id: 'fashion', label: 'Fashion', head: 'The line.', body: 'Lookbooks reward contrast: tight display typography and a minimal grotesk for sizes and care copy.', hint: 8 },
       { id: 'healthcare', label: 'Healthcare', head: 'Care, explained.', body: 'Patient-facing UI favors neutral sans pairs with clear hierarchy; reserve display for hero moments only.', hint: 6 },
       { id: 'realestate', label: 'Real estate', head: 'Your next address.', body: 'Listings and tours: confident headline + readable sans for specs, maps, and disclosures.', hint: 0 },
       { id: 'restaurant', label: 'Restaurant', head: 'Tonight’s menu.', body: 'Menus and sites: appetizing display for titles, clean sans for ingredients, hours, and reservations.', hint: 3 },
@@ -2663,7 +2750,7 @@
   }
 
 
-  /* —— Beat maker —— (Web Audio; timeline + instruments + genre presets) */
+  /* Beat maker (Web Audio; timeline + instruments + genre presets) */
   function initBeatMaker(iface) {
     var BEAT_INSTRUMENTS_HTML =
       '<optgroup label="Core (quick mix)">' +
@@ -2713,7 +2800,7 @@
     var BEAT_PRESETS = [
       {
         id: '_',
-        name: '— Pick a groove —',
+        name: 'Pick a groove',
         bpm: 110,
         instruments: ['kick_sub', 'snare_tight', 'hat_closed', 'bass_sub'],
         pattern: [pat([]), pat([]), pat([]), pat([])],
@@ -3482,7 +3569,7 @@
           setTimeout(function () {
             URL.revokeObjectURL(a.href);
           }, 4000);
-          setBeatStat('Exported 48 kHz WAV (stereo) — ready for Premiere, Resolve, etc.');
+          setBeatStat('Exported 48 kHz WAV (stereo). Ready for Premiere, Resolve, etc.');
         })
         .catch(function (e) {
           console.error('Overprint beat export failed', e);
@@ -3767,7 +3854,8 @@
   var REGISTRY = {
     'contrast-checker': initContrastChecker,
     'aspect-ratio-calc': initAspectRatioCalc,
-    'placeholder-hub': initPlaceholderHub,
+    'avatar-generator': initAvatarGenerator,
+    'placeholder-hub': initAvatarGenerator,
     'css-generator': initCssGenerator,
     'color-lab': initColorLab,
     'noise-texture': initNoiseTexture,

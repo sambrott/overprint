@@ -8,6 +8,7 @@
     if (t.length === 3) {
       t = t[0] + t[0] + t[1] + t[1] + t[2] + t[2];
     }
+    if (t.length === 8) t = t.slice(0, 6);
     if (!/^[0-9a-fA-F]{6}$/.test(t)) return null;
     return {
       r: parseInt(t.slice(0, 2), 16),
@@ -42,6 +43,18 @@
     var lo = Math.min(L1, L2);
     if (lo <= 0) return 21;
     return (hi + 0.05) / (lo + 0.05);
+  };
+
+  /** Map WCAG luminance contrast (1–21) to a 0–10 readability score. */
+  OV.contrastQuality10 = function (ratio) {
+    var r = ratio;
+    if (r >= 21) return 10;
+    if (r >= 7) return 8 + ((r - 7) / (21 - 7)) * 2;
+    if (r >= 4.5) return 6 + ((r - 4.5) / (7 - 4.5)) * 2;
+    if (r >= 3) return 4 + ((r - 3) / (4.5 - 3)) * 2;
+    if (r >= 2) return 2 + (r - 2) * 2;
+    if (r >= 1) return Math.max(0, (r - 1) * 2);
+    return 0;
   };
 
   OV.rgbToHsl = function (r, g, b) {
@@ -193,7 +206,7 @@
 
   /**
    * Build a Windows .ico containing embedded PNG chunks (Vista+).
-   * @param {Uint8Array[]} pngBuffers — one raw PNG file per size (ascending order is fine).
+   * @param {Uint8Array[]} pngBuffers: one raw PNG file per size (ascending order is fine).
    */
   OV.encodeIcoFromPngBuffers = function (pngBuffers) {
     var n = pngBuffers.length;

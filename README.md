@@ -51,7 +51,7 @@ External **reference implementations** (ideas only; Overprint stays dependency-f
 9. Contrast Checker — WCAG AA/AAA accessibility testing
 10. Favicon Forge — Create favicons, export as ICO + PNG
 11. Noise & Texture — SVG/PNG grain and texture generator
-12. Placeholder Hub — Lorem ipsum, dummy images, fake data
+12. Avatar Generator — Pixel identicons, characters, scenes; PNG export
 13. Screenshot Beautifier — Backgrounds, frames, shadows
 14. Image Optimizer — Compress and optimize PNG, JPG, WebP, and SVG
 15. QR Code Generator — Custom colors, embedded logo

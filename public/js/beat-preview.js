@@ -1,4 +1,4 @@
-/* Beat maker card preview — same grid pattern as original inline script */
+/* Beat maker card preview: same grid pattern as original inline script */
 function initBeatPreview() {
   var ba = document.getElementById('beatAnim');
   if (!ba) return;
