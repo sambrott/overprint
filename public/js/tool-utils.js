@@ -36,12 +36,12 @@
     return 0.2126 * R + 0.7152 * G + 0.0722 * B;
   };
 
+  /** WCAG 2.1 relative luminance contrast (1–21). Identical colors → 1. */
   OV.contrastRatio = function (rgb1, rgb2) {
     var L1 = OV.relativeLuminance(rgb1.r, rgb1.g, rgb1.b);
     var L2 = OV.relativeLuminance(rgb2.r, rgb2.g, rgb2.b);
     var hi = Math.max(L1, L2);
     var lo = Math.min(L1, L2);
-    if (lo <= 0) return 21;
     return (hi + 0.05) / (lo + 0.05);
   };
 

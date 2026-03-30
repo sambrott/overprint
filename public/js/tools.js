@@ -740,11 +740,12 @@
       '<div class="qr-colors-inputs">' +
       '<div class="tool-field"><span class="tool-label">FG</span><input type="color" class="tool-input" id="qrf" value="#08080c"></div>' +
       '<div class="tool-field"><span class="tool-label">BG</span><input type="color" class="tool-input" id="qrb" value="#ffffff"></div>' +
-      '</div>' +
+      '<div class="tool-field">' +
+      '<span class="tool-label">Contrast</span>' +
       '<div class="qr-contrast-panel" id="qr-cc" role="status" aria-live="polite" title="Readability score from luminance contrast (0–10). Higher helps scanners read the code.">' +
-      '<div class="qr-contrast-panel__label">Contrast quality</div>' +
-      '<div class="qr-contrast-panel__score" id="qr-cc-score">' +
-      '<span class="qr-contrast-panel__num" id="qr-cc-n">-</span><span class="qr-contrast-panel__denom" aria-hidden="true"> / 10</span>' +
+      '<span class="qr-contrast-panel__num" id="qr-cc-n">-</span>' +
+      '<span class="qr-contrast-panel__denom" aria-hidden="true">/10</span>' +
+      '</div>' +
       '</div>' +
       '</div>' +
       '</div>' +
@@ -840,26 +841,29 @@
     }
     function syncQrContrast() {
       var nEl = iface.querySelector('#qr-cc-n');
-      var scoreEl = iface.querySelector('#qr-cc-score');
-      if (!nEl || !scoreEl) return;
+      var panel = iface.querySelector('#qr-cc');
+      if (!nEl || !panel) return;
       var fg = OV.parseHex(iface.querySelector('#qrf').value);
       var bg = OV.parseHex(iface.querySelector('#qrb').value);
-      scoreEl.className = 'qr-contrast-panel__score';
+      panel.classList.remove(
+        'qr-contrast-panel--good',
+        'qr-contrast-panel--mid',
+        'qr-contrast-panel--bad',
+        'qr-contrast-panel--empty'
+      );
       if (!fg || !bg) {
         nEl.textContent = '-';
-        scoreEl.classList.add('qr-contrast-panel__score--empty');
-        var wrap0 = iface.querySelector('#qr-cc');
-        if (wrap0) wrap0.setAttribute('aria-label', 'Contrast quality');
+        panel.classList.add('qr-contrast-panel--empty');
+        panel.setAttribute('aria-label', 'Contrast quality');
         return;
       }
       var ratio = OV.contrastRatio(fg, bg);
       var q = OV.contrastQuality10(ratio);
       nEl.textContent = q.toFixed(1);
-      if (ratio >= 4.5) scoreEl.classList.add('qr-contrast-panel__score--good');
-      else if (ratio >= 3) scoreEl.classList.add('qr-contrast-panel__score--mid');
-      else scoreEl.classList.add('qr-contrast-panel__score--bad');
-      var wrap = iface.querySelector('#qr-cc');
-      if (wrap) wrap.setAttribute('aria-label', 'Contrast quality ' + q.toFixed(1) + ' out of 10');
+      if (ratio >= 4.5) panel.classList.add('qr-contrast-panel--good');
+      else if (ratio >= 3) panel.classList.add('qr-contrast-panel--mid');
+      else panel.classList.add('qr-contrast-panel--bad');
+      panel.setAttribute('aria-label', 'Contrast quality ' + q.toFixed(1) + ' out of 10');
     }
     function drawPreview() {
       if (!QR) {
@@ -1409,6 +1413,155 @@
   /* Favicon forge */
   function initFaviconForge(iface) {
     var FCV_SIZES = [16, 24, 32, 48, 64];
+    /** Master canvas resolution (was 180px — too soft when scaled to 16/32 favicons). */
+    var FCV_INTERNAL = 512;
+    var FCV_FONT_SCALE = FCV_INTERNAL / 180;
+    /** Preview / GIF: seconds per full loop (each preset has its own tempo). */
+    var FCV_MOTION_LOOP_SEC = {
+      rotate: 3.47,
+      pulse: 2.63,
+      beat: 2.08,
+      wobble: 3.18,
+      buzz: 1.79,
+      float: 3.71,
+      sway: 3.27,
+      rock: 3.02,
+    };
+    function fcvMotionLoopSec(kind) {
+      var s = FCV_MOTION_LOOP_SEC[kind];
+      return typeof s === 'number' ? s : 2.85;
+    }
+    function fcvClamp01(u) {
+      return u < 0 ? 0 : u > 1 ? 1 : u;
+    }
+    /** Subtle phase warp: eases off perfect harmonic timing (endpoints unchanged). */
+    function fcvWarpPhase(p) {
+      var x = fcvClamp01(p);
+      return fcvClamp01(x + 0.038 * Math.sin(Math.PI * 2 * x) * x * (1 - x) * 4);
+    }
+    function fcvEaseInOutCubic(u) {
+      return u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2;
+    }
+    function fcvEaseOutCubic(u) {
+      return 1 - Math.pow(1 - fcvClamp01(u), 3);
+    }
+    function fcvEaseInCubic(u) {
+      u = fcvClamp01(u);
+      return u * u * u;
+    }
+    function fcvEaseInOutQuart(u) {
+      u = fcvClamp01(u);
+      return u < 0.5 ? 8 * u * u * u * u : 1 - Math.pow(-2 * u + 2, 4) / 2;
+    }
+    function fcvSmoothstep01(u) {
+      var x = u < 0 ? 0 : u > 1 ? 1 : u;
+      return x * x * (3 - 2 * x);
+    }
+    var fcvPreviewRafId = null;
+    var fcvPreviewT0 = 0;
+    /** Non-static motion modes (preview loop + GIF export). */
+    var FCV_MOTION_ON = {
+      rotate: 1,
+      pulse: 1,
+      beat: 1,
+      wobble: 1,
+      buzz: 1,
+      float: 1,
+      sway: 1,
+      rock: 1,
+    };
+    function fcvIsMotionOn(mode) {
+      return !!FCV_MOTION_ON[mode];
+    }
+    /** 0 = none, 1 = default design strength, 1.5 = max slider. */
+    function fcvMotionIntensityRatio() {
+      var el = iface.querySelector('#ov-fmotion-int');
+      var n = el ? parseInt(el.value, 10) : 100;
+      if (isNaN(n)) return 1;
+      return Math.max(0, Math.min(1.5, n / 100));
+    }
+    function fcvApplyMotion(ctx, w, h, animKind, animPhase) {
+      var inten = fcvMotionIntensityRatio();
+      if (inten <= 0) return;
+      var p = animPhase - Math.floor(animPhase);
+      var po = fcvWarpPhase(p);
+      var t = po * Math.PI * 2;
+      ctx.translate(w / 2, h / 2);
+      switch (animKind) {
+        case 'rotate': {
+          var spin =
+            po * Math.PI * 2 +
+            0.0055 * Math.sin(t * 2.7 + 0.5) +
+            0.0035 * Math.sin(t * 4.3 + 1.1);
+          ctx.rotate(spin * inten);
+          break;
+        }
+        case 'pulse': {
+          var pulseDeep = 0.098 * inten;
+          var depth;
+          if (p < 0.53) {
+            depth = pulseDeep * fcvEaseOutCubic(p / 0.53);
+          } else {
+            depth = pulseDeep * (1 - fcvEaseInCubic((p - 0.53) / 0.47));
+          }
+          var pulseS = 1 - depth;
+          ctx.scale(pulseS, pulseS);
+          break;
+        }
+        case 'beat': {
+          var bd = 0.078 * inten;
+          var dip = (1 - Math.cos(t * 2)) / 2;
+          var asym = 0.88 + 0.12 * Math.sin(Math.PI * 2 * po * 2 + 0.4);
+          var shaped = fcvSmoothstep01(dip * asym);
+          var bs = 1 - bd * shaped;
+          ctx.scale(bs, bs);
+          break;
+        }
+        case 'wobble':
+          ctx.rotate(
+            inten *
+              (0.158 * Math.sin(t + 0.11) +
+                0.038 * Math.sin(t * 2.17 + 0.95) +
+                0.014 * Math.sin(t * 4.51 + 2.2))
+          );
+          break;
+        case 'buzz':
+          ctx.rotate(
+            inten *
+              (0.034 * Math.sin(t * 4.4 + 0.2) +
+                0.022 * Math.sin(t * 6.7 + 1.4) +
+                0.011 * Math.sin(t * 2.9 + 0.6))
+          );
+          break;
+        case 'float': {
+          var bob = Math.sin(t);
+          var bobE = fcvEaseInOutQuart((bob + 1) / 2) * 2 - 1;
+          ctx.translate(
+            0,
+            inten * h * 0.036 * bobE * (0.79 + 0.21 * Math.sin(t * 1.73 + 0.52))
+          );
+          break;
+        }
+        case 'sway':
+          ctx.translate(
+            inten * (w * 0.042 * Math.sin(t * 0.91 + 0.2) + w * 0.006 * Math.sin(t * 2.4 + 0.8)),
+            inten * (h * 0.009 * Math.sin(t * 1.03 + 0.41) + h * 0.004 * Math.sin(t * 1.67 + 1.2))
+          );
+          break;
+        case 'rock':
+          ctx.rotate(
+            inten * (0.102 * Math.sin(t + 0.25) + 0.024 * Math.sin(t * 2.21 + 0.7))
+          );
+          ctx.translate(
+            inten * w * 0.021 * Math.sin(t + 0.88),
+            inten * (h * 0.016 * Math.sin(t * 0.89 + 0.45) + h * 0.005 * Math.sin(t * 2.6 + 0.3))
+          );
+          break;
+        default:
+          break;
+      }
+      ctx.translate(-w / 2, -h / 2);
+    }
     /**
      * Icon path `d` values: geometric marks are original; several paths derive from
      * Heroicons (MIT) https://github.com/tailwindlabs/heroicons; rendered as vectors, not emoji.
@@ -1422,6 +1575,7 @@
       'sparkle',
       'disc',
       'target',
+      'pathfinder',
       'square',
       'triangle',
       'diamond',
@@ -1435,6 +1589,7 @@
       sparkle: 'Sparkle',
       disc: 'Filled circle',
       target: 'Target rings',
+      pathfinder: 'Pathfinder',
       square: 'Square',
       triangle: 'Triangle',
       diamond: 'Diamond',
@@ -1460,6 +1615,7 @@
       diamond: { d: 'M12 2.25L21.75 12 12 21.75 2.25 12 12 2.25Z' },
       disc: { fn: 'disc' },
       target: { fn: 'target' },
+      pathfinder: { fn: 'pathfinder' },
     };
     var FCV_EMOJI = [
       [0x1f600, 'Grinning face'],
@@ -1549,7 +1705,11 @@
       '<div class="fcv-preview-inner">' +
       '<div class="fcv-main-wrap" id="fcv-main-wrap">' +
       '<div class="fcv-main">' +
-      '<canvas id="ov-fcv" width="180" height="180" class="fcv-canvas-main"></canvas>' +
+      '<canvas id="ov-fcv" width="' +
+      FCV_INTERNAL +
+      '" height="' +
+      FCV_INTERNAL +
+      '" class="fcv-canvas-main"></canvas>' +
       '</div>' +
       '<div class="fcv-scales" aria-label="Preview at common sizes">' +
       FCV_SIZES.map(function (sz) {
@@ -1571,7 +1731,7 @@
       '<aside class="fcv-toolbar" aria-label="Favicon controls">' +
       '<div class="fcv-toolbar-head">' +
       '<div class="fcv-export-actions">' +
-      '<button type="button" class="tool-btn tool-btn--m" id="ov-fico">favicon.ico</button>' +
+      '<button type="button" class="tool-btn tool-btn--m" id="ov-fico" title="Static: multi-size .ico. Motion: animated .gif for browser tabs.">FAVICON.ICO</button>' +
       '<button type="button" class="tool-btn" id="ov-f32">PNG 32</button>' +
       '<button type="button" class="tool-btn" id="ov-f180">PNG 180</button>' +
       '</div></div>' +
@@ -1581,11 +1741,11 @@
       '<div class="tool-field"><span class="tool-label">Mode</span>' +
       '<select class="tool-select" id="ov-fmode" aria-label="Content type">' +
       '<option value="letter">Letters</option>' +
-      '<option value="symbol">Icons and text</option>' +
+      '<option value="symbol" selected>Icons and text</option>' +
       '<option value="emoji">Emoji</option>' +
       '</select></div>' +
-      '<div class="tool-field" id="ov-fwrap-letter"><span class="tool-label">Letters (1–2)</span>' +
-      '<input type="text" class="tool-input" id="ov-ft" maxlength="2" value="OP" autocomplete="off"></div>' +
+      '<div class="tool-field" id="ov-fwrap-letter"><span class="tool-label">Letters (optional)</span>' +
+      '<input type="text" class="tool-input" id="ov-ft" maxlength="2" value="" placeholder="e.g. OP" autocomplete="off" aria-label="Letters, up to 2; leave empty for no text"></div>' +
       '</section>' +
       '<section class="fcv-section" id="ov-fwrap-symbol" hidden>' +
       '<div class="fcv-section-title">Icon</div>' +
@@ -1633,6 +1793,11 @@
       '<option value="diamond">Diamond</option>' +
       '<option value="triangle">Triangle</option>' +
       '</select></div>' +
+      '<div class="tool-field fcv-field-range">' +
+      '<span class="tool-label">Shape size <span id="ov-fmask-scale-val" class="fcv-size-val">100</span>%</span>' +
+      '<div class="tool-bpm-slider-row">' +
+      '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ov-fmask-scale" min="55" max="100" value="100" step="1" aria-label="Mask shape scale" aria-valuemin="55" aria-valuemax="100" aria-valuenow="100">' +
+      '</div></div>' +
       '<div class="tool-field"><span class="tool-label">Foreground</span>' +
       '<div class="fcv-color-row">' +
       '<input type="color" class="tool-input" id="ov-ffg" value="#08080c" aria-label="Foreground color">' +
@@ -1641,7 +1806,7 @@
       '<div class="tool-field"><span class="tool-label">Background</span>' +
       '<div class="fcv-color-row">' +
       '<input type="color" class="tool-input" id="ov-fbg" value="#00b4d8" aria-label="Background color">' +
-      '<label class="fcv-color-none"><input type="checkbox" id="ov-fbg-none"> None</label>' +
+      '<label class="fcv-color-none"><input type="checkbox" id="ov-fbg-none" checked> None</label>' +
       '</div></div>' +
       '</section>' +
       '<section class="fcv-section fcv-section--presets">' +
@@ -1654,6 +1819,26 @@
       '<button type="button" class="fcv-preset" data-fg="#ecfdf5" data-bg="#059669" title="Mint on green"></button>' +
       '<button type="button" class="fcv-preset" data-fg="#fef3c7" data-bg="#7c3aed" title="Cream on violet"></button>' +
       '</div></section>' +
+      '<section class="fcv-section">' +
+      '<div class="fcv-section-title">Motion</div>' +
+      '<div class="tool-field"><span class="tool-label">Tab icon</span>' +
+      '<select class="tool-select" id="ov-fanim" aria-label="Favicon motion (preview and download)">' +
+      '<option value="none" selected>Static</option>' +
+      '<option value="rotate">Rotate</option>' +
+      '<option value="pulse">Pulse</option>' +
+      '<option value="beat">Beat</option>' +
+      '<option value="wobble">Wobble</option>' +
+      '<option value="buzz">Buzz</option>' +
+      '<option value="float">Float</option>' +
+      '<option value="sway">Sway</option>' +
+      '<option value="rock">Rock</option>' +
+      '</select></div>' +
+      '<div class="tool-field fcv-field-range">' +
+      '<span class="tool-label">Intensity <span id="ov-fmotion-int-val" class="fcv-size-val">100</span>%</span>' +
+      '<div class="tool-bpm-slider-row">' +
+      '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ov-fmotion-int" min="0" max="150" value="100" step="1" aria-label="Motion intensity" aria-valuemin="0" aria-valuemax="150" aria-valuenow="100">' +
+      '</div></div>' +
+      '</section>' +
       '</div></aside></div></div>';
 
     var fcvFontLink = document.createElement('link');
@@ -1689,6 +1874,81 @@
       var n = el ? parseInt(el.value, 10) : 100;
       if (isNaN(n)) return 100;
       return Math.max(48, Math.min(140, n));
+    }
+
+    /** Mask shape scale (0.55–1), centered; scales background shape only (foreground is full size). */
+    function fcvMaskScaleRatio() {
+      var el = iface.querySelector('#ov-fmask-scale');
+      var n = el ? parseInt(el.value, 10) : 100;
+      if (isNaN(n)) return 1;
+      return Math.max(0.55, Math.min(1, n / 100));
+    }
+
+    var fcvFgScratch = document.createElement('canvas');
+    fcvFgScratch.width = FCV_INTERNAL;
+    fcvFgScratch.height = FCV_INTERNAL;
+
+    function fcvDrawForeground(ox) {
+      var w = FCV_INTERNAL;
+      var h = FCV_INTERNAL;
+      ox.clearRect(0, 0, w, h);
+      var mode = iface.querySelector('#ov-fmode').value;
+      var fg = iface.querySelector('#ov-ffg').value;
+      var fsPx = fcvTypeSizePx();
+      var fsCanvas = fsPx * FCV_FONT_SCALE;
+      var optNudge = Math.round(2 * FCV_FONT_SCALE);
+      var fwNum = iface.querySelector('#ov-fweight').value === '400' ? '400' : '700';
+      var fontFace = fcvFontCanvasFace();
+      ox.fillStyle = fg;
+      ox.textAlign = 'center';
+      ox.textBaseline = 'middle';
+      if (mode === 'letter') {
+        var t = iface.querySelector('#ov-ft').value.trim().slice(0, 2).toUpperCase();
+        if (t.length) {
+          ox.font = fwNum + ' ' + fsCanvas + 'px ' + fontFace;
+          ox.fillText(t, w / 2, h / 2 + optNudge);
+        }
+      } else if (mode === 'emoji') {
+        var eg = emojiGlyph();
+        ox.font =
+          fwNum +
+          ' ' +
+          fsCanvas +
+          'px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+        ox.textBaseline = 'alphabetic';
+        var em = ox.measureText(eg);
+        var eAsc = em.actualBoundingBoxAscent;
+        var eDesc = em.actualBoundingBoxDescent;
+        var ey = h / 2;
+        if (
+          eAsc != null &&
+          eDesc != null &&
+          !isNaN(eAsc) &&
+          !isNaN(eDesc) &&
+          (eAsc > 0 || eDesc > 0)
+        ) {
+          ey = h / 2 + (eAsc - eDesc) / 2;
+        } else {
+          ox.textBaseline = 'middle';
+          ey = h / 2 + Math.round(fsCanvas * 0.06);
+        }
+        ox.fillText(eg, w / 2, ey);
+      } else {
+        var customSym = iface.querySelector('#ov-fsym-custom').value.trim();
+        if (customSym.length) {
+          ox.font =
+            fwNum + ' ' + fsCanvas + 'px ' + fontFace + ',system-ui,"Segoe UI Symbol","Apple Symbols",sans-serif';
+          ox.fillText(customSym.slice(0, 4), w / 2, h / 2 + optNudge);
+        } else {
+          ox.save();
+          var u = (Math.min(w, h) * 0.72 * (fsPx / 100)) / 24;
+          ox.translate(w / 2, h / 2);
+          ox.scale(u, u);
+          ox.translate(-12, -12);
+          drawVectorIcon(ox, iface.querySelector('#ov-ficon-select').value);
+          ox.restore();
+        }
+      }
     }
 
     function pathShape(ctx, w, h, shape) {
@@ -1743,6 +2003,11 @@
         ctx.arc(12, 12, 4, 0, Math.PI * 2, true);
         ctx.fill(spec.rule || 'evenodd');
         return;
+      } else if (spec.fn === 'pathfinder') {
+        ctx.arc(9.5, 12, 6.5, 0, Math.PI * 2);
+        ctx.arc(14.5, 12, 6.5, 0, Math.PI * 2);
+        ctx.fill('nonzero');
+        return;
       }
       ctx.fill(spec.rule || 'nonzero');
     }
@@ -1776,6 +2041,11 @@
       return ch;
     }
 
+    function fcvSetSmoothDownscale(ctx) {
+      ctx.imageSmoothingEnabled = true;
+      if (typeof ctx.imageSmoothingQuality === 'string') ctx.imageSmoothingQuality = 'high';
+    }
+
     function drawScales() {
       var main = iface.querySelector('#ov-fcv');
       var i;
@@ -1786,9 +2056,9 @@
         el.width = sz;
         el.height = sz;
         var sx = el.getContext('2d');
-        sx.imageSmoothingEnabled = true;
+        fcvSetSmoothDownscale(sx);
         sx.clearRect(0, 0, sz, sz);
-        sx.drawImage(main, 0, 0, 180, 180, 0, 0, sz, sz);
+        sx.drawImage(main, 0, 0, FCV_INTERNAL, FCV_INTERNAL, 0, 0, sz, sz);
       }
     }
 
@@ -1801,88 +2071,211 @@
       if (bgIn && bgN) bgIn.disabled = bgN.checked;
     }
 
-    function syncFcvTransparentBgUi() {
-      var wrap = iface.querySelector('#fcv-main-wrap');
-      var bgN = iface.querySelector('#ov-fbg-none');
-      var on = bgN && bgN.checked;
-      if (wrap) wrap.classList.toggle('fcv-main-wrap--transparent-bg', !!on);
-    }
-
-    function draw() {
-      var w = 180;
-      var h = 180;
-      var c = iface.querySelector('#ov-fcv');
-      var x = c.getContext('2d');
+    function drawToCanvas(canvasEl, opts) {
+      opts = opts || {};
+      var animPhase = typeof opts.animPhase === 'number' ? opts.animPhase : 0;
+      var animKind = opts.animKind || 'none';
+      var matteBg = opts.matteBg;
+      var w = FCV_INTERNAL;
+      var h = FCV_INTERNAL;
+      var x = canvasEl.getContext('2d');
+      fcvSetSmoothDownscale(x);
       var shape = iface.querySelector('#ov-fshape').value;
-      var mode = iface.querySelector('#ov-fmode').value;
-      var fg = iface.querySelector('#ov-ffg').value;
       var bg = iface.querySelector('#ov-fbg').value;
       var fgNone = iface.querySelector('#ov-ffg-none').checked;
       var bgNone = iface.querySelector('#ov-fbg-none').checked;
+      var paintFg = !fgNone;
       x.clearRect(0, 0, w, h);
       x.save();
+      /* Motion before clip so mask + artwork move as one (rotation visible even for solid fills). */
+      if (fcvIsMotionOn(animKind)) {
+        fcvApplyMotion(x, w, h, animKind, animPhase);
+      }
+      var maskScale = fcvMaskScaleRatio();
+      if (paintFg) {
+        var ox = fcvFgScratch.getContext('2d');
+        fcvSetSmoothDownscale(ox);
+        fcvDrawForeground(ox);
+      }
+      /* One path for all shape sizes: mask uses scale(s); foreground is drawn from scratch at full size (inverse scale) so 100% matches <100% behavior. */
+      x.save();
+      x.translate(w / 2, h / 2);
+      x.scale(maskScale, maskScale);
+      x.translate(-w / 2, -h / 2);
       pathShape(x, w, h, shape);
       x.clip();
       if (!bgNone) {
         x.fillStyle = bg;
         x.fillRect(0, 0, w, h);
+      } else if (matteBg) {
+        x.fillStyle = matteBg;
+        x.fillRect(0, 0, w, h);
       }
-      if (!fgNone) {
-        x.fillStyle = fg;
-        x.textAlign = 'center';
-        x.textBaseline = 'middle';
-        var fsPx = fcvTypeSizePx();
-        var fwNum = iface.querySelector('#ov-fweight').value === '400' ? '400' : '700';
-        var fontFace = fcvFontCanvasFace();
-        if (mode === 'letter') {
-          var t = (iface.querySelector('#ov-ft').value || '?').slice(0, 2).toUpperCase();
-          x.font = fwNum + ' ' + fsPx + 'px ' + fontFace;
-          x.fillText(t, w / 2, h / 2 + 2);
-        } else if (mode === 'emoji') {
-          var eg = emojiGlyph();
-          x.font =
-            fwNum +
-            ' ' +
-            fsPx +
-            'px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
-          x.textBaseline = 'alphabetic';
-          var em = x.measureText(eg);
-          var eAsc = em.actualBoundingBoxAscent;
-          var eDesc = em.actualBoundingBoxDescent;
-          var ey = h / 2;
-          if (
-            eAsc != null &&
-            eDesc != null &&
-            !isNaN(eAsc) &&
-            !isNaN(eDesc) &&
-            (eAsc > 0 || eDesc > 0)
-          ) {
-            ey = h / 2 + (eAsc - eDesc) / 2;
-          } else {
-            x.textBaseline = 'middle';
-            ey = h / 2 + Math.round(fsPx * 0.06);
-          }
-          x.fillText(eg, w / 2, ey);
-        } else {
-          var customSym = iface.querySelector('#ov-fsym-custom').value.trim();
-          if (customSym.length) {
-            x.font =
-              fwNum + ' ' + fsPx + 'px ' + fontFace + ',system-ui,"Segoe UI Symbol","Apple Symbols",sans-serif';
-            x.fillText(customSym.slice(0, 4), w / 2, h / 2 + 2);
-          } else {
-            x.save();
-            var u = (Math.min(w, h) * 0.72 * (fsPx / 100)) / 24;
-            x.translate(w / 2, h / 2);
-            x.scale(u, u);
-            x.translate(-12, -12);
-            drawVectorIcon(x, iface.querySelector('#ov-ficon-select').value);
-            x.restore();
-          }
-        }
+      if (paintFg) {
+        x.save();
+        x.translate(w / 2, h / 2);
+        x.scale(1 / maskScale, 1 / maskScale);
+        x.translate(-w / 2, -h / 2);
+        x.drawImage(fcvFgScratch, 0, 0);
+        x.restore();
       }
       x.restore();
+      x.restore();
+    }
+
+    function fcvStopPreviewLoop() {
+      if (fcvPreviewRafId != null) {
+        cancelAnimationFrame(fcvPreviewRafId);
+        fcvPreviewRafId = null;
+      }
+    }
+
+    function fcvDrawStatic() {
+      drawToCanvas(iface.querySelector('#ov-fcv'), {});
       drawScales();
-      syncFcvTransparentBgUi();
+    }
+
+    function fcvPreviewFrame(now) {
+      if (!iface.isConnected) {
+        fcvStopPreviewLoop();
+        return;
+      }
+      var animEl = iface.querySelector('#ov-fanim');
+      if (!animEl || animEl.value === 'none') {
+        fcvStopPreviewLoop();
+        fcvDrawStatic();
+        return;
+      }
+      var mode = animEl.value;
+      if (!fcvIsMotionOn(mode)) {
+        fcvStopPreviewLoop();
+        fcvDrawStatic();
+        return;
+      }
+      if (fcvMotionIntensityRatio() <= 0) {
+        fcvStopPreviewLoop();
+        fcvDrawStatic();
+        return;
+      }
+      var elapsed = (now - fcvPreviewT0) / 1000;
+      var loopSec = fcvMotionLoopSec(mode);
+      var phase = (elapsed % loopSec) / loopSec;
+      drawToCanvas(iface.querySelector('#ov-fcv'), { animPhase: phase, animKind: mode });
+      drawScales();
+      fcvPreviewRafId = requestAnimationFrame(fcvPreviewFrame);
+    }
+
+    function fcvStartPreviewLoop() {
+      if (fcvPreviewRafId != null) return;
+      fcvPreviewT0 = performance.now();
+      fcvPreviewRafId = requestAnimationFrame(fcvPreviewFrame);
+    }
+
+    function syncFcvExportButton() {
+      var btn = iface.querySelector('#ov-fico');
+      var animEl = iface.querySelector('#ov-fanim');
+      if (!btn || !animEl) return;
+      var mode = animEl.value || 'none';
+      if (fcvIsMotionOn(mode)) {
+        btn.textContent = 'FAVICON.GIF';
+        btn.title = 'Download animated tab favicon (GIF; browsers use this for motion).';
+        btn.setAttribute('aria-label', 'Download animated favicon as GIF');
+      } else {
+        btn.textContent = 'FAVICON.ICO';
+        btn.title = 'Static: multi-size .ico. Turn on Motion below for animated .gif.';
+        btn.setAttribute('aria-label', 'Download favicon.ico');
+      }
+    }
+
+    function fcvSyncPreviewMotion() {
+      fcvStopPreviewLoop();
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          var animEl = iface.querySelector('#ov-fanim');
+          var mode = animEl ? animEl.value : 'none';
+          if (fcvIsMotionOn(mode) && fcvMotionIntensityRatio() > 0) fcvStartPreviewLoop();
+          else fcvDrawStatic();
+          syncFcvExportButton();
+        });
+      });
+    }
+
+    function draw() {
+      var animEl = iface.querySelector('#ov-fanim');
+      var mode = animEl ? animEl.value : 'none';
+      if (fcvIsMotionOn(mode)) {
+        if (fcvMotionIntensityRatio() <= 0) {
+          fcvStopPreviewLoop();
+          fcvDrawStatic();
+          return;
+        }
+        if (fcvPreviewRafId == null) fcvStartPreviewLoop();
+        return;
+      }
+      fcvStopPreviewLoop();
+      fcvDrawStatic();
+    }
+
+    function fcvExportAnimatedFavicon() {
+      var G = typeof GIFenc !== 'undefined' ? GIFenc : window.GIFenc;
+      if (!G || typeof G.GIFEncoder !== 'function') {
+        if (typeof alert === 'function') {
+          alert('GIF encoder did not load. Refresh the page and try again.');
+        }
+        return;
+      }
+      var animKind = iface.querySelector('#ov-fanim').value;
+      var gifTiming =
+        animKind === 'none'
+          ? { frameCount: 1, delayMs: 200 }
+          : (function () {
+              var fc = 28;
+              var loopMs = fcvMotionLoopSec(animKind) * 1000;
+              var dm = Math.max(20, Math.round(loopMs / fc));
+              return { frameCount: fc, delayMs: dm };
+            })();
+      var frameCount = gifTiming.frameCount;
+      var delayMs = gifTiming.delayMs;
+      var outSize = 128;
+      var w = FCV_INTERNAL;
+      var off = document.createElement('canvas');
+      off.width = w;
+      off.height = w;
+      var tmp = document.createElement('canvas');
+      tmp.width = outSize;
+      tmp.height = outSize;
+      var tctx = tmp.getContext('2d');
+      fcvSetSmoothDownscale(tctx);
+      var gif = G.GIFEncoder();
+      var quantize = G.quantize;
+      var applyPalette = G.applyPalette;
+      var bgN = iface.querySelector('#ov-fbg-none').checked;
+      var matteBg = bgN ? '#ffffff' : null;
+      var fi;
+      for (fi = 0; fi < frameCount; fi++) {
+        var phase = frameCount <= 1 ? 0 : fi / frameCount;
+        drawToCanvas(off, {
+          animPhase: phase,
+          animKind: animKind === 'none' ? 'none' : animKind,
+          matteBg: matteBg,
+        });
+        tctx.clearRect(0, 0, outSize, outSize);
+        tctx.drawImage(off, 0, 0, w, w, 0, 0, outSize, outSize);
+        var imageData = tctx.getImageData(0, 0, outSize, outSize);
+        var data = imageData.data;
+        var palette = quantize(data, 256);
+        var index = applyPalette(data, palette);
+        var frameOpts = {
+          palette: palette,
+          delay: delayMs,
+        };
+        if (fi === 0) frameOpts.repeat = 0;
+        gif.writeFrame(index, outSize, outSize, frameOpts);
+      }
+      gif.finish();
+      var bytes = gif.bytes();
+      OV.downloadBlob(new Blob([bytes], { type: 'image/gif' }), 'favicon.gif');
+      draw();
     }
 
     function applyFcvFont() {
@@ -1906,9 +2299,10 @@
     }
 
     function bindInputs() {
-      iface.querySelectorAll('#ov-ft,#ov-ffg,#ov-fbg,#ov-fshape,#ov-fsym-custom').forEach(function (i) {
+      iface.querySelectorAll('#ov-ft,#ov-ffg,#ov-fbg,#ov-fshape,#ov-fsym-custom,#ov-fmask-scale,#ov-fmotion-int').forEach(function (i) {
         i.addEventListener('input', draw);
       });
+      iface.querySelector('#ov-fshape').addEventListener('change', draw);
       iface.querySelectorAll('#ov-ffg-none,#ov-fbg-none').forEach(function (cb) {
         cb.addEventListener('change', function () {
           syncFcvColorEnabled();
@@ -1917,6 +2311,8 @@
       });
       iface.querySelector('#ov-fsize').addEventListener('input', draw);
       bindToolSliderValue(iface, '#ov-fsize', '#ov-fsize-val');
+      bindToolSliderValue(iface, '#ov-fmask-scale', '#ov-fmask-scale-val');
+      bindToolSliderValue(iface, '#ov-fmotion-int', '#ov-fmotion-int-val');
       iface.querySelector('#ov-ffont').addEventListener('change', applyFcvFont);
       iface.querySelector('#ov-fweight').addEventListener('change', draw);
       iface.querySelector('#ov-femoji-in').addEventListener('input', draw);
@@ -1932,6 +2328,11 @@
         syncContentUi();
         draw();
       });
+      var fcvAnimEl = iface.querySelector('#ov-fanim');
+      if (fcvAnimEl) {
+        fcvAnimEl.addEventListener('change', fcvSyncPreviewMotion);
+        fcvAnimEl.addEventListener('input', fcvSyncPreviewMotion);
+      }
       iface.querySelectorAll('.fcv-preset').forEach(function (btn) {
         btn.addEventListener('click', function () {
           iface.querySelector('#ov-ffg').value = btn.getAttribute('data-fg') || '#000000';
@@ -1947,14 +2348,20 @@
     syncContentUi();
     bindInputs();
     syncFcvColorEnabled();
-    syncFcvTransparentBgUi();
     applyFcvFont();
+    syncFcvExportButton();
+
+    OV.addCleanup(function () {
+      fcvStopPreviewLoop();
+    });
 
     function dl(size) {
       var out = document.createElement('canvas');
       out.width = out.height = size;
       var src = iface.querySelector('#ov-fcv');
-      out.getContext('2d').drawImage(src, 0, 0, 180, 180, 0, 0, size, size);
+      var octx = out.getContext('2d');
+      fcvSetSmoothDownscale(octx);
+      octx.drawImage(src, 0, 0, FCV_INTERNAL, FCV_INTERNAL, 0, 0, size, size);
       OV.downloadCanvas(out, 'favicon-' + size + '.png', 'image/png');
     }
 
@@ -1967,14 +2374,24 @@
         var sz = order[i];
         var tmp = document.createElement('canvas');
         tmp.width = tmp.height = sz;
-        tmp.getContext('2d').drawImage(src, 0, 0, 180, 180, 0, 0, sz, sz);
+        var tctx = tmp.getContext('2d');
+        fcvSetSmoothDownscale(tctx);
+        tctx.drawImage(src, 0, 0, FCV_INTERNAL, FCV_INTERNAL, 0, 0, sz, sz);
         pngs.push(OV.canvasToPngUint8Array(tmp));
       }
       var ico = OV.encodeIcoFromPngBuffers(pngs);
       OV.downloadBlob(new Blob([ico], { type: 'image/vnd.microsoft.icon' }), 'favicon.ico');
     }
 
-    iface.querySelector('#ov-fico').addEventListener('click', dlIco);
+    iface.querySelector('#ov-fico').addEventListener('click', function () {
+      var animEl = iface.querySelector('#ov-fanim');
+      var mode = animEl ? animEl.value : 'none';
+      if (fcvIsMotionOn(mode)) {
+        fcvExportAnimatedFavicon();
+      } else {
+        dlIco();
+      }
+    });
     iface.querySelector('#ov-f32').addEventListener('click', function () {
       dl(32);
     });
