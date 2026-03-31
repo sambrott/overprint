@@ -516,6 +516,7 @@ html.theme-light .cc-score-main--bad .cc-score-denom{color:rgba(185,28,28,.75)}
 
 /* Favicon Forge: preview left, toolbar right; export actions in toolbar head */
 .fcv-stack{max-width:100%}
+.tool-preview-pane .fcv-media-pane .fcv-preview{flex:1;min-height:0;width:100%}
 .fcv-shell{
   display:flex;flex-direction:row;align-items:stretch;
   min-height:min(78vh,620px);max-height:min(90vh,720px);
@@ -555,6 +556,8 @@ html.theme-light .cc-score-main--bad .cc-score-denom{color:rgba(185,28,28,.75)}
   scrollbar-width:thin
 }
 /* [hidden] must win over .fcv-section / .tool-field { display:flex } */
+.tool-toolbar-pane .fcv-section[hidden],
+.tool-toolbar-pane .tool-field[hidden],
 .fcv-panels .fcv-section[hidden],
 .fcv-panels .tool-field[hidden]{display:none!important}
 .fcv-section{display:flex;flex-direction:column;gap:10px}
@@ -604,38 +607,6 @@ html.theme-light .cc-score-main--bad .cc-score-denom{color:rgba(185,28,28,.75)}
 html.theme-light .fcv-canvas-main{
   box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)
 }
-.fcv-scales{
-  display:flex;flex-wrap:wrap;gap:10px 14px;align-items:flex-end;justify-content:center;
-  padding-top:8px;border-top:1px solid var(--border);flex-shrink:0
-}
-.fcv-scale{display:flex;flex-direction:column;align-items:center;gap:4px}
-.fcv-canvas-scale{
-  display:block;
-  border:none;
-  border-radius:4px;
-  image-rendering:auto;
-  background-color:var(--fcv-transparency-base);
-  background-image:
-    linear-gradient(45deg,var(--fcv-transparency-tile) 25%,transparent 25%),
-    linear-gradient(-45deg,var(--fcv-transparency-tile) 25%,transparent 25%),
-    linear-gradient(45deg,transparent 75%,var(--fcv-transparency-tile) 75%),
-    linear-gradient(-45deg,transparent 75%,var(--fcv-transparency-tile) 75%);
-  background-size:16px 16px;
-  background-position:0 0,0 8px,8px -8px,-8px 0;
-  box-shadow:inset 0 0 0 1px rgba(0,0,0,.12);
-  vertical-align:middle;
-  outline:none;
-  -webkit-tap-highlight-color:transparent;
-  touch-action:manipulation
-}
-.fcv-canvas-scale:focus,
-.fcv-canvas-scale:focus-visible{
-  outline:none
-}
-html.theme-light .fcv-canvas-scale{
-  box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)
-}
-.fcv-scale-label{font-size:10px;color:var(--text-lo);letter-spacing:.02em}
 .fcv-presets{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .fcv-preset{
   width:28px;height:28px;padding:0;border:1px solid var(--border);border-radius:8px;cursor:pointer;
@@ -853,8 +824,7 @@ html.theme-light .tool-header-tag.cat-type{color:var(--text-hi)}
 .tool-header-export:hover .tool-header-export__icon{opacity:1}
 .tool-interface{background:var(--s1);border:1px solid var(--border);padding:24px;min-height:220px}
 .tool-interface:has(> .tool-shell.tool-shell--split),
-.tool-interface:has(> .tool-shell.tool-shell--single),
-.tool-interface:has(> .tool-stack.fcv-stack){
+.tool-interface:has(> .tool-shell.tool-shell--single){
   padding:0;border:none;background:transparent;min-height:0
 }
 .tool-page--beat .tool-interface{padding:12px 16px;min-height:0}
@@ -870,8 +840,7 @@ html.theme-light .tool-header-tag.cat-type{color:var(--text-hi)}
   .about-page{padding-bottom:max(40px,env(safe-area-inset-bottom))}
   .tool-interface{padding:18px 16px;min-height:180px}
   .tool-interface:has(> .tool-shell.tool-shell--split),
-  .tool-interface:has(> .tool-shell.tool-shell--single),
-  .tool-interface:has(> .tool-stack.fcv-stack){
+  .tool-interface:has(> .tool-shell.tool-shell--single){
     padding:0;border:none;background:transparent;min-height:0
   }
   .tool-page--beat .tool-interface{padding:10px 12px}
@@ -884,27 +853,154 @@ html.theme-light .tool-header-tag.cat-type{color:var(--text-hi)}
 .drop-zone.is-drag{border-color:var(--C);background:var(--C-dim);color:var(--text-hi)}
 /* Screenshot beautifier: fill empty preview pane with drop target */
 .ss-beaut-media .drop-zone{flex:1;min-height:min(280px,50vh);display:flex;align-items:center;justify-content:center;box-sizing:border-box}
-.ss-beaut-media .ss-beaut-canvas{
-  margin:0 auto;
-  max-width:100%;
-  max-height:min(58vh,560px);
-  width:auto;
-  height:auto;
-  object-fit:contain;
-  image-rendering:auto
+/* Preview wrap: canvas keeps constant on-screen screenshot width; tall/wide frames scroll inside .tool-media-pane (no max-height shrink) */
+.ss-beaut-preview-wrap{
+  flex:1;
+  min-height:0;
+  width:100%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-start;
+  padding:8px 0 12px;
+  box-sizing:border-box;
+  overflow:visible
 }
+.ss-beaut-preview-wrap .ss-beaut-canvas--view{
+  margin:0;
+  display:block;
+  flex-shrink:0;
+  image-rendering:auto;
+  box-sizing:border-box;
+  border:2px solid var(--border-hi);
+  box-shadow:0 0 0 1px rgba(0,0,0,0.55);
+  max-width:100%;
+  height:auto
+}
+html.theme-light .ss-beaut-preview-wrap .ss-beaut-canvas--view{
+  box-shadow:0 0 0 1px rgba(0,35,80,0.12)
+}
+/* Screenshot beautifier: ratio grid must not use .tool-row (flex overrides grid) */
 .ss-beaut-ratio-row{
-  display:grid;
+  display:grid !important;
   grid-template-columns:repeat(3,minmax(0,1fr));
-  gap:8px;
+  gap:6px;
   width:100%;
   box-sizing:border-box
 }
-.ss-beaut-ratio-row .tool-btn{width:100%;min-height:40px;margin-left:0 !important;text-align:center;font-size:9px;letter-spacing:1px;padding:8px 6px}
-.ss-beaut-dim-row{display:flex;flex-wrap:wrap;gap:12px 16px;align-items:flex-end;width:100%}
-.ss-beaut-dim-row .tool-input{min-width:0;max-width:140px}
+.ss-beaut-preset-row{margin-top:2px}
+.ss-beaut-preset-row .tool-field--grow{width:100%}
+.ss-beaut-section input.tool-input--range:disabled{opacity:.45;cursor:not-allowed}
+.ss-beaut-bg-colors{
+  flex-wrap:wrap;
+  gap:8px 12px;
+  align-items:flex-end
+}
+.ss-beaut-bg-colors .tool-field{min-width:0}
+/* [hidden] must win over .tool-field { display:flex } (same issue as .fcv-panels / dpi-wrap) */
+.ss-beaut-bg-colors .tool-field[hidden]{display:none!important}
+.ss-beaut-ratio-row .tool-btn--preset{
+  width:100%;
+  min-height:36px;
+  margin-left:0 !important;
+  text-align:center;
+  font-size:11px;
+  letter-spacing:0.04em;
+  padding:8px 4px;
+  text-transform:none;
+  font-family:'IBM Plex Mono',monospace;
+  font-weight:600
+}
+.ss-beaut-dim-row{display:flex;flex-wrap:wrap;gap:10px 12px;align-items:flex-end;width:100%}
+.ss-beaut-dim-row .tool-input{min-width:0;max-width:132px}
 .ss-beaut-dpi-wrap[hidden]{display:none !important}
-.ss-beaut-hint{font-size:10px;color:var(--text-faint);line-height:1.4;margin:0;max-width:42ch}
+.tool-stack.ss-beaut-tool{gap:0}
+.tool-tab-toolbar-inner .tool-panel-stack .tool-panel .tool-stack.ss-beaut-tool{width:100%;min-height:0;flex:1;display:flex;flex-direction:column}
+.ss-beaut-section{
+  border-bottom:1px solid var(--border);
+  padding:0 0 10px;
+  margin:0 0 10px
+}
+.ss-beaut-section:last-of-type{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.ss-beaut-section > summary.ss-beaut-sum{
+  list-style:none;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  cursor:pointer;
+  padding:4px 0 8px;
+  font-size:9px;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  color:var(--text-faint);
+  font-weight:600;
+  user-select:none
+}
+.ss-beaut-section > summary.ss-beaut-sum::-webkit-details-marker{display:none}
+.ss-beaut-sum-t{flex:1;min-width:0}
+/* Screenshot Beautifier: shadow on/off lives in <summary> next to the section title */
+label.ss-beaut-sum-shadow{
+  flex:1;
+  min-width:0;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  margin:0;
+  cursor:pointer;
+  font:inherit;
+  letter-spacing:inherit;
+  text-transform:inherit;
+  font-weight:inherit;
+  color:inherit;
+  user-select:none
+}
+label.ss-beaut-sum-shadow input[type="checkbox"]{
+  flex-shrink:0;
+  width:13px;
+  height:13px;
+  margin:0;
+  accent-color:var(--C)
+}
+.ss-beaut-body{padding-top:2px}
+/* Disclosure chevron: closed → right, open → down (rotate 90°) */
+.tool-disclosure-chev{
+  flex-shrink:0;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:18px;
+  height:18px;
+  margin:0;
+  padding:0;
+  color:var(--text-lo);
+  line-height:0;
+  transition:transform .2s cubic-bezier(0.2,0,0,1);
+  transform:rotate(0deg);
+  transform-origin:50% 50%
+}
+.tool-disclosure-chev svg{
+  display:block;
+  width:11px;
+  height:11px;
+  stroke:currentColor;
+  fill:none
+}
+.tool-disclosure-chev svg path{
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.35;
+  stroke-linecap:round;
+  stroke-linejoin:round
+}
+details[open] > summary > .tool-disclosure-chev{transform:rotate(90deg)}
+@media (prefers-reduced-motion:reduce){
+  .tool-disclosure-chev{transition:none}
+}
+.ss-beaut-section > summary.ss-beaut-sum:focus-visible{
+  outline:2px solid color-mix(in srgb,var(--C) 55%,transparent);
+  outline-offset:2px;
+  border-radius:2px
+}
 
 /* Tool UI (functional tools) */
 .tool-stack{display:flex;flex-direction:column;gap:20px}
@@ -965,7 +1061,10 @@ html.theme-light .tool-header-tag.cat-type{color:var(--text-hi)}
 .tool-preview-box{border:1px solid var(--border);background:var(--bg);border-radius:2px;padding:16px;margin-top:8px}
 /* Split layout: preview left, toolbar right (QR and other tools); height aligned with Font Pair / Beat rail */
 .tool-shell--split{
-  display:flex;flex-direction:row;align-items:stretch;gap:0;min-height:min(78vh,620px);max-height:min(90vh,720px);
+  display:flex;flex-direction:row;align-items:stretch;gap:0;
+  height:min(78vh,620px);
+  max-height:min(90vh,720px);
+  min-height:0;
   border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--s2);max-width:100%;box-sizing:border-box
 }
 .tool-shell--single{
@@ -981,7 +1080,13 @@ html.theme-light .tool-header-tag.cat-type{color:var(--text-hi)}
 }
 .tool-preview-pane .tool-media-pane{
   flex:1;min-height:0;width:100%;align-self:stretch;overflow-y:auto;overflow-x:hidden;
-  -webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:var(--C) var(--ov-scroll-track)
+  -webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:var(--C) var(--ov-scroll-track);
+  scrollbar-gutter:stable
+}
+.tool-preview-pane .tool-media-pane.ss-beaut-media{
+  overflow-x:auto;
+  overflow-y:auto;
+  scrollbar-gutter:stable
 }
 .tool-preview-pane .tool-media-pane::-webkit-scrollbar{width:8px}
 .tool-preview-pane .tool-media-pane::-webkit-scrollbar-track{background:var(--ov-scroll-track);border-radius:3px}

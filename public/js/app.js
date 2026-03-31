@@ -120,8 +120,19 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!canvas || !canvas.getContext) return;
     var ctx = canvas.getContext('2d');
     ctx.imageSmoothingEnabled = false;
-    var styles = AP.STYLES;
-    var seeds = [0x9e3779b1, 0xdeadbeef, 0xcafebabe, 0xabcdef01];
+    var styles = AP.CARD_PREVIEW_STYLES && AP.CARD_PREVIEW_STYLES.length ? AP.CARD_PREVIEW_STYLES : AP.STYLES;
+    var seeds = [
+      0x9e3779b1,
+      0xdeadbeef,
+      0xcafebabe,
+      0xabcdef01,
+      0x243f6a88,
+      0x85a308d3,
+      0x13198a2e,
+      0x03707344,
+      0xa4093822,
+      0x299f31d0,
+    ];
     function mulberry32(a) {
       return function () {
         a |= 0;
@@ -150,7 +161,7 @@ document.addEventListener('DOMContentLoaded', function () {
       tick = setInterval(function () {
         idx = (idx + 1) % styles.length;
         renderAt(idx);
-      }, 100);
+      }, 150);
     }
     function onLeave() {
       if (tick) {

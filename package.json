@@ -3,8 +3,8 @@
   "private": true,
   "description": "Free client-side design tools — serve the public/ folder",
   "scripts": {
-    "start": "python3 -m http.server 8080 --bind 127.0.0.1 --directory public",
-    "serve": "python3 -m http.server 8080 --bind 127.0.0.1 --directory public",
+    "start": "python3 -m http.server 8765 --bind 127.0.0.1 --directory public",
+    "serve": "python3 -m http.server 8765 --bind 127.0.0.1 --directory public",
     "vendor:gifenc": "esbuild node_modules/gifenc/src/index.js --bundle --format=iife --global-name=GIFenc --outfile=public/js/vendor/gifenc.js"
   },
   "devDependencies": {

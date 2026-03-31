@@ -367,9 +367,11 @@
           '<span class="tool-label">Avatar style</span>' +
           '<select class="tool-select" id="ov-av-type" aria-label="Avatar style">' +
           '<option value="identicon">Identicon: symmetric noise</option>' +
-          '<option value="face">Pixel face</option>' +
-          '<option value="robot">Robot</option>' +
-          '<option value="cat">Cat</option>' +
+          '<option value="identicon_macro">Identicon: chunky blocks</option>' +
+          '<option value="identicon_bands">Identicon: color bands</option>' +
+          '<option value="identicon_spark">Identicon: sparse / LED</option>' +
+          '<option value="identicon_mosaic">Identicon: 3-color mosaic</option>' +
+          '<option value="identicon_core">Identicon: soft core</option>' +
           '</select></div></div>' +
           '<div class="tool-row av-tool-actions">' +
           '<button type="button" class="tool-btn tool-btn--m" id="ov-av-gen">New avatar</button>' +
@@ -411,16 +413,16 @@
           pPrev.innerHTML =
             '<div id="gp" style="height:80px;border:1px solid var(--border);border-radius:2px"></div>';
           pCtrl.innerHTML =
-            '<div class="tool-row">' +
-            '<div class="tool-field"><span class="tool-label">C1</span><input type="color" class="tool-input" id="g1" value="#00b4d8"></div>' +
-            '<div class="tool-field"><span class="tool-label">C2</span><input type="color" class="tool-input" id="g2" value="#e040a0"></div>' +
-            '<div class="tool-field tool-field--slider">' +
-            '<span class="tool-label">Angle</span>' +
-            '<div class="tool-bpm-slider-row">' +
-            '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ga" min="0" max="360" step="1" value="135" aria-valuemin="0" aria-valuemax="360" aria-valuenow="135">' +
-            '<span class="tool-bpm-val" id="ga-val">135</span></div></div>' +
-            '</div>' +
-            '<pre class="tool-pre-wrap" id="go"></pre>';
+              '<div class="tool-row">' +
+              '<div class="tool-field"><span class="tool-label">C1</span><input type="color" class="tool-input" id="g1" value="#00b4d8"></div>' +
+              '<div class="tool-field"><span class="tool-label">C2</span><input type="color" class="tool-input" id="g2" value="#e040a0"></div>' +
+              '<div class="tool-field tool-field--slider">' +
+              '<span class="tool-label">Angle</span>' +
+              '<div class="tool-bpm-slider-row">' +
+              '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ga" min="0" max="360" step="1" value="135" aria-valuemin="0" aria-valuemax="360" aria-valuenow="135">' +
+              '<span class="tool-bpm-val" id="ga-val">135</span></div></div>' +
+              '</div>' +
+              '<pre class="tool-pre-wrap" id="go"></pre>';
           function u() {
             var a = pCtrl.querySelector('#ga').value || 135;
             var c1 = pCtrl.querySelector('#g1').value;
@@ -442,30 +444,30 @@
           pPrev.innerHTML =
             '<div id="sp" style="width:120px;height:80px;background:var(--s2);margin:12px auto;border:1px solid var(--border)"></div>';
           pCtrl.innerHTML =
-            '<div class="tool-row">' +
-            '<div class="tool-field tool-field--slider">' +
-            '<span class="tool-label">X</span>' +
-            '<div class="tool-bpm-slider-row">' +
-            '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="sx" min="-40" max="40" step="1" value="4" aria-valuenow="4">' +
-            '<span class="tool-bpm-val" id="sx-val">4</span></div></div>' +
-            '<div class="tool-field tool-field--slider">' +
-            '<span class="tool-label">Y</span>' +
-            '<div class="tool-bpm-slider-row">' +
-            '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="sy" min="-40" max="40" step="1" value="8" aria-valuenow="8">' +
-            '<span class="tool-bpm-val" id="sy-val">8</span></div></div>' +
-            '<div class="tool-field tool-field--slider">' +
-            '<span class="tool-label">Blur</span>' +
-            '<div class="tool-bpm-slider-row">' +
-            '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="sb" min="0" max="80" step="1" value="24" aria-valuenow="24">' +
-            '<span class="tool-bpm-val" id="sb-val">24</span></div></div>' +
-            '<div class="tool-field tool-field--slider">' +
-            '<span class="tool-label">Spread</span>' +
-            '<div class="tool-bpm-slider-row">' +
-            '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ss" min="-32" max="32" step="1" value="0" aria-valuenow="0">' +
-            '<span class="tool-bpm-val" id="ss-val">0</span></div></div>' +
-            '</div>' +
-            '<div class="tool-field"><span class="tool-label">Color</span><input type="color" class="tool-input" id="sc" value="#000000"></div>' +
-            '<pre class="tool-pre-wrap" id="so"></pre>';
+              '<div class="tool-row">' +
+              '<div class="tool-field tool-field--slider">' +
+              '<span class="tool-label">X</span>' +
+              '<div class="tool-bpm-slider-row">' +
+              '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="sx" min="-40" max="40" step="1" value="4" aria-valuenow="4">' +
+              '<span class="tool-bpm-val" id="sx-val">4</span></div></div>' +
+              '<div class="tool-field tool-field--slider">' +
+              '<span class="tool-label">Y</span>' +
+              '<div class="tool-bpm-slider-row">' +
+              '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="sy" min="-40" max="40" step="1" value="8" aria-valuenow="8">' +
+              '<span class="tool-bpm-val" id="sy-val">8</span></div></div>' +
+              '<div class="tool-field tool-field--slider">' +
+              '<span class="tool-label">Blur</span>' +
+              '<div class="tool-bpm-slider-row">' +
+              '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="sb" min="0" max="80" step="1" value="24" aria-valuenow="24">' +
+              '<span class="tool-bpm-val" id="sb-val">24</span></div></div>' +
+              '<div class="tool-field tool-field--slider">' +
+              '<span class="tool-label">Spread</span>' +
+              '<div class="tool-bpm-slider-row">' +
+              '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ss" min="-32" max="32" step="1" value="0" aria-valuenow="0">' +
+              '<span class="tool-bpm-val" id="ss-val">0</span></div></div>' +
+              '</div>' +
+              '<div class="tool-field"><span class="tool-label">Color</span><input type="color" class="tool-input" id="sc" value="#000000"></div>' +
+              '<pre class="tool-pre-wrap" id="so"></pre>';
           function u() {
             var x = +pCtrl.querySelector('#sx').value || 0;
             var y = +pCtrl.querySelector('#sy').value || 0;
@@ -492,14 +494,14 @@
           pPrev.innerHTML =
             '<div id="rp" style="width:140px;height:90px;background:var(--C-dim);border:2px solid var(--C);margin:12px auto"></div>';
           pCtrl.innerHTML =
-            '<div class="tool-row">' +
-            '<div class="tool-field tool-field--slider">' +
-            '<span class="tool-label">All</span>' +
-            '<div class="tool-bpm-slider-row">' +
-            '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ra" min="0" max="64" step="1" value="12" aria-valuenow="12">' +
-            '<span class="tool-bpm-val" id="ra-val">12</span></div></div>' +
-            '</div>' +
-            '<pre class="tool-pre-wrap" id="ro"></pre>';
+              '<div class="tool-row">' +
+              '<div class="tool-field tool-field--slider">' +
+              '<span class="tool-label">All</span>' +
+              '<div class="tool-bpm-slider-row">' +
+              '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ra" min="0" max="64" step="1" value="12" aria-valuenow="12">' +
+              '<span class="tool-bpm-val" id="ra-val">12</span></div></div>' +
+              '</div>' +
+              '<pre class="tool-pre-wrap" id="ro"></pre>';
           function u() {
             var r = (+pCtrl.querySelector('#ra').value || 0) + 'px';
             pPrev.querySelector('#rp').style.borderRadius = r;
@@ -515,7 +517,8 @@
         function (pPrev, pCtrl) {
           pPrev.innerHTML =
             '<div id="glp" style="padding:24px;background:rgba(20,20,28,.55);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.12);border-radius:8px;max-width:260px;margin:12px auto;text-align:center;color:var(--text-hi)">Glass card</div>';
-          pCtrl.innerHTML = '<pre class="tool-pre-wrap" id="glo"></pre>';
+          pCtrl.innerHTML =
+            '<pre class="tool-pre-wrap" id="glo"></pre>';
           var css =
             'background: rgba(20,20,28,0.55);\n' +
             'backdrop-filter: blur(12px);\n' +
@@ -536,7 +539,7 @@
           pPrev.querySelector('#nvis').innerHTML = svg;
           pCtrl.innerHTML =
             '<pre class="tool-pre-wrap" id="nsvg"></pre>' +
-            '<div class="tool-row"><button type="button" class="tool-btn tool-btn--c" id="ndl">Download SVG</button></div>';
+              '<div class="tool-row"><button type="button" class="tool-btn tool-btn--c" id="ndl">Download SVG</button></div>';
           pCtrl.querySelector('#nsvg').textContent = svg.replace(/></g, '>\n<');
           pCtrl.querySelector('#ndl').addEventListener('click', function () {
             var blob = new Blob([svg], { type: 'image/svg+xml' });
@@ -593,7 +596,7 @@
             '<div class="tool-out" style="margin:0;font-size:10px;color:var(--text-faint);letter-spacing:1px;text-transform:uppercase">Output</div>';
           pCtrl.innerHTML =
             '<div class="tool-field"><span class="tool-label">Hex</span><input type="text" class="tool-input" id="cfh" value="#f0d020"></div>' +
-            '<pre class="tool-pre-wrap" id="cfo"></pre>';
+              '<pre class="tool-pre-wrap" id="cfo"></pre>';
           function u() {
             var rgb = OV.parseHex(pCtrl.querySelector('#cfh').value);
             if (!rgb) {
@@ -628,16 +631,16 @@
           pPrev.innerHTML =
             '<div id="cgp" style="height:72px;border:1px solid var(--border)"></div>';
           pCtrl.innerHTML =
-            '<div class="tool-row">' +
-            '<div class="tool-field"><span class="tool-label">A</span><input type="color" class="tool-input" id="cg1" value="#00b4d8"></div>' +
-            '<div class="tool-field"><span class="tool-label">B</span><input type="color" class="tool-input" id="cg2" value="#f0d020"></div>' +
-            '<div class="tool-field tool-field--slider">' +
-            '<span class="tool-label">°</span>' +
-            '<div class="tool-bpm-slider-row">' +
-            '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="cga" min="0" max="360" step="1" value="90" aria-valuenow="90">' +
-            '<span class="tool-bpm-val" id="cga-val">90</span></div></div>' +
-            '</div>' +
-            '<pre class="tool-pre-wrap" id="cgo"></pre>';
+              '<div class="tool-row">' +
+              '<div class="tool-field"><span class="tool-label">A</span><input type="color" class="tool-input" id="cg1" value="#00b4d8"></div>' +
+              '<div class="tool-field"><span class="tool-label">B</span><input type="color" class="tool-input" id="cg2" value="#f0d020"></div>' +
+              '<div class="tool-field tool-field--slider">' +
+              '<span class="tool-label">°</span>' +
+              '<div class="tool-bpm-slider-row">' +
+              '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="cga" min="0" max="360" step="1" value="90" aria-valuenow="90">' +
+              '<span class="tool-bpm-val" id="cga-val">90</span></div></div>' +
+              '</div>' +
+              '<pre class="tool-pre-wrap" id="cgo"></pre>';
           function u() {
             var a = pCtrl.querySelector('#cg1').value;
             var b = pCtrl.querySelector('#cg2').value;
@@ -728,35 +731,32 @@
 
   /* QR */
   function initQrCodeGenerator(iface) {
-    iface.innerHTML =
-      '<div class="tool-shell tool-shell--split">' +
-      '<div class="tool-preview-pane" aria-label="QR preview">' +
-      '<div class="qr-preview-canvas"><canvas id="qrc" width="280" height="280" aria-label="QR code preview"></canvas></div>' +
-      '</div>' +
-      '<aside class="tool-toolbar-pane" aria-label="QR options">' +
-      '<div class="tool-field tool-field--grow"><span class="tool-label">Content (URL or text)</span>' +
+    iface.innerHTML = toolShellSplit(
+      '<div class="qr-preview-canvas"><canvas id="qrc" width="280" height="280" aria-label="QR code preview"></canvas></div>',
+      '<div class="tool-stack">' +
+      '<div class="tool-field tool-field--grow"><span class="tool-label">URL or text</span>' +
       '<input type="text" class="tool-input" id="qrt" value="" autocomplete="off" placeholder="https://example.com"></div>' +
       '<div class="tool-row qr-row-colors">' +
-      '<div class="qr-colors-inputs">' +
-      '<div class="tool-field"><span class="tool-label">FG</span><input type="color" class="tool-input" id="qrf" value="#08080c"></div>' +
-      '<div class="tool-field"><span class="tool-label">BG</span><input type="color" class="tool-input" id="qrb" value="#ffffff"></div>' +
-      '<div class="tool-field">' +
-      '<span class="tool-label">Contrast</span>' +
-      '<div class="qr-contrast-panel" id="qr-cc" role="status" aria-live="polite" title="Readability score from luminance contrast (0–10). Higher helps scanners read the code.">' +
-      '<span class="qr-contrast-panel__num" id="qr-cc-n">-</span>' +
-      '<span class="qr-contrast-panel__denom" aria-hidden="true">/10</span>' +
-      '</div>' +
-      '</div>' +
-      '</div>' +
-      '</div>' +
+        '<div class="qr-colors-inputs">' +
+        '<div class="tool-field"><span class="tool-label">FG</span><input type="color" class="tool-input" id="qrf" value="#08080c"></div>' +
+        '<div class="tool-field"><span class="tool-label">BG</span><input type="color" class="tool-input" id="qrb" value="#ffffff"></div>' +
+        '<div class="tool-field">' +
+        '<span class="tool-label">Contrast</span>' +
+        '<div class="qr-contrast-panel" id="qr-cc" role="status" aria-live="polite" title="Readability score from luminance contrast (0–10). Higher helps scanners read the code.">' +
+        '<span class="qr-contrast-panel__num" id="qr-cc-n">-</span>' +
+        '<span class="qr-contrast-panel__denom" aria-hidden="true">/10</span>' +
+        '</div>' +
+        '</div>' +
+        '</div>' +
+        '</div>' +
       '<div class="tool-field tool-field--slider">' +
-      '<span class="tool-label">Export size (px)</span>' +
+      '<span class="tool-label">Size (px)</span>' +
       '<div class="tool-bpm-slider-row">' +
       '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="qrs" min="64" max="800" step="1" value="200" aria-valuemin="64" aria-valuemax="800" aria-valuenow="200">' +
       '<span class="tool-bpm-val" id="qrs-val">200</span></div></div>' +
       '<div class="tool-row"><button type="button" class="tool-btn tool-btn--c" id="qrp">Download PNG</button></div>' +
-      '</aside>' +
-      '</div>';
+      '</div>'
+    );
     var canvas = iface.querySelector('#qrc');
     var QR = typeof QRCode !== 'undefined' ? QRCode : null;
     function qrSplitAuthorityAndRest(s) {
@@ -1327,20 +1327,31 @@
     iface.innerHTML = toolShellSplit(
       '<div class="tool-stack tool-media-pane ss-beaut-media" style="width:100%;min-height:0;align-items:stretch">' +
         '<div class="drop-zone" id="ov-ssz">Drop screenshot</div>' +
-        '<canvas id="ov-spc" class="ss-beaut-canvas" style="display:none;border:1px solid var(--border)"></canvas></div>',
-      '<div class="tool-stack">' +
-        '<p class="ss-beaut-hint">Frame size is the export canvas; your screenshot scales down to fit inside padding so the whole image stays visible.</p>' +
-        '<div class="tool-row tool-row--top">' +
-        '<span class="tool-label" style="width:100%">Aspect presets</span></div>' +
-        '<div class="tool-row ss-beaut-ratio-row">' +
-        '<button type="button" class="tool-btn" data-ss-ratio="1:1">1:1</button>' +
-        '<button type="button" class="tool-btn" data-ss-ratio="4:3">4:3</button>' +
-        '<button type="button" class="tool-btn" data-ss-ratio="3:2">3:2</button>' +
-        '<button type="button" class="tool-btn" data-ss-ratio="16:9">16:9</button>' +
-        '<button type="button" class="tool-btn" data-ss-ratio="21:9">21:9</button>' +
-        '<button type="button" class="tool-btn" data-ss-ratio="9:16">9:16</button>' +
-        '<button type="button" class="tool-btn" data-ss-ratio="4:5">4:5</button>' +
+        '<div class="ss-beaut-preview-wrap" id="ov-spw" style="display:none" aria-hidden="true">' +
+        '<canvas id="ov-spc" class="ss-beaut-canvas ss-beaut-canvas--view"></canvas></div>' +
+        '<canvas id="ov-spex" class="ss-beaut-canvas ss-beaut-canvas--export" width="0" height="0" style="display:none" aria-hidden="true"></canvas></div>',
+      '<div class="tool-stack ss-beaut-tool">' +
+        '<details class="ss-beaut-section" open>' +
+        '<summary class="ss-beaut-sum">' +
+        '<span class="tool-disclosure-chev" aria-hidden="true"><svg viewBox="0 0 12 12" xmlns="http://www.w3.org/2000/svg" focusable="false"><path d="M4.5 2.5L8.5 6 4.5 9.5"/></svg></span>' +
+        '<span class="ss-beaut-sum-t">Presets</span>' +
+        '</summary>' +
+        '<div class="ss-beaut-body">' +
+        '<div class="ss-beaut-ratio-row">' +
+        '<button type="button" class="tool-btn tool-btn--preset" data-ss-ratio="16:9">16:9</button>' +
+        '<button type="button" class="tool-btn tool-btn--preset" data-ss-ratio="4:3">4:3</button>' +
+        '<button type="button" class="tool-btn tool-btn--preset" data-ss-ratio="1:1">1:1</button>' +
+        '<button type="button" class="tool-btn tool-btn--preset" data-ss-ratio="9:16">9:16</button>' +
+        '<button type="button" class="tool-btn tool-btn--preset" data-ss-ratio="4:5">4:5</button>' +
+        '<button type="button" class="tool-btn tool-btn--preset" data-ss-ratio="21:9">21:9</button>' +
         '</div>' +
+        '</div></details>' +
+        '<details class="ss-beaut-section">' +
+        '<summary class="ss-beaut-sum">' +
+        '<span class="tool-disclosure-chev" aria-hidden="true"><svg viewBox="0 0 12 12" xmlns="http://www.w3.org/2000/svg" focusable="false"><path d="M4.5 2.5L8.5 6 4.5 9.5"/></svg></span>' +
+        '<span class="ss-beaut-sum-t">Dimensions</span>' +
+        '</summary>' +
+        '<div class="ss-beaut-body">' +
         '<div class="tool-row ss-beaut-dim-row">' +
         '<div class="tool-field">' +
         '<span class="tool-label">Units</span>' +
@@ -1349,34 +1360,59 @@
         '<option value="in">Inches</option></select></div>' +
         '<div class="tool-field ss-beaut-dpi-wrap" id="ov-sdpi-wrap" hidden>' +
         '<span class="tool-label">DPI</span>' +
-        '<input type="number" class="tool-input" id="ov-sdpi" min="36" max="1200" step="1" value="96" title="Pixels per inch for converting inches to pixels"></div>' +
+        '<input type="number" class="tool-input" id="ov-sdpi" min="36" max="1200" step="1" value="96"></div>' +
         '<div class="tool-field">' +
         '<span class="tool-label" id="ov-swl">Width</span>' +
         '<input type="number" class="tool-input" id="ov-sww" min="0.01" step="0.01" value="1920"></div>' +
         '<div class="tool-field">' +
         '<span class="tool-label" id="ov-shl">Height</span>' +
         '<input type="number" class="tool-input" id="ov-swh" min="0.01" step="0.01" value="1080"></div>' +
-        '</div>' +
+        '</div></div></details>' +
+        '<details class="ss-beaut-section">' +
+        '<summary class="ss-beaut-sum">' +
+        '<span class="tool-disclosure-chev" aria-hidden="true"><svg viewBox="0 0 12 12" xmlns="http://www.w3.org/2000/svg" focusable="false"><path d="M4.5 2.5L8.5 6 4.5 9.5"/></svg></span>' +
+        '<span class="ss-beaut-sum-t">Background</span>' +
+        '</summary>' +
+        '<div class="ss-beaut-body">' +
         '<div class="tool-row">' +
         '<div class="tool-field tool-field--grow">' +
-        '<span class="tool-label">Background</span>' +
+        '<span class="tool-label">Style</span>' +
         '<select class="tool-select" id="ov-sgrad" aria-label="Background style">' +
-        '<option value="solid">Solid color</option>' +
-        '<option value="lin-twilight">Linear · twilight</option>' +
-        '<option value="lin-sunset">Linear · sunset</option>' +
-        '<option value="lin-ocean">Linear · ocean</option>' +
-        '<option value="lin-mint">Linear · mint</option>' +
-        '<option value="lin-rose">Linear · rose</option>' +
-        '<option value="rad-glow">Radial · soft glow</option>' +
-        '<option value="rad-vignette">Radial · vignette</option>' +
-        '<option value="lin-mesh">Linear · mesh (dual)</option>' +
-        '</select></div>' +
-        '<div class="tool-field"><span class="tool-label">Solid / tint</span>' +
-        '<input type="color" class="tool-input" id="ov-sbg" value="#131318" title="Used for Solid; tints some gradients"></div>' +
+        '<option value="solid">Solid</option>' +
+        '<option value="lin-twilight">Twilight</option>' +
+        '<option value="lin-sunset">Sunset</option>' +
+        '<option value="lin-ocean">Ocean</option>' +
+        '<option value="lin-mint">Mint</option>' +
+        '<option value="lin-rose">Rose</option>' +
+        '<option value="rad-glow">Glow</option>' +
+        '<option value="rad-vignette">Vignette</option>' +
+        '<option value="lin-mesh">Mesh</option>' +
+        '</select></div></div>' +
+        '<div class="tool-row ss-beaut-bg-colors" id="ov-sbg-row">' +
+        '<div class="tool-field" id="ov-sbg1-wrap">' +
+        '<span class="tool-label" id="ov-sbg1-l">Color</span>' +
+        '<input type="color" class="tool-input" id="ov-sbg" value="#00b4d8" aria-label="Background color"></div>' +
+        '<div class="tool-field" id="ov-sbg2-wrap" hidden>' +
+        '<span class="tool-label">Color 2</span>' +
+        '<input type="color" class="tool-input" id="ov-sbg2" value="#4a6fa5" aria-label="Background color 2"></div>' +
+        '<div class="tool-field" id="ov-sbg3-wrap" hidden>' +
+        '<span class="tool-label">Color 3</span>' +
+        '<input type="color" class="tool-input" id="ov-sbg3" value="#c9a0dc" aria-label="Background color 3"></div>' +
         '</div>' +
+        '<div class="tool-row ss-beaut-preset-row" id="ov-sbg-preset-wrap">' +
+        '<div class="tool-field tool-field--grow">' +
+        '<span class="tool-label">Presets</span>' +
+        '<select class="tool-select" id="ov-sbg-presets" aria-label="Background color preset">' +
+        '<option value="">Custom (use swatches)</option></select></div></div>' +
+        '</div></details>' +
+        '<details class="ss-beaut-section">' +
+        '<summary class="ss-beaut-sum">' +
+        '<span class="tool-disclosure-chev" aria-hidden="true"><svg viewBox="0 0 12 12" xmlns="http://www.w3.org/2000/svg" focusable="false"><path d="M4.5 2.5L8.5 6 4.5 9.5"/></svg></span>' +
+        '<span class="ss-beaut-sum-t">Image</span></summary>' +
+        '<div class="ss-beaut-body">' +
         '<div class="tool-row">' +
         '<div class="tool-field tool-field--slider">' +
-        '<span class="tool-label">Padding</span>' +
+        '<span class="tool-label">Size</span>' +
         '<div class="tool-bpm-slider-row">' +
         '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ov-spad" min="0" max="200" step="2" value="48" aria-valuenow="48">' +
         '<span class="tool-bpm-val" id="ov-spad-val">48</span></div></div>' +
@@ -1385,27 +1421,103 @@
         '<div class="tool-bpm-slider-row">' +
         '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ov-srd" min="0" max="64" step="1" value="12" aria-valuenow="12">' +
         '<span class="tool-bpm-val" id="ov-srd-val">12</span></div></div>' +
-        '</div>' +
+        '</div></div></details>' +
+        '<details class="ss-beaut-section">' +
+        '<summary class="ss-beaut-sum">' +
+        '<span class="tool-disclosure-chev" aria-hidden="true"><svg viewBox="0 0 12 12" xmlns="http://www.w3.org/2000/svg" focusable="false"><path d="M4.5 2.5L8.5 6 4.5 9.5"/></svg></span>' +
+        '<label class="ss-beaut-sum-shadow">' +
+        '<input type="checkbox" id="ov-ss-on" checked aria-label="Shadow enabled">' +
+        '<span class="ss-beaut-sum-t">Shadow</span>' +
+        '</label>' +
+        '</summary>' +
+        '<div class="ss-beaut-body">' +
         '<div class="tool-row">' +
         '<div class="tool-field tool-field--slider">' +
-        '<span class="tool-label">Shadow blur</span>' +
+        '<span class="tool-label">Blur</span>' +
         '<div class="tool-bpm-slider-row">' +
         '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ov-ssb" min="0" max="80" step="1" value="24" aria-valuenow="24">' +
         '<span class="tool-bpm-val" id="ov-ssb-val">24</span></div></div>' +
         '<div class="tool-field tool-field--slider">' +
-        '<span class="tool-label">Shadow Y</span>' +
+        '<span class="tool-label">Offset Y</span>' +
         '<div class="tool-bpm-slider-row">' +
         '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ov-ssy" min="0" max="48" step="1" value="10" aria-valuenow="10">' +
         '<span class="tool-bpm-val" id="ov-ssy-val">10</span></div></div>' +
         '<div class="tool-field tool-field--slider">' +
-        '<span class="tool-label">Shadow X</span>' +
+        '<span class="tool-label">Offset X</span>' +
         '<div class="tool-bpm-slider-row">' +
         '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ov-ssx" min="-40" max="40" step="1" value="0" aria-valuenow="0">' +
         '<span class="tool-bpm-val" id="ov-ssx-val">0</span></div></div>' +
-        '</div>' +
-        '<div class="tool-row"><button type="button" class="tool-btn tool-btn--c" id="ov-sdl">Export PNG</button></div></div>'
+        '</div></div></details>' +
+        '<div class="tool-row" style="margin-top:4px"><button type="button" class="tool-btn tool-btn--c" id="ov-sdl">Export PNG</button></div></div>'
     );
     iface.appendChild(input);
+    /** Per-style palette presets (hex count matches ssBeautColorCount for that style). */
+    var SS_BEAUT_BG_PRESETS = {
+      solid: [
+        { label: 'Brand cyan', c: ['#00b4d8'] },
+        { label: 'Charcoal', c: ['#131318'] },
+        { label: 'Warm paper', c: ['#f5f0e8'] },
+        { label: 'Slate blue', c: ['#334155'] },
+        { label: 'Deep pine', c: ['#14532d'] },
+        { label: 'Oxblood', c: ['#3f1018'] },
+      ],
+      /* lin-twilight: dark base + second hue at center; ends darken toward black */
+      'lin-twilight': [
+        { label: 'Blue hour', c: ['#0d1b2a', '#778da9'] },
+        { label: 'Violet dusk', c: ['#1e1b4b', '#a78bfa'] },
+        { label: 'Rose afterglow', c: ['#2d1b2e', '#d4a5a5'] },
+        { label: 'Steel twilight', c: ['#0f172a', '#94a3b8'] },
+      ],
+      /* lin-sunset: warm progression (mixes toward white) */
+      'lin-sunset': [
+        { label: 'Golden hour', c: ['#d97706', '#fde68a'] },
+        { label: 'Coral sky', c: ['#ea580c', '#fecaca'] },
+        { label: 'Magenta blaze', c: ['#db2777', '#fae8ff'] },
+        { label: 'Desert sundown', c: ['#c2410c', '#fef3c7'] },
+      ],
+      /* lin-ocean: deep top (c1+black) → bright shallow (c2+white) */
+      'lin-ocean': [
+        { label: 'Midnight sea', c: ['#0c4a6e', '#38bdf8'] },
+        { label: 'Pacific', c: ['#1e3a8a', '#7dd3fc'] },
+        { label: 'Tropical reef', c: ['#115e59', '#5eead4'] },
+        { label: 'Storm surge', c: ['#1e293b', '#93c5fd'] },
+      ],
+      /* lin-mint: cool green / teal (not yellow-green) */
+      'lin-mint': [
+        { label: 'Spearmint', c: ['#134e4a', '#34d399'] },
+        { label: 'Eucalyptus', c: ['#14532d', '#86efac'] },
+        { label: 'Seafoam', c: ['#164e63', '#a5f3fc'] },
+        { label: 'Winter ice', c: ['#0f766e', '#ccfbf1'] },
+      ],
+      /* lin-rose: diagonal soft romantic */
+      'lin-rose': [
+        { label: 'Dusty blush', c: ['#be123c', '#ffe4e6'] },
+        { label: 'Mauve mist', c: ['#86198f', '#f5d0fe'] },
+        { label: 'Champagne rose', c: ['#b45309', '#fff7ed'] },
+        { label: 'Wild berry', c: ['#831843', '#fbcfe8'] },
+      ],
+      /* rad-glow: center → mid ring → dark edge */
+      'rad-glow': [
+        { label: 'Ember core', c: ['#fff7ed', '#ea580c', '#1c0a05'] },
+        { label: 'Moon halo', c: ['#f1f5f9', '#64748b', '#0f172a'] },
+        { label: 'Biolume', c: ['#e0f2fe', '#06b6d4', '#082f49'] },
+        { label: 'Amethyst orb', c: ['#f3e8ff', '#a855f7', '#1e1b4b'] },
+      ],
+      /* rad-vignette: bright center fades to dark edge */
+      'rad-vignette': [
+        { label: 'Studio gray', c: ['#71717a', '#18181b'] },
+        { label: 'Sepia frame', c: ['#a8a29e', '#1c1917'] },
+        { label: 'Cool steel', c: ['#64748b', '#020617'] },
+        { label: 'Warm vignette', c: ['#d6d3d1', '#292524'] },
+      ],
+      /* lin-mesh: three-way blend; c1 dark corner, c2 mid, c3 far edge */
+      'lin-mesh': [
+        { label: 'Synthwave', c: ['#4c1d95', '#f472b6', '#0f0518'] },
+        { label: 'Deep lagoon', c: ['#134e4a', '#2dd4bf', '#042f2e'] },
+        { label: 'Copper rust', c: ['#7c2d12', '#fb923c', '#1c0a05'] },
+        { label: 'Royal iris', c: ['#312e81', '#818cf8', '#0f0a1f'] },
+      ],
+    };
     bindToolSliderValue(iface, '#ov-spad', '#ov-spad-val');
     bindToolSliderValue(iface, '#ov-srd', '#ov-srd-val');
     bindToolSliderValue(iface, '#ov-ssb', '#ov-ssb-val');
@@ -1413,17 +1525,81 @@
     bindToolSliderValue(iface, '#ov-ssx', '#ov-ssx-val');
     var shot = null;
     var unitPrev = 'px';
+    /** Keeps on-screen screenshot width stable; frame (canvas) scales around it. */
+    var lastPreviewMetrics = null;
+    var PREVIEW_SCREENSHOT_CSS_PX = 420;
+    function syncSsShadowUi() {
+      var on = iface.querySelector('#ov-ss-on');
+      var en = on && on.checked;
+      ['#ov-ssb', '#ov-ssy', '#ov-ssx'].forEach(function (sel) {
+        var el = iface.querySelector(sel);
+        if (el) el.disabled = !en;
+      });
+    }
     function syncBeautMediaUi() {
       var dz = iface.querySelector('#ov-ssz');
+      var wrap = iface.querySelector('#ov-spw');
       var c = iface.querySelector('#ov-spc');
       if (!dz || !c) return;
       if (shot) {
         dz.style.display = 'none';
-        c.style.display = 'block';
+        if (wrap) {
+          wrap.style.display = 'flex';
+          wrap.setAttribute('aria-hidden', 'false');
+        }
       } else {
         dz.style.display = '';
-        c.style.display = 'none';
+        if (wrap) {
+          wrap.style.display = 'none';
+          wrap.setAttribute('aria-hidden', 'true');
+        }
+        c.style.width = '';
+        c.style.height = '';
+        lastPreviewMetrics = null;
+        var ex = iface.querySelector('#ov-spex');
+        if (ex) {
+          ex.width = 0;
+          ex.height = 0;
+        }
       }
+    }
+    function applyPreviewScale() {
+      if (!shot || !lastPreviewMetrics) return;
+      var c = iface.querySelector('#ov-spc');
+      var wrap = iface.querySelector('#ov-spw');
+      if (!c || !wrap) return;
+      var cw = lastPreviewMetrics.cw;
+      var ch = lastPreviewMetrics.ch;
+      var drawW = lastPreviewMetrics.drawW;
+      if (cw < 1 || ch < 1) return;
+      if (drawW < 0.5) drawW = 0.5;
+      /* Match on-screen width of the fitted screenshot to PREVIEW_SCREENSHOT_CSS_PX (same pixel space as cw/ch/drawW). */
+      var s = PREVIEW_SCREENSHOT_CSS_PX / drawW;
+      var dispW = cw * s;
+      var dispH = ch * s;
+      /*
+       * Measure the scrollport from the media pane, not the inner wrap: when a vertical scrollbar
+       * appears/disappears, wrap.clientWidth used to jump (~8px) and ResizeObserver + clamp fought
+       * the layout (bad when switching landscape presets ↔ portrait like 4:3 ↔ 4:5). scrollbar-gutter:stable
+       * helps; still use the pane for max dimensions.
+       */
+      var pane = wrap.parentElement;
+      var maxW = pane && pane.clientWidth > 0 ? pane.clientWidth - 4 : 0;
+      var maxH = pane && pane.clientHeight > 0 ? pane.clientHeight - 28 : 0;
+      if (maxW > 0 && dispW > maxW) {
+        var f = maxW / dispW;
+        dispW *= f;
+        dispH *= f;
+      }
+      if (maxH > 0 && dispH > maxH) {
+        var f2 = maxH / dispH;
+        dispW *= f2;
+        dispH *= f2;
+      }
+      var rw = Math.max(1, Math.round(dispW));
+      c.style.width = rw + 'px';
+      c.style.maxWidth = '100%';
+      c.style.height = 'auto';
     }
     function getDpi() {
       var d = +iface.querySelector('#ov-sdpi').value;
@@ -1474,17 +1650,34 @@
       var h = parseFloat(hEl.value);
       if (isNaN(w) || w <= 0) w = u === 'in' ? 10 : 1920;
       if (isNaN(h) || h <= 0) h = u === 'in' ? 10 : 1080;
+      /*
+       * Anchor on the long edge of the current box (not “keep width” vs “keep height” by preset).
+       * The old rule shrank dimensions every time you alternated landscape ↔ portrait presets
+       * (e.g. 4:3 ↔ 4:5), eventually locking to tiny sizes like 16×20.
+       */
+      var targetAspect = R.rw / R.rh;
+      var longEdge = Math.max(w, h);
+      if (u === 'px') longEdge = Math.max(100, longEdge);
       var newW;
       var newH;
       if (R.rw >= R.rh) {
-        newH = (w * R.rh) / R.rw;
-        newW = w;
+        newW = longEdge;
+        newH = longEdge / targetAspect;
       } else {
-        newW = (h * R.rw) / R.rh;
-        newH = h;
+        newH = longEdge;
+        newW = longEdge * targetAspect;
       }
-      wEl.value = u === 'in' ? newW.toFixed(3) : String(Math.round(newW));
-      hEl.value = u === 'in' ? newH.toFixed(3) : String(Math.round(newH));
+      if (u === 'px') {
+        newW = Math.round(newW);
+        newH = Math.round(newH);
+        if (newW < 100 || newH < 100) {
+          var bump = Math.max(100 / newW, 100 / newH);
+          newW = Math.max(100, Math.round(newW * bump));
+          newH = Math.max(100, Math.round(newH * bump));
+        }
+      }
+      wEl.value = u === 'in' ? newW.toFixed(3) : String(newW);
+      hEl.value = u === 'in' ? newH.toFixed(3) : String(newH);
     }
     function onUnitChange() {
       var cur = iface.querySelector('#ov-sunit').value;
@@ -1504,9 +1697,88 @@
       unitPrev = cur;
       syncDimLabels();
     }
-    function fillBackground(ctx, w, h, gradId, solidHex) {
+    function getSsBgColors() {
+      var c1 = iface.querySelector('#ov-sbg').value;
+      var w2 = iface.querySelector('#ov-sbg2-wrap');
+      var w3 = iface.querySelector('#ov-sbg3-wrap');
+      var c2 = c1;
+      var c3 = c1;
+      if (w2 && !w2.hasAttribute('hidden')) {
+        c2 = iface.querySelector('#ov-sbg2').value;
+      }
+      if (w3 && !w3.hasAttribute('hidden')) {
+        c3 = iface.querySelector('#ov-sbg3').value;
+      } else if (w2 && !w2.hasAttribute('hidden')) {
+        c3 = c2;
+      }
+      return { c1: c1, c2: c2, c3: c3 };
+    }
+    /** How many user color swatches the current fillBackground() recipe actually reads (matches composition). */
+    function ssBeautColorCount(gradId) {
+      if (gradId === 'solid' || !gradId) return 1;
+      if (gradId === 'rad-glow' || gradId === 'lin-mesh') return 3;
+      return 2;
+    }
+    function syncSSBeautBgUi() {
+      var v = iface.querySelector('#ov-sgrad').value;
+      var w2 = iface.querySelector('#ov-sbg2-wrap');
+      var w3 = iface.querySelector('#ov-sbg3-wrap');
+      var l1 = iface.querySelector('#ov-sbg1-l');
+      var n = ssBeautColorCount(v);
+      if (n <= 1) {
+        if (w2) w2.setAttribute('hidden', '');
+        if (w3) w3.setAttribute('hidden', '');
+        if (l1) l1.textContent = 'Color';
+      } else if (n === 2) {
+        if (w2) w2.removeAttribute('hidden');
+        if (w3) w3.setAttribute('hidden', '');
+        if (l1) l1.textContent = 'Color 1';
+      } else {
+        if (w2) w2.removeAttribute('hidden');
+        if (w3) w3.removeAttribute('hidden');
+        if (l1) l1.textContent = 'Color 1';
+      }
+    }
+    function syncSSBeautPresetsUI() {
+      var gradId = iface.querySelector('#ov-sgrad').value;
+      var sel = iface.querySelector('#ov-sbg-presets');
+      if (!sel) return;
+      var list = SS_BEAUT_BG_PRESETS[gradId] || [];
+      sel.innerHTML = '';
+      var o0 = document.createElement('option');
+      o0.value = '';
+      o0.textContent = 'Custom (use swatches)';
+      sel.appendChild(o0);
+      list.forEach(function (p, i) {
+        var o = document.createElement('option');
+        o.value = String(i);
+        o.textContent = p.label;
+        sel.appendChild(o);
+      });
+      sel.value = '';
+    }
+    function applySsBeautPresetByIndex(idx) {
+      var gradId = iface.querySelector('#ov-sgrad').value;
+      var list = SS_BEAUT_BG_PRESETS[gradId] || [];
+      var p = list[idx];
+      if (!p || !p.c || !p.c.length) return;
+      iface.querySelector('#ov-sbg').value = p.c[0];
+      var i2 = iface.querySelector('#ov-sbg2');
+      var i3 = iface.querySelector('#ov-sbg3');
+      if (p.c[1] && i2) i2.value = p.c[1];
+      if (p.c[2] && i3) i3.value = p.c[2];
+      compose();
+    }
+    function onSsBgColorInput() {
+      var sel = iface.querySelector('#ov-sbg-presets');
+      if (sel) sel.value = '';
+      compose();
+    }
+    function fillBackground(ctx, w, h, gradId, colors) {
       var g;
-      var tint = solidHex || '#131318';
+      var c1 = colors.c1 || '#00b4d8';
+      var c2 = colors.c2 || c1;
+      var c3 = colors.c3 || c2;
       function hexToRgb(hex) {
         var m = /^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(hex);
         if (!m) return { r: 19, g: 19, b: 24 };
@@ -1522,67 +1794,71 @@
       function rgbStr(o) {
         return 'rgb(' + o.r + ',' + o.g + ',' + o.b + ')';
       }
+      var K = { r: 0, g: 0, b: 0 };
+      var W = { r: 255, g: 255, b: 255 };
+      var T = hexToRgb(c1);
+      var T2 = hexToRgb(c2);
+      var T3 = hexToRgb(c3);
       if (gradId === 'solid' || !gradId) {
-        ctx.fillStyle = tint;
+        ctx.fillStyle = c1;
         ctx.fillRect(0, 0, w, h);
         return;
       }
-      var T = hexToRgb(tint);
       switch (gradId) {
         case 'lin-twilight': {
           g = ctx.createLinearGradient(0, 0, w, h);
-          g.addColorStop(0, '#1a1a30');
-          g.addColorStop(0.5, rgbStr(mix(T, { r: 45, g: 35, b: 70 }, 0.35)));
-          g.addColorStop(1, '#2a1528');
+          g.addColorStop(0, rgbStr(mix(T, K, 0.35)));
+          g.addColorStop(0.5, rgbStr(mix(T, T2, 0.55)));
+          g.addColorStop(1, rgbStr(mix(T2, K, 0.4)));
           break;
         }
         case 'lin-sunset': {
           g = ctx.createLinearGradient(0, 0, w, h * 0.9);
-          g.addColorStop(0, '#ff6b6b');
-          g.addColorStop(0.5, '#feca57');
-          g.addColorStop(1, '#ff9ff3');
+          g.addColorStop(0, rgbStr(mix(T, W, 0.12)));
+          g.addColorStop(0.5, rgbStr(mix(T, T2, 0.5)));
+          g.addColorStop(1, rgbStr(mix(T2, W, 0.18)));
           break;
         }
         case 'lin-ocean': {
           g = ctx.createLinearGradient(0, 0, w, h);
-          g.addColorStop(0, '#0c3483');
-          g.addColorStop(1, '#a2b6df');
+          g.addColorStop(0, rgbStr(mix(T, K, 0.45)));
+          g.addColorStop(1, rgbStr(mix(T2, W, 0.25)));
           break;
         }
         case 'lin-mint': {
           g = ctx.createLinearGradient(0, h, w, 0);
-          g.addColorStop(0, '#11998e');
-          g.addColorStop(1, '#38ef7d');
+          g.addColorStop(0, rgbStr(mix(T, K, 0.2)));
+          g.addColorStop(1, rgbStr(mix(T2, W, 0.28)));
           break;
         }
         case 'lin-rose': {
           g = ctx.createLinearGradient(w, 0, 0, h);
-          g.addColorStop(0, '#ee9ca7');
-          g.addColorStop(1, '#ffdde1');
+          g.addColorStop(0, rgbStr(mix(T, W, 0.15)));
+          g.addColorStop(1, rgbStr(mix(T2, W, 0.35)));
           break;
         }
         case 'rad-glow': {
           g = ctx.createRadialGradient(w * 0.45, h * 0.35, 0, w * 0.5, h * 0.5, Math.max(w, h) * 0.85);
-          g.addColorStop(0, '#3d3d55');
-          g.addColorStop(0.45, rgbStr(mix({ r: 30, g: 30, b: 40 }, T, 0.25)));
-          g.addColorStop(1, '#0d0d12');
+          g.addColorStop(0, rgbStr(mix(T, W, 0.08)));
+          g.addColorStop(0.45, rgbStr(mix(T, T2, 0.42)));
+          g.addColorStop(1, rgbStr(mix(T3, K, 0.82)));
           break;
         }
         case 'rad-vignette': {
           g = ctx.createRadialGradient(w * 0.5, h * 0.5, Math.min(w, h) * 0.15, w * 0.5, h * 0.5, Math.max(w, h) * 0.72);
-          g.addColorStop(0, rgbStr(mix(T, { r: 40, g: 40, b: 48 }, 0.2)));
-          g.addColorStop(1, '#050508');
+          g.addColorStop(0, rgbStr(mix(T, W, 0.06)));
+          g.addColorStop(1, rgbStr(mix(T2, K, 0.88)));
           break;
         }
         case 'lin-mesh': {
           g = ctx.createLinearGradient(0, 0, w, h);
-          g.addColorStop(0, '#667eea');
-          g.addColorStop(0.45, rgbStr(T));
-          g.addColorStop(1, '#764ba2');
+          g.addColorStop(0, rgbStr(mix(T, K, 0.15)));
+          g.addColorStop(0.45, rgbStr(mix(T, T2, 0.5)));
+          g.addColorStop(1, rgbStr(mix(T3, K, 0.2)));
           break;
         }
         default: {
-          ctx.fillStyle = tint;
+          ctx.fillStyle = c1;
           ctx.fillRect(0, 0, w, h);
           return;
         }
@@ -1604,36 +1880,31 @@
       ctx.quadraticCurveTo(dx, dy, dx + r, dy);
       ctx.closePath();
     }
-    function compose() {
-      if (!shot) return;
-      syncBeautMediaUi();
-      var dims = readDimsPx();
-      if (!dims) return;
-      var pad = +iface.querySelector('#ov-spad').value || 0;
-      var rad = +iface.querySelector('#ov-srd').value || 0;
-      var gradId = iface.querySelector('#ov-sgrad').value;
-      var solid = iface.querySelector('#ov-sbg').value;
-      var sBlur = +iface.querySelector('#ov-ssb').value || 0;
-      var sY = +iface.querySelector('#ov-ssy').value || 0;
-      var sX = +iface.querySelector('#ov-ssx').value || 0;
+    /** Preview bitmap: upscale small exports so the on-screen preview stays sharp; cap huge exports for perf. */
+    function previewScaleForLongEdge(m) {
+      var MIN = 1600;
+      var CAP = 2560;
+      if (m < MIN) return MIN / m;
+      if (m > CAP) return CAP / m;
+      return 1;
+    }
+    /** Draw one frame at the given pixel dimensions (pad/rad/shadow in the same space as cw×ch). Returns { drawW } or null. */
+    function renderBeautifiedToCanvas(canvas, cw, ch, pad, rad, sBlur, sY, sX, gradId, bgColors) {
       var iw = shot.naturalWidth;
       var ih = shot.naturalHeight;
-      var cw = dims.w;
-      var ch = dims.h;
       var availW = cw - pad * 2;
       var availH = ch - pad * 2;
-      if (availW < 8 || availH < 8) return;
-      var scale = Math.min(availW / iw, availH / ih);
-      var drawW = iw * scale;
-      var drawH = ih * scale;
+      if (availW < 8 || availH < 8) return null;
+      var fit = Math.min(availW / iw, availH / ih);
+      var drawW = iw * fit;
+      var drawH = ih * fit;
       var ox = pad + (availW - drawW) / 2;
       var oy = pad + (availH - drawH) / 2;
       var rr = Math.min(rad, drawW / 2, drawH / 2);
-      var c = iface.querySelector('#ov-spc');
-      c.width = cw;
-      c.height = ch;
-      var ctx = c.getContext('2d');
-      fillBackground(ctx, cw, ch, gradId, solid);
+      canvas.width = cw;
+      canvas.height = ch;
+      var ctx = canvas.getContext('2d');
+      fillBackground(ctx, cw, ch, gradId, bgColors);
       var tmp = document.createElement('canvas');
       tmp.width = Math.max(1, Math.ceil(drawW));
       tmp.height = Math.max(1, Math.ceil(drawH));
@@ -1652,6 +1923,86 @@
       }
       ctx.drawImage(tmp, ox, oy);
       ctx.restore();
+      return { drawW: drawW };
+    }
+    function compose() {
+      if (!shot) return;
+      syncBeautMediaUi();
+      var dims = readDimsPx();
+      if (!dims) {
+        lastPreviewMetrics = null;
+        return;
+      }
+      var pad = +iface.querySelector('#ov-spad').value || 0;
+      var rad = +iface.querySelector('#ov-srd').value || 0;
+      var gradId = iface.querySelector('#ov-sgrad').value;
+      var bgColors = getSsBgColors();
+      var shadowOn = iface.querySelector('#ov-ss-on');
+      var shadowEn = shadowOn && shadowOn.checked;
+      var sBlur = shadowEn ? +iface.querySelector('#ov-ssb').value || 0 : 0;
+      var sY = shadowEn ? +iface.querySelector('#ov-ssy').value || 0 : 0;
+      var sX = shadowEn ? +iface.querySelector('#ov-ssx').value || 0 : 0;
+      var cw = dims.w;
+      var ch = dims.h;
+      var exportCanvas = iface.querySelector('#ov-spex');
+      var viewCanvas = iface.querySelector('#ov-spc');
+      if (!exportCanvas || !viewCanvas) return;
+      var rEx = renderBeautifiedToCanvas(exportCanvas, cw, ch, pad, rad, sBlur, sY, sX, gradId, bgColors);
+      if (!rEx) {
+        lastPreviewMetrics = null;
+        return;
+      }
+      var m = Math.max(cw, ch);
+      var ps = previewScaleForLongEdge(m);
+      var pcw = Math.max(1, Math.round(cw * ps));
+      var pch = Math.max(1, Math.round(ch * ps));
+      var dpr = Math.min(typeof window !== 'undefined' && window.devicePixelRatio ? window.devicePixelRatio : 1, 2);
+      var pcwHi = Math.max(1, Math.round(pcw * dpr));
+      var pchHi = Math.max(1, Math.round(pch * dpr));
+      var rView = renderBeautifiedToCanvas(
+        viewCanvas,
+        pcwHi,
+        pchHi,
+        pad * ps * dpr,
+        rad * ps * dpr,
+        sBlur * ps * dpr,
+        sY * ps * dpr,
+        sX * ps * dpr,
+        gradId,
+        bgColors
+      );
+      if (!rView) {
+        lastPreviewMetrics = null;
+        return;
+      }
+      /* drawW is in the same pixel space as the view canvas (Hi-DPI); cw/ch must match or scale math is wrong for some aspect ratios. */
+      lastPreviewMetrics = {
+        cw: viewCanvas.width,
+        ch: viewCanvas.height,
+        drawW: rView.drawW,
+      };
+      applyPreviewScale();
+      requestAnimationFrame(function () {
+        requestAnimationFrame(applyPreviewScale);
+      });
+    }
+    var previewWrap = iface.querySelector('#ov-spw');
+    if (previewWrap && typeof ResizeObserver !== 'undefined') {
+      var sszRoRaf = null;
+      var sszRo = new ResizeObserver(function () {
+        if (!shot) return;
+        if (sszRoRaf) cancelAnimationFrame(sszRoRaf);
+        sszRoRaf = requestAnimationFrame(function () {
+          sszRoRaf = null;
+          if (shot) applyPreviewScale();
+        });
+      });
+      sszRo.observe(previewWrap);
+      var sszPane = previewWrap.parentElement;
+      if (sszPane) sszRo.observe(sszPane);
+      OV.addCleanup(function () {
+        sszRo.disconnect();
+      });
     }
     syncDimLabels();
     iface.querySelector('#ov-sunit').addEventListener('change', onUnitChange);
@@ -1669,13 +2020,49 @@
         compose();
       });
     });
+    var gradSel = iface.querySelector('#ov-sgrad');
+    if (gradSel) {
+      gradSel.addEventListener('change', function () {
+        syncSSBeautBgUi();
+        syncSSBeautPresetsUI();
+        compose();
+      });
+    }
+    var preSel = iface.querySelector('#ov-sbg-presets');
+    if (preSel) {
+      preSel.addEventListener('change', function () {
+        var v = preSel.value;
+        if (v === '') {
+          compose();
+          return;
+        }
+        applySsBeautPresetByIndex(+v);
+      });
+    }
+    var ssOnEl = iface.querySelector('#ov-ss-on');
+    var ssOnLbl = iface.querySelector('label.ss-beaut-sum-shadow');
+    if (ssOnEl) {
+      ssOnEl.addEventListener('click', function (e) {
+        e.stopPropagation();
+      });
+      ssOnEl.addEventListener('change', function () {
+        syncSsShadowUi();
+        compose();
+      });
+    }
+    if (ssOnLbl) {
+      ssOnLbl.addEventListener('click', function (e) {
+        e.stopPropagation();
+      });
+    }
+    syncSSBeautBgUi();
+    syncSSBeautPresetsUI();
+    syncSsShadowUi();
     [
       '#ov-sww',
       '#ov-swh',
       '#ov-spad',
       '#ov-srd',
-      '#ov-sbg',
-      '#ov-sgrad',
       '#ov-ssb',
       '#ov-ssy',
       '#ov-ssx',
@@ -1683,15 +2070,18 @@
       var node = iface.querySelector(sel);
       if (node) node.addEventListener('input', compose);
     });
+    ['#ov-sbg', '#ov-sbg2', '#ov-sbg3'].forEach(function (sel) {
+      var node = iface.querySelector(sel);
+      if (node) node.addEventListener('input', onSsBgColorInput);
+    });
     iface.querySelector('#ov-sdl').addEventListener('click', function () {
-      var c = iface.querySelector('#ov-spc');
-      if (c.width) OV.downloadCanvas(c, 'beautified.png', 'image/png');
+      var c = iface.querySelector('#ov-spex');
+      if (c && c.width) OV.downloadCanvas(c, 'beautified.png', 'image/png');
     });
   }
 
   /* Favicon forge */
   function initFaviconForge(iface) {
-    var FCV_SIZES = [16, 24, 32, 48, 64];
     /** Master canvas resolution (was 180px — too soft when scaled to 16/32 favicons). */
     var FCV_INTERNAL = 512;
     var FCV_FONT_SCALE = FCV_INTERNAL / 180;
@@ -1977,148 +2367,151 @@
       return '<option value="' + i + '"' + (i === 0 ? ' selected' : '') + '>' + label + '</option>';
     }).join('');
 
-    iface.innerHTML =
-      '<div class="tool-stack fcv-stack">' +
-      '<div class="fcv-shell">' +
-      '<div class="fcv-preview" aria-label="Preview">' +
-      '<div class="fcv-preview-inner">' +
-      '<div class="fcv-main-wrap" id="fcv-main-wrap">' +
-      '<div class="fcv-main">' +
-      '<canvas id="ov-fcv" width="' +
-      FCV_INTERNAL +
-      '" height="' +
-      FCV_INTERNAL +
-      '" class="fcv-canvas-main"></canvas>' +
-      '</div>' +
-      '<div class="fcv-scales" aria-label="Preview at common sizes">' +
-      FCV_SIZES.map(function (sz) {
-        return (
-          '<div class="fcv-scale">' +
-          '<canvas id="ov-fcv-p' +
-          sz +
-          '" width="' +
-          sz +
-          '" height="' +
-          sz +
-          '" class="fcv-canvas-scale"></canvas>' +
-          '<span class="fcv-scale-label">' +
-          sz +
-          'px</span></div>'
-        );
-      }).join('') +
-      '</div></div></div></div>' +
-      '<aside class="fcv-toolbar" aria-label="Favicon controls">' +
-      '<div class="fcv-toolbar-head">' +
-      '<div class="fcv-export-actions">' +
-      '<button type="button" class="tool-btn tool-btn--m" id="ov-fico" title="Static: multi-size .ico. Motion: animated .gif for browser tabs.">FAVICON.ICO</button>' +
-      '<button type="button" class="tool-btn" id="ov-f32">PNG 32</button>' +
-      '<button type="button" class="tool-btn" id="ov-f180">PNG 180</button>' +
-      '</div></div>' +
-      '<div class="fcv-panels">' +
-      '<section class="fcv-section">' +
-      '<div class="fcv-section-title">Content</div>' +
-      '<div class="tool-field"><span class="tool-label">Mode</span>' +
-      '<select class="tool-select" id="ov-fmode" aria-label="Content type">' +
-      '<option value="letter">Letters</option>' +
-      '<option value="symbol" selected>Icons and text</option>' +
-      '<option value="emoji">Emoji</option>' +
-      '</select></div>' +
-      '<div class="tool-field" id="ov-fwrap-letter"><span class="tool-label">Letters (optional)</span>' +
-      '<input type="text" class="tool-input" id="ov-ft" maxlength="2" value="" placeholder="e.g. OP" autocomplete="off" aria-label="Letters, up to 2; leave empty for no text"></div>' +
-      '</section>' +
-      '<section class="fcv-section" id="ov-fwrap-symbol" hidden>' +
-      '<div class="fcv-section-title">Icon</div>' +
-      '<div class="tool-field"><span class="tool-label">Vector icon</span>' +
-      '<select class="tool-select" id="ov-ficon-select" aria-label="Vector icon">' +
-      fcvIconOpts +
-      '</select></div>' +
-      '<div class="tool-field fcv-custom-field">' +
-      '<span class="tool-label">Custom character (optional)</span>' +
-      '<input type="text" class="tool-input" id="ov-fsym-custom" maxlength="4" placeholder="e.g. π, @, ½" autocomplete="off">' +
-      '</div></section>' +
-      '<section class="fcv-section" id="ov-fwrap-emoji" hidden>' +
-      '<div class="fcv-section-title">Emoji</div>' +
-      '<div class="tool-field"><span class="tool-label">Preset</span>' +
-      '<select class="tool-select" id="ov-femoji-select" aria-label="Emoji preset">' +
-      fcvEmojiOpts +
-      '</select></div>' +
-      '<div class="tool-field fcv-custom-field">' +
-      '<span class="tool-label">Or paste / type</span>' +
-      '<input type="text" class="tool-input" id="ov-femoji-in" maxlength="8" autocomplete="off" placeholder="Paste any emoji">' +
-      '</div></section>' +
-      '<section class="fcv-section" id="fcv-section-type">' +
-      '<div class="fcv-section-title" id="fcv-typo-title">Typography</div>' +
-      '<div class="tool-field" id="ov-fwrap-ffont"><span class="tool-label">Typeface</span>' +
-      '<select class="tool-select" id="ov-ffont" aria-label="Font family">' +
-      fcvFontOpts +
-      '</select></div>' +
-      '<div class="tool-field"><span class="tool-label">Weight</span>' +
-      '<select class="tool-select" id="ov-fweight" aria-label="Font weight">' +
-      '<option value="700" selected>Bold</option>' +
-      '<option value="400">Regular</option>' +
-      '</select></div>' +
-      '<div class="tool-field fcv-field-range">' +
-      '<span class="tool-label">Size <span id="ov-fsize-val" class="fcv-size-val">100</span>px</span>' +
-      '<div class="tool-bpm-slider-row">' +
-      '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ov-fsize" min="56" max="132" value="100" step="2" aria-valuemin="56" aria-valuemax="132" aria-valuenow="100">' +
-      '</div></div></section>' +
-      '<section class="fcv-section">' +
-      '<div class="fcv-section-title">Mask and color</div>' +
-      '<div class="tool-field"><span class="tool-label">Mask shape</span>' +
-      '<select class="tool-select" id="ov-fshape" aria-label="Outer mask shape">' +
-      '<option value="square">Square</option>' +
-      '<option value="rounded">Rounded square</option>' +
-      '<option value="circle">Circle</option>' +
-      '<option value="diamond">Diamond</option>' +
-      '<option value="triangle">Triangle</option>' +
-      '</select></div>' +
-      '<div class="tool-field fcv-field-range">' +
-      '<span class="tool-label">Shape size <span id="ov-fmask-scale-val" class="fcv-size-val">100</span>%</span>' +
-      '<div class="tool-bpm-slider-row">' +
-      '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ov-fmask-scale" min="55" max="100" value="100" step="1" aria-label="Mask shape scale" aria-valuemin="55" aria-valuemax="100" aria-valuenow="100">' +
-      '</div></div>' +
-      '<div class="tool-field"><span class="tool-label">Foreground</span>' +
-      '<div class="fcv-color-row">' +
-      '<input type="color" class="tool-input" id="ov-ffg" value="#08080c" aria-label="Foreground color">' +
-      '<label class="fcv-color-none"><input type="checkbox" id="ov-ffg-none"> None</label>' +
-      '</div></div>' +
-      '<div class="tool-field"><span class="tool-label">Background</span>' +
-      '<div class="fcv-color-row">' +
-      '<input type="color" class="tool-input" id="ov-fbg" value="#00b4d8" aria-label="Background color">' +
-      '<label class="fcv-color-none"><input type="checkbox" id="ov-fbg-none" checked> None</label>' +
-      '</div></div>' +
-      '</section>' +
-      '<section class="fcv-section fcv-section--presets">' +
-      '<div class="fcv-section-title">Swatches</div>' +
-      '<div class="fcv-presets" role="group" aria-label="Color presets">' +
-      '<button type="button" class="fcv-preset" data-fg="#08080c" data-bg="#00b4d8" title="Dark on cyan"></button>' +
-      '<button type="button" class="fcv-preset" data-fg="#f8fafc" data-bg="#0f172a" title="Light on slate"></button>' +
-      '<button type="button" class="fcv-preset" data-fg="#111827" data-bg="#fbbf24" title="Dark on amber"></button>' +
-      '<button type="button" class="fcv-preset" data-fg="#ffffff" data-bg="#dc2626" title="White on red"></button>' +
-      '<button type="button" class="fcv-preset" data-fg="#ecfdf5" data-bg="#059669" title="Mint on green"></button>' +
-      '<button type="button" class="fcv-preset" data-fg="#fef3c7" data-bg="#7c3aed" title="Cream on violet"></button>' +
-      '</div></section>' +
-      '<section class="fcv-section">' +
-      '<div class="fcv-section-title">Motion</div>' +
-      '<div class="tool-field"><span class="tool-label">Tab icon</span>' +
-      '<select class="tool-select" id="ov-fanim" aria-label="Favicon motion (preview and download)">' +
-      '<option value="none" selected>Static</option>' +
-      '<option value="rotate">Rotate</option>' +
-      '<option value="pulse">Pulse</option>' +
-      '<option value="beat">Beat</option>' +
-      '<option value="wobble">Wobble</option>' +
-      '<option value="buzz">Buzz</option>' +
-      '<option value="float">Float</option>' +
-      '<option value="sway">Sway</option>' +
-      '<option value="rock">Rock</option>' +
-      '</select></div>' +
-      '<div class="tool-field fcv-field-range">' +
-      '<span class="tool-label">Intensity <span id="ov-fmotion-int-val" class="fcv-size-val">100</span>%</span>' +
-      '<div class="tool-bpm-slider-row">' +
-      '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ov-fmotion-int" min="0" max="150" value="100" step="1" aria-label="Motion intensity" aria-valuemin="0" aria-valuemax="150" aria-valuenow="100">' +
-      '</div></div>' +
-      '</section>' +
-      '</div></aside></div></div>';
+    iface.innerHTML = toolShellSplit(
+      '<div class="tool-stack tool-media-pane fcv-media-pane" style="width:100%;min-height:0;align-items:stretch">' +
+        '<div class="fcv-preview" aria-label="Preview">' +
+        '<div class="fcv-preview-inner">' +
+        '<div class="fcv-main-wrap" id="fcv-main-wrap">' +
+        '<div class="fcv-main">' +
+        '<canvas id="ov-fcv" width="' +
+        FCV_INTERNAL +
+        '" height="' +
+        FCV_INTERNAL +
+        '" class="fcv-canvas-main"></canvas>' +
+        '</div></div></div></div>' +
+        '</div>',
+      '<div class="tool-stack ss-beaut-tool">' +
+        '<div class="fcv-toolbar-head">' +
+        '<div class="fcv-export-actions">' +
+        '<button type="button" class="tool-btn tool-btn--m" id="ov-fico" title="Static: multi-size .ico. Motion: animated .gif for browser tabs.">FAVICON.ICO</button>' +
+        '<button type="button" class="tool-btn" id="ov-f32">PNG 32</button>' +
+        '<button type="button" class="tool-btn" id="ov-f180">PNG 180</button>' +
+        '</div></div>' +
+        '<details class="ss-beaut-section">' +
+        '<summary class="ss-beaut-sum">' +
+        '<span class="tool-disclosure-chev" aria-hidden="true"><svg viewBox="0 0 12 12" xmlns="http://www.w3.org/2000/svg" focusable="false"><path d="M4.5 2.5L8.5 6 4.5 9.5"/></svg></span>' +
+        '<span class="ss-beaut-sum-t">Content</span>' +
+        '</summary>' +
+        '<div class="ss-beaut-body">' +
+        '<div class="tool-field"><span class="tool-label">Mode</span>' +
+        '<select class="tool-select" id="ov-fmode" aria-label="Content type">' +
+        '<option value="letter">Letters</option>' +
+        '<option value="symbol" selected>Icons and text</option>' +
+        '<option value="emoji">Emoji</option>' +
+        '</select></div>' +
+        '<div class="tool-field" id="ov-fwrap-letter"><span class="tool-label">Letters (optional)</span>' +
+        '<input type="text" class="tool-input" id="ov-ft" maxlength="2" value="" placeholder="e.g. OP" autocomplete="off" aria-label="Letters, up to 2; leave empty for no text"></div>' +
+        '<section class="fcv-section" id="ov-fwrap-symbol" hidden>' +
+        '<div class="fcv-section-title">Icon</div>' +
+        '<div class="tool-field"><span class="tool-label">Vector icon</span>' +
+        '<select class="tool-select" id="ov-ficon-select" aria-label="Vector icon">' +
+        fcvIconOpts +
+        '</select></div>' +
+        '<div class="tool-field fcv-custom-field">' +
+        '<span class="tool-label">Custom character (optional)</span>' +
+        '<input type="text" class="tool-input" id="ov-fsym-custom" maxlength="4" placeholder="e.g. π, @, ½" autocomplete="off">' +
+        '</div></section>' +
+        '<section class="fcv-section" id="ov-fwrap-emoji" hidden>' +
+        '<div class="fcv-section-title">Emoji</div>' +
+        '<div class="tool-field"><span class="tool-label">Preset</span>' +
+        '<select class="tool-select" id="ov-femoji-select" aria-label="Emoji preset">' +
+        fcvEmojiOpts +
+        '</select></div>' +
+        '<div class="tool-field fcv-custom-field">' +
+        '<span class="tool-label">Or paste / type</span>' +
+        '<input type="text" class="tool-input" id="ov-femoji-in" maxlength="8" autocomplete="off" placeholder="Paste any emoji">' +
+        '</div></section>' +
+        '</div></details>' +
+        '<details class="ss-beaut-section">' +
+        '<summary class="ss-beaut-sum">' +
+        '<span class="tool-disclosure-chev" aria-hidden="true"><svg viewBox="0 0 12 12" xmlns="http://www.w3.org/2000/svg" focusable="false"><path d="M4.5 2.5L8.5 6 4.5 9.5"/></svg></span>' +
+        '<span class="ss-beaut-sum-t" id="fcv-typo-title">Font &amp; size</span>' +
+        '</summary>' +
+        '<div class="ss-beaut-body">' +
+        '<div class="tool-field" id="ov-fwrap-ffont"><span class="tool-label">Typeface</span>' +
+        '<select class="tool-select" id="ov-ffont" aria-label="Font family">' +
+        fcvFontOpts +
+        '</select></div>' +
+        '<div class="tool-field"><span class="tool-label">Weight</span>' +
+        '<select class="tool-select" id="ov-fweight" aria-label="Font weight">' +
+        '<option value="700" selected>Bold</option>' +
+        '<option value="400">Regular</option>' +
+        '</select></div>' +
+        '<div class="tool-field fcv-field-range">' +
+        '<span class="tool-label">Size <span id="ov-fsize-val" class="fcv-size-val">100</span>px</span>' +
+        '<div class="tool-bpm-slider-row">' +
+        '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ov-fsize" min="56" max="132" value="100" step="2" aria-valuemin="56" aria-valuemax="132" aria-valuenow="100">' +
+        '</div></div></div></details>' +
+        '<details class="ss-beaut-section">' +
+        '<summary class="ss-beaut-sum">' +
+        '<span class="tool-disclosure-chev" aria-hidden="true"><svg viewBox="0 0 12 12" xmlns="http://www.w3.org/2000/svg" focusable="false"><path d="M4.5 2.5L8.5 6 4.5 9.5"/></svg></span>' +
+        '<span class="ss-beaut-sum-t">Mask &amp; color</span>' +
+        '</summary>' +
+        '<div class="ss-beaut-body">' +
+        '<div class="tool-field"><span class="tool-label">Mask shape</span>' +
+        '<select class="tool-select" id="ov-fshape" aria-label="Outer mask shape">' +
+        '<option value="square">Square</option>' +
+        '<option value="rounded">Rounded square</option>' +
+        '<option value="circle">Circle</option>' +
+        '<option value="diamond">Diamond</option>' +
+        '<option value="triangle">Triangle</option>' +
+        '</select></div>' +
+        '<div class="tool-field fcv-field-range">' +
+        '<span class="tool-label">Shape size <span id="ov-fmask-scale-val" class="fcv-size-val">100</span>%</span>' +
+        '<div class="tool-bpm-slider-row">' +
+        '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ov-fmask-scale" min="55" max="100" value="100" step="1" aria-label="Mask shape scale" aria-valuemin="55" aria-valuemax="100" aria-valuenow="100">' +
+        '</div></div>' +
+        '<div class="tool-field"><span class="tool-label">Foreground</span>' +
+        '<div class="fcv-color-row">' +
+        '<input type="color" class="tool-input" id="ov-ffg" value="#08080c" aria-label="Foreground color">' +
+        '<label class="fcv-color-none"><input type="checkbox" id="ov-ffg-none"> None</label>' +
+        '</div></div>' +
+        '<div class="tool-field"><span class="tool-label">Background</span>' +
+        '<div class="fcv-color-row">' +
+        '<input type="color" class="tool-input" id="ov-fbg" value="#00b4d8" aria-label="Background color">' +
+        '<label class="fcv-color-none"><input type="checkbox" id="ov-fbg-none"> None</label>' +
+        '</div></div>' +
+        '</div></details>' +
+        '<details class="ss-beaut-section">' +
+        '<summary class="ss-beaut-sum">' +
+        '<span class="tool-disclosure-chev" aria-hidden="true"><svg viewBox="0 0 12 12" xmlns="http://www.w3.org/2000/svg" focusable="false"><path d="M4.5 2.5L8.5 6 4.5 9.5"/></svg></span>' +
+        '<span class="ss-beaut-sum-t">Swatches</span>' +
+        '</summary>' +
+        '<div class="ss-beaut-body">' +
+        '<div class="fcv-section fcv-section--presets">' +
+        '<div class="fcv-presets" role="group" aria-label="Color presets">' +
+        '<button type="button" class="fcv-preset" data-fg="#08080c" data-bg="#00b4d8" title="Dark on cyan"></button>' +
+        '<button type="button" class="fcv-preset" data-fg="#f8fafc" data-bg="#0f172a" title="Light on slate"></button>' +
+        '<button type="button" class="fcv-preset" data-fg="#111827" data-bg="#fbbf24" title="Dark on amber"></button>' +
+        '<button type="button" class="fcv-preset" data-fg="#ffffff" data-bg="#dc2626" title="White on red"></button>' +
+        '<button type="button" class="fcv-preset" data-fg="#ecfdf5" data-bg="#059669" title="Mint on green"></button>' +
+        '<button type="button" class="fcv-preset" data-fg="#fef3c7" data-bg="#7c3aed" title="Cream on violet"></button>' +
+        '</div></div></div></details>' +
+        '<details class="ss-beaut-section">' +
+        '<summary class="ss-beaut-sum">' +
+        '<span class="tool-disclosure-chev" aria-hidden="true"><svg viewBox="0 0 12 12" xmlns="http://www.w3.org/2000/svg" focusable="false"><path d="M4.5 2.5L8.5 6 4.5 9.5"/></svg></span>' +
+        '<span class="ss-beaut-sum-t">Motion</span>' +
+        '</summary>' +
+        '<div class="ss-beaut-body">' +
+        '<div class="tool-field"><span class="tool-label">Tab icon</span>' +
+        '<select class="tool-select" id="ov-fanim" aria-label="Favicon motion (preview and download)">' +
+        '<option value="none" selected>Static</option>' +
+        '<option value="rotate">Rotate</option>' +
+        '<option value="pulse">Pulse</option>' +
+        '<option value="beat">Beat</option>' +
+        '<option value="wobble">Wobble</option>' +
+        '<option value="buzz">Buzz</option>' +
+        '<option value="float">Float</option>' +
+        '<option value="sway">Sway</option>' +
+        '<option value="rock">Rock</option>' +
+        '</select></div>' +
+        '<div class="tool-field fcv-field-range">' +
+        '<span class="tool-label">Intensity <span id="ov-fmotion-int-val" class="fcv-size-val">100</span>%</span>' +
+        '<div class="tool-bpm-slider-row">' +
+        '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ov-fmotion-int" min="0" max="150" value="100" step="1" aria-label="Motion intensity" aria-valuemin="0" aria-valuemax="150" aria-valuenow="100">' +
+        '</div></div></div></details>' +
+        '</div>'
+    );
 
     var fcvFontLink = document.createElement('link');
     fcvFontLink.rel = 'stylesheet';
@@ -2300,10 +2693,12 @@
       if (wrapFont) wrapFont.hidden = mode === 'emoji';
       var typoTitle = iface.querySelector('#fcv-typo-title');
       if (typoTitle) {
-        if (mode === 'emoji') {
+        if (mode === 'letter') {
+          typoTitle.textContent = 'Typography';
+        } else if (mode === 'emoji') {
           typoTitle.textContent = 'Emoji size';
         } else {
-          typoTitle.textContent = 'Typography';
+          typoTitle.textContent = 'Font & size';
         }
       }
     }
@@ -2323,22 +2718,6 @@
     function fcvSetSmoothDownscale(ctx) {
       ctx.imageSmoothingEnabled = true;
       if (typeof ctx.imageSmoothingQuality === 'string') ctx.imageSmoothingQuality = 'high';
-    }
-
-    function drawScales() {
-      var main = iface.querySelector('#ov-fcv');
-      var i;
-      for (i = 0; i < FCV_SIZES.length; i++) {
-        var sz = FCV_SIZES[i];
-        var el = iface.querySelector('#ov-fcv-p' + sz);
-        if (!el) continue;
-        el.width = sz;
-        el.height = sz;
-        var sx = el.getContext('2d');
-        fcvSetSmoothDownscale(sx);
-        sx.clearRect(0, 0, sz, sz);
-        sx.drawImage(main, 0, 0, FCV_INTERNAL, FCV_INTERNAL, 0, 0, sz, sz);
-      }
     }
 
     function syncFcvColorEnabled() {
@@ -2411,7 +2790,6 @@
 
     function fcvDrawStatic() {
       drawToCanvas(iface.querySelector('#ov-fcv'), {});
-      drawScales();
     }
 
     function fcvPreviewFrame(now) {
@@ -2440,7 +2818,6 @@
       var loopSec = fcvMotionLoopSec(mode);
       var phase = (elapsed % loopSec) / loopSec;
       drawToCanvas(iface.querySelector('#ov-fcv'), { animPhase: phase, animKind: mode });
-      drawScales();
       fcvPreviewRafId = requestAnimationFrame(fcvPreviewFrame);
     }
 
@@ -3135,7 +3512,8 @@
       '</div>' +
       '<div class="fp-props-panel" id="fp-panel-css" role="tabpanel" aria-labelledby="fp-tab-css" hidden>' +
       '<pre class="tool-pre-wrap fp-pre" id="fp-css"></pre></div>' +
-      '</div></aside></div></div>';
+      '</div>' +
+      '</aside></div></div>';
     var link = document.createElement('link');
     link.rel = 'stylesheet';
     document.head.appendChild(link);
@@ -3538,10 +3916,10 @@
       },
       {
         id: 'dnb',
-        name: 'DnB (break feel)',
+        name: 'DnB (roller)',
         bpm: 174,
-        instruments: ['kick_punch', 'snare_room', 'hat_metallic', 'bass_pluck'],
-        pattern: [pat([0, 8]), pat([4, 12]), pat([1, 3, 5, 7, 9, 11, 13, 15]), pat([0, 2, 8, 10])],
+        instruments: ['kick_punch', 'snare_tight', 'hat_closed', 'bass_pluck'],
+        pattern: [pat([0, 4, 8, 12]), pat([4, 12]), pat([2, 6, 10, 14]), pat([0, 3, 8, 11])],
       },
       {
         id: 'disco',
@@ -3566,21 +3944,21 @@
       '<div class="tool-stack">' +
       '<p class="tool-beat-audio-status" id="ov-bstat" role="status" aria-live="polite"></p>' +
       '<div class="tool-beat-control-column">' +
-      '<div class="tool-row tool-row--top tool-row--beat-preset">' +
-      '<div class="tool-field tool-field--beat-preset"><span class="tool-label">Pattern preset</span>' +
-      '<select class="tool-select tool-select--beat-preset" id="ov-bpre"></select></div>' +
-      '<div class="tool-field tool-field--beat-bpm">' +
-      '<span class="tool-label">BPM</span>' +
-      '<div class="tool-bpm-slider-row">' +
-      '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ov-bpm" value="110" min="60" max="200" step="1" aria-valuemin="60" aria-valuemax="200" aria-valuenow="110" aria-label="Tempo BPM">' +
-      '<span class="tool-bpm-val" id="ov-bpm-val">110</span>' +
-      '</div></div>' +
-      '</div>' +
-      '<div class="tool-row tool-row--beat-transport">' +
-      '<button type="button" class="tool-btn tool-btn--c tool-beat-transport" id="ov-bplay" aria-pressed="false" aria-label="Play beat">Play</button>' +
-      '<button type="button" class="tool-btn tool-btn--m" id="ov-bclr">Clear grid</button>' +
-      '</div>' +
-      '</div>' +
+        '<div class="tool-row tool-row--top tool-row--beat-preset">' +
+        '<div class="tool-field tool-field--beat-preset"><span class="tool-label">Pattern preset</span>' +
+        '<select class="tool-select tool-select--beat-preset" id="ov-bpre"></select></div>' +
+        '<div class="tool-field tool-field--beat-bpm">' +
+        '<span class="tool-label">BPM</span>' +
+        '<div class="tool-bpm-slider-row">' +
+        '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ov-bpm" value="110" min="60" max="200" step="1" aria-valuemin="60" aria-valuemax="200" aria-valuenow="110" aria-label="Tempo BPM">' +
+        '<span class="tool-bpm-val" id="ov-bpm-val">110</span>' +
+        '</div></div>' +
+        '</div>' +
+        '<div class="tool-row tool-row--beat-transport">' +
+        '<button type="button" class="tool-btn tool-btn--c tool-beat-transport" id="ov-bplay" aria-pressed="false" aria-label="Play beat">Play</button>' +
+        '<button type="button" class="tool-btn tool-btn--m" id="ov-bclr">Clear grid</button>' +
+        '</div>' +
+        '</div>' +
       '<div class="tool-beat-wrap" id="ov-bwrap"></div>' +
       '</div>';
 
