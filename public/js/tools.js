@@ -1327,27 +1327,92 @@
     iface.innerHTML = toolShellSplit(
       '<div class="tool-stack tool-media-pane ss-beaut-media" style="width:100%;min-height:0;align-items:stretch">' +
         '<div class="drop-zone" id="ov-ssz">Drop screenshot</div>' +
-        '<canvas id="ov-spc" class="ss-beaut-canvas" style="display:none;max-width:100%;border:1px solid var(--border)"></canvas></div>',
+        '<canvas id="ov-spc" class="ss-beaut-canvas" style="display:none;border:1px solid var(--border)"></canvas></div>',
       '<div class="tool-stack">' +
+        '<p class="ss-beaut-hint">Frame size is the export canvas; your screenshot scales down to fit inside padding so the whole image stays visible.</p>' +
+        '<div class="tool-row tool-row--top">' +
+        '<span class="tool-label" style="width:100%">Aspect presets</span></div>' +
+        '<div class="tool-row ss-beaut-ratio-row">' +
+        '<button type="button" class="tool-btn" data-ss-ratio="1:1">1:1</button>' +
+        '<button type="button" class="tool-btn" data-ss-ratio="4:3">4:3</button>' +
+        '<button type="button" class="tool-btn" data-ss-ratio="3:2">3:2</button>' +
+        '<button type="button" class="tool-btn" data-ss-ratio="16:9">16:9</button>' +
+        '<button type="button" class="tool-btn" data-ss-ratio="21:9">21:9</button>' +
+        '<button type="button" class="tool-btn" data-ss-ratio="9:16">9:16</button>' +
+        '<button type="button" class="tool-btn" data-ss-ratio="4:5">4:5</button>' +
+        '</div>' +
+        '<div class="tool-row ss-beaut-dim-row">' +
+        '<div class="tool-field">' +
+        '<span class="tool-label">Units</span>' +
+        '<select class="tool-select" id="ov-sunit" aria-label="Dimension units">' +
+        '<option value="px" selected>Pixels</option>' +
+        '<option value="in">Inches</option></select></div>' +
+        '<div class="tool-field ss-beaut-dpi-wrap" id="ov-sdpi-wrap" hidden>' +
+        '<span class="tool-label">DPI</span>' +
+        '<input type="number" class="tool-input" id="ov-sdpi" min="36" max="1200" step="1" value="96" title="Pixels per inch for converting inches to pixels"></div>' +
+        '<div class="tool-field">' +
+        '<span class="tool-label" id="ov-swl">Width</span>' +
+        '<input type="number" class="tool-input" id="ov-sww" min="0.01" step="0.01" value="1920"></div>' +
+        '<div class="tool-field">' +
+        '<span class="tool-label" id="ov-shl">Height</span>' +
+        '<input type="number" class="tool-input" id="ov-swh" min="0.01" step="0.01" value="1080"></div>' +
+        '</div>' +
+        '<div class="tool-row">' +
+        '<div class="tool-field tool-field--grow">' +
+        '<span class="tool-label">Background</span>' +
+        '<select class="tool-select" id="ov-sgrad" aria-label="Background style">' +
+        '<option value="solid">Solid color</option>' +
+        '<option value="lin-twilight">Linear · twilight</option>' +
+        '<option value="lin-sunset">Linear · sunset</option>' +
+        '<option value="lin-ocean">Linear · ocean</option>' +
+        '<option value="lin-mint">Linear · mint</option>' +
+        '<option value="lin-rose">Linear · rose</option>' +
+        '<option value="rad-glow">Radial · soft glow</option>' +
+        '<option value="rad-vignette">Radial · vignette</option>' +
+        '<option value="lin-mesh">Linear · mesh (dual)</option>' +
+        '</select></div>' +
+        '<div class="tool-field"><span class="tool-label">Solid / tint</span>' +
+        '<input type="color" class="tool-input" id="ov-sbg" value="#131318" title="Used for Solid; tints some gradients"></div>' +
+        '</div>' +
         '<div class="tool-row">' +
         '<div class="tool-field tool-field--slider">' +
         '<span class="tool-label">Padding</span>' +
         '<div class="tool-bpm-slider-row">' +
-        '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ov-spad" min="0" max="160" step="2" value="48" aria-valuenow="48">' +
+        '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ov-spad" min="0" max="200" step="2" value="48" aria-valuenow="48">' +
         '<span class="tool-bpm-val" id="ov-spad-val">48</span></div></div>' +
         '<div class="tool-field tool-field--slider">' +
         '<span class="tool-label">Radius</span>' +
         '<div class="tool-bpm-slider-row">' +
         '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ov-srd" min="0" max="64" step="1" value="12" aria-valuenow="12">' +
         '<span class="tool-bpm-val" id="ov-srd-val">12</span></div></div>' +
-        '<div class="tool-field"><span class="tool-label">BG</span><input type="color" class="tool-input" id="ov-sbg" value="#131318"></div>' +
+        '</div>' +
+        '<div class="tool-row">' +
+        '<div class="tool-field tool-field--slider">' +
+        '<span class="tool-label">Shadow blur</span>' +
+        '<div class="tool-bpm-slider-row">' +
+        '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ov-ssb" min="0" max="80" step="1" value="24" aria-valuenow="24">' +
+        '<span class="tool-bpm-val" id="ov-ssb-val">24</span></div></div>' +
+        '<div class="tool-field tool-field--slider">' +
+        '<span class="tool-label">Shadow Y</span>' +
+        '<div class="tool-bpm-slider-row">' +
+        '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ov-ssy" min="0" max="48" step="1" value="10" aria-valuenow="10">' +
+        '<span class="tool-bpm-val" id="ov-ssy-val">10</span></div></div>' +
+        '<div class="tool-field tool-field--slider">' +
+        '<span class="tool-label">Shadow X</span>' +
+        '<div class="tool-bpm-slider-row">' +
+        '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ov-ssx" min="-40" max="40" step="1" value="0" aria-valuenow="0">' +
+        '<span class="tool-bpm-val" id="ov-ssx-val">0</span></div></div>' +
         '</div>' +
         '<div class="tool-row"><button type="button" class="tool-btn tool-btn--c" id="ov-sdl">Export PNG</button></div></div>'
     );
     iface.appendChild(input);
     bindToolSliderValue(iface, '#ov-spad', '#ov-spad-val');
     bindToolSliderValue(iface, '#ov-srd', '#ov-srd-val');
+    bindToolSliderValue(iface, '#ov-ssb', '#ov-ssb-val');
+    bindToolSliderValue(iface, '#ov-ssy', '#ov-ssy-val');
+    bindToolSliderValue(iface, '#ov-ssx', '#ov-ssx-val');
     var shot = null;
+    var unitPrev = 'px';
     function syncBeautMediaUi() {
       var dz = iface.querySelector('#ov-ssz');
       var c = iface.querySelector('#ov-spc');
@@ -1360,40 +1425,243 @@
         c.style.display = 'none';
       }
     }
+    function getDpi() {
+      var d = +iface.querySelector('#ov-sdpi').value;
+      return isNaN(d) || d < 1 ? 96 : d;
+    }
+    function syncDimLabels() {
+      var u = iface.querySelector('#ov-sunit').value;
+      var px = u === 'px';
+      iface.querySelector('#ov-swl').textContent = px ? 'Width (px)' : 'Width (in)';
+      iface.querySelector('#ov-shl').textContent = px ? 'Height (px)' : 'Height (in)';
+      var dpiWrap = iface.querySelector('#ov-sdpi-wrap');
+      if (dpiWrap) {
+        if (px) {
+          dpiWrap.setAttribute('hidden', '');
+        } else {
+          dpiWrap.removeAttribute('hidden');
+        }
+      }
+    }
+    function parseRatio(str) {
+      var p = str.split(':');
+      var a = +p[0];
+      var b = +p[1];
+      if (!a || !b) return { rw: 16, rh: 9 };
+      return { rw: a, rh: b };
+    }
+    function readDimsPx() {
+      var u = iface.querySelector('#ov-sunit').value;
+      var dpi = getDpi();
+      var w = parseFloat(iface.querySelector('#ov-sww').value);
+      var h = parseFloat(iface.querySelector('#ov-swh').value);
+      if (isNaN(w) || isNaN(h) || w <= 0 || h <= 0) return null;
+      if (u === 'in') {
+        w *= dpi;
+        h *= dpi;
+      }
+      return {
+        w: Math.round(Math.max(100, Math.min(8192, w))),
+        h: Math.round(Math.max(100, Math.min(8192, h))),
+      };
+    }
+    function applyRatioPreset(ratioStr) {
+      var R = parseRatio(ratioStr);
+      var u = iface.querySelector('#ov-sunit').value;
+      var wEl = iface.querySelector('#ov-sww');
+      var hEl = iface.querySelector('#ov-swh');
+      var w = parseFloat(wEl.value);
+      var h = parseFloat(hEl.value);
+      if (isNaN(w) || w <= 0) w = u === 'in' ? 10 : 1920;
+      if (isNaN(h) || h <= 0) h = u === 'in' ? 10 : 1080;
+      var newW;
+      var newH;
+      if (R.rw >= R.rh) {
+        newH = (w * R.rh) / R.rw;
+        newW = w;
+      } else {
+        newW = (h * R.rw) / R.rh;
+        newH = h;
+      }
+      wEl.value = u === 'in' ? newW.toFixed(3) : String(Math.round(newW));
+      hEl.value = u === 'in' ? newH.toFixed(3) : String(Math.round(newH));
+    }
+    function onUnitChange() {
+      var cur = iface.querySelector('#ov-sunit').value;
+      var dpi = getDpi();
+      var wEl = iface.querySelector('#ov-sww');
+      var hEl = iface.querySelector('#ov-swh');
+      var w = parseFloat(wEl.value);
+      var h = parseFloat(hEl.value);
+      if (isNaN(w) || isNaN(h)) return;
+      if (unitPrev === 'px' && cur === 'in') {
+        wEl.value = (w / dpi).toFixed(3);
+        hEl.value = (h / dpi).toFixed(3);
+      } else if (unitPrev === 'in' && cur === 'px') {
+        wEl.value = String(Math.round(w * dpi));
+        hEl.value = String(Math.round(h * dpi));
+      }
+      unitPrev = cur;
+      syncDimLabels();
+    }
+    function fillBackground(ctx, w, h, gradId, solidHex) {
+      var g;
+      var tint = solidHex || '#131318';
+      function hexToRgb(hex) {
+        var m = /^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(hex);
+        if (!m) return { r: 19, g: 19, b: 24 };
+        return { r: parseInt(m[1], 16), g: parseInt(m[2], 16), b: parseInt(m[3], 16) };
+      }
+      function mix(a, b, t) {
+        return {
+          r: Math.round(a.r + (b.r - a.r) * t),
+          g: Math.round(a.g + (b.g - a.g) * t),
+          b: Math.round(a.b + (b.b - a.b) * t),
+        };
+      }
+      function rgbStr(o) {
+        return 'rgb(' + o.r + ',' + o.g + ',' + o.b + ')';
+      }
+      if (gradId === 'solid' || !gradId) {
+        ctx.fillStyle = tint;
+        ctx.fillRect(0, 0, w, h);
+        return;
+      }
+      var T = hexToRgb(tint);
+      switch (gradId) {
+        case 'lin-twilight': {
+          g = ctx.createLinearGradient(0, 0, w, h);
+          g.addColorStop(0, '#1a1a30');
+          g.addColorStop(0.5, rgbStr(mix(T, { r: 45, g: 35, b: 70 }, 0.35)));
+          g.addColorStop(1, '#2a1528');
+          break;
+        }
+        case 'lin-sunset': {
+          g = ctx.createLinearGradient(0, 0, w, h * 0.9);
+          g.addColorStop(0, '#ff6b6b');
+          g.addColorStop(0.5, '#feca57');
+          g.addColorStop(1, '#ff9ff3');
+          break;
+        }
+        case 'lin-ocean': {
+          g = ctx.createLinearGradient(0, 0, w, h);
+          g.addColorStop(0, '#0c3483');
+          g.addColorStop(1, '#a2b6df');
+          break;
+        }
+        case 'lin-mint': {
+          g = ctx.createLinearGradient(0, h, w, 0);
+          g.addColorStop(0, '#11998e');
+          g.addColorStop(1, '#38ef7d');
+          break;
+        }
+        case 'lin-rose': {
+          g = ctx.createLinearGradient(w, 0, 0, h);
+          g.addColorStop(0, '#ee9ca7');
+          g.addColorStop(1, '#ffdde1');
+          break;
+        }
+        case 'rad-glow': {
+          g = ctx.createRadialGradient(w * 0.45, h * 0.35, 0, w * 0.5, h * 0.5, Math.max(w, h) * 0.85);
+          g.addColorStop(0, '#3d3d55');
+          g.addColorStop(0.45, rgbStr(mix({ r: 30, g: 30, b: 40 }, T, 0.25)));
+          g.addColorStop(1, '#0d0d12');
+          break;
+        }
+        case 'rad-vignette': {
+          g = ctx.createRadialGradient(w * 0.5, h * 0.5, Math.min(w, h) * 0.15, w * 0.5, h * 0.5, Math.max(w, h) * 0.72);
+          g.addColorStop(0, rgbStr(mix(T, { r: 40, g: 40, b: 48 }, 0.2)));
+          g.addColorStop(1, '#050508');
+          break;
+        }
+        case 'lin-mesh': {
+          g = ctx.createLinearGradient(0, 0, w, h);
+          g.addColorStop(0, '#667eea');
+          g.addColorStop(0.45, rgbStr(T));
+          g.addColorStop(1, '#764ba2');
+          break;
+        }
+        default: {
+          ctx.fillStyle = tint;
+          ctx.fillRect(0, 0, w, h);
+          return;
+        }
+      }
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, w, h);
+    }
+    function roundedPath(ctx, dx, dy, dw, dh, r) {
+      r = Math.min(r, dw / 2, dh / 2);
+      ctx.beginPath();
+      ctx.moveTo(dx + r, dy);
+      ctx.lineTo(dx + dw - r, dy);
+      ctx.quadraticCurveTo(dx + dw, dy, dx + dw, dy + r);
+      ctx.lineTo(dx + dw, dy + dh - r);
+      ctx.quadraticCurveTo(dx + dw, dy + dh, dx + dw - r, dy + dh);
+      ctx.lineTo(dx + r, dy + dh);
+      ctx.quadraticCurveTo(dx, dy + dh, dx, dy + dh - r);
+      ctx.lineTo(dx, dy + r);
+      ctx.quadraticCurveTo(dx, dy, dx + r, dy);
+      ctx.closePath();
+    }
     function compose() {
       if (!shot) return;
       syncBeautMediaUi();
-      var pad = +iface.querySelector('#ov-spad').value || 40;
+      var dims = readDimsPx();
+      if (!dims) return;
+      var pad = +iface.querySelector('#ov-spad').value || 0;
       var rad = +iface.querySelector('#ov-srd').value || 0;
-      var bg = iface.querySelector('#ov-sbg').value;
+      var gradId = iface.querySelector('#ov-sgrad').value;
+      var solid = iface.querySelector('#ov-sbg').value;
+      var sBlur = +iface.querySelector('#ov-ssb').value || 0;
+      var sY = +iface.querySelector('#ov-ssy').value || 0;
+      var sX = +iface.querySelector('#ov-ssx').value || 0;
       var iw = shot.naturalWidth;
       var ih = shot.naturalHeight;
+      var cw = dims.w;
+      var ch = dims.h;
+      var availW = cw - pad * 2;
+      var availH = ch - pad * 2;
+      if (availW < 8 || availH < 8) return;
+      var scale = Math.min(availW / iw, availH / ih);
+      var drawW = iw * scale;
+      var drawH = ih * scale;
+      var ox = pad + (availW - drawW) / 2;
+      var oy = pad + (availH - drawH) / 2;
+      var rr = Math.min(rad, drawW / 2, drawH / 2);
       var c = iface.querySelector('#ov-spc');
-      c.width = iw + pad * 2;
-      c.height = ih + pad * 2;
-      var x = c.getContext('2d');
-      x.fillStyle = bg;
-      x.fillRect(0, 0, c.width, c.height);
-      x.save();
-      roundedClip(x, pad, pad, iw, ih, rad);
-      x.drawImage(shot, pad, pad);
-      x.restore();
-      function roundedClip(ctx, dx, dy, w, h, r) {
-        ctx.beginPath();
-        r = Math.min(r, w / 2, h / 2);
-        ctx.moveTo(dx + r, dy);
-        ctx.lineTo(dx + w - r, dy);
-        ctx.quadraticCurveTo(dx + w, dy, dx + w, dy + r);
-        ctx.lineTo(dx + w, dy + h - r);
-        ctx.quadraticCurveTo(dx + w, dy + h, dx + w - r, dy + h);
-        ctx.lineTo(dx + r, dy + h);
-        ctx.quadraticCurveTo(dx, dy + h, dx, dy + h - r);
-        ctx.lineTo(dx, dy + r);
-        ctx.quadraticCurveTo(dx, dy, dx + r, dy);
-        ctx.closePath();
-        ctx.clip();
+      c.width = cw;
+      c.height = ch;
+      var ctx = c.getContext('2d');
+      fillBackground(ctx, cw, ch, gradId, solid);
+      var tmp = document.createElement('canvas');
+      tmp.width = Math.max(1, Math.ceil(drawW));
+      tmp.height = Math.max(1, Math.ceil(drawH));
+      var tx = tmp.getContext('2d');
+      tx.save();
+      roundedPath(tx, 0, 0, drawW, drawH, rr);
+      tx.clip();
+      tx.drawImage(shot, 0, 0, iw, ih, 0, 0, drawW, drawH);
+      tx.restore();
+      ctx.save();
+      if (sBlur > 0 || sX !== 0 || sY !== 0) {
+        ctx.shadowColor = 'rgba(0,0,0,0.42)';
+        ctx.shadowBlur = sBlur;
+        ctx.shadowOffsetX = sX;
+        ctx.shadowOffsetY = sY;
       }
+      ctx.drawImage(tmp, ox, oy);
+      ctx.restore();
     }
+    syncDimLabels();
+    iface.querySelector('#ov-sunit').addEventListener('change', onUnitChange);
+    iface.querySelector('#ov-sdpi').addEventListener('input', compose);
+    iface.querySelectorAll('[data-ss-ratio]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        applyRatioPreset(btn.getAttribute('data-ss-ratio') || '16:9');
+        compose();
+      });
+    });
     OV.bindDropZone(iface.querySelector('#ov-ssz'), input, function (fs) {
       if (!fs[0]) return;
       OV.loadImageFile(fs[0]).then(function (img) {
@@ -1401,8 +1669,19 @@
         compose();
       });
     });
-    ['#ov-spad', '#ov-srd', '#ov-sbg'].forEach(function (sel) {
-      iface.querySelector(sel).addEventListener('input', compose);
+    [
+      '#ov-sww',
+      '#ov-swh',
+      '#ov-spad',
+      '#ov-srd',
+      '#ov-sbg',
+      '#ov-sgrad',
+      '#ov-ssb',
+      '#ov-ssy',
+      '#ov-ssx',
+    ].forEach(function (sel) {
+      var node = iface.querySelector(sel);
+      if (node) node.addEventListener('input', compose);
     });
     iface.querySelector('#ov-sdl').addEventListener('click', function () {
       var c = iface.querySelector('#ov-spc');

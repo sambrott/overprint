@@ -884,7 +884,27 @@ html.theme-light .tool-header-tag.cat-type{color:var(--text-hi)}
 .drop-zone.is-drag{border-color:var(--C);background:var(--C-dim);color:var(--text-hi)}
 /* Screenshot beautifier: fill empty preview pane with drop target */
 .ss-beaut-media .drop-zone{flex:1;min-height:min(280px,50vh);display:flex;align-items:center;justify-content:center;box-sizing:border-box}
-.ss-beaut-media .ss-beaut-canvas{margin:0 auto}
+.ss-beaut-media .ss-beaut-canvas{
+  margin:0 auto;
+  max-width:100%;
+  max-height:min(58vh,560px);
+  width:auto;
+  height:auto;
+  object-fit:contain;
+  image-rendering:auto
+}
+.ss-beaut-ratio-row{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+  width:100%;
+  box-sizing:border-box
+}
+.ss-beaut-ratio-row .tool-btn{width:100%;min-height:40px;margin-left:0 !important;text-align:center;font-size:9px;letter-spacing:1px;padding:8px 6px}
+.ss-beaut-dim-row{display:flex;flex-wrap:wrap;gap:12px 16px;align-items:flex-end;width:100%}
+.ss-beaut-dim-row .tool-input{min-width:0;max-width:140px}
+.ss-beaut-dpi-wrap[hidden]{display:none !important}
+.ss-beaut-hint{font-size:10px;color:var(--text-faint);line-height:1.4;margin:0;max-width:42ch}
 
 /* Tool UI (functional tools) */
 .tool-stack{display:flex;flex-direction:column;gap:20px}

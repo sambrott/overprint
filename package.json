@@ -8,7 +8,7 @@
     "vendor:gifenc": "esbuild node_modules/gifenc/src/index.js --bundle --format=iife --global-name=GIFenc --outfile=public/js/vendor/gifenc.js"
   },
   "devDependencies": {
-    "esbuild": "^0.24.0",
+    "esbuild": "^0.25.0",
     "gifenc": "^1.0.3"
   }
 }
