@@ -22,6 +22,9 @@ cd public && python3 -m http.server 8080 --bind 127.0.0.1
 
 For **GitHub Pages** (branch builds), GitHub only serves from the repo **root** or **`/docs`**. Options: copy or symlink `public/*` into `docs/`, make `public/` your root via a small deploy Action, or host `public/` on Netlify/Vercel/Cloudflare Pages with that folder as the publish directory.
 
+### Vercel
+The repo includes **`vercel.json`**: **Output Directory** is **`public`**, **Framework** is **Other** (no framework build), and **`installCommand`** uses **npm** so deploys don’t pick **pnpm** when both `package-lock.json` and `pnpm-lock.yaml` exist. After pushing, trigger a redeploy from the Vercel dashboard if needed.
+
 Open `public/index.html` only works for a quick static peek; use a server for routing (`#/about`, `#/tools/...`).
 
 ### Troubleshooting (“nothing works” / blank tools)
