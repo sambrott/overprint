@@ -118,8 +118,9 @@ body{
   cursor:pointer;min-height:44px;border-radius:2px
 }
 .nav-left:focus-visible{outline:2px solid var(--C);outline-offset:3px}
-.ov-logo{display:flex;gap:0;height:16px;flex-shrink:0}
-.ov-logo div{width:10px;height:16px;transform:skewX(-12deg)}
+.ov-logo{display:flex;gap:0;height:16px;flex-shrink:0;cursor:pointer}
+/* Explicit pointer on each parallelogram (skew can make inheritance unreliable in some engines) */
+.ov-logo>div{width:10px;height:16px;transform:skewX(-12deg);cursor:pointer}
 /* Logo word: L→R reveal via max-width 0 → px (Safari interpolates literal px; avoid var/min/calc on the transitioned value).
    Absolutely positioned so expansion does not push .nav-right. app.js toggles .nav-home-word-visible. */
 .ov-word-wrap{
