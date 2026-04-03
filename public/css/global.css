@@ -141,9 +141,9 @@ body{
   .ov-word-wrap,.ov-word{transition-duration:0.01ms}
 }
 @media(max-width:640px){
-  .ov-word-wrap{display:none}
-  /* Tool routes: show “OVERPRINT” beside the mark (desktop does this via .nav-home-word-visible) */
-  .nav-left.nav-tool-active .ov-word-wrap{display:flex}
+  /* Same L→R word reveal as desktop: app.js toggles .nav-home-word-visible when the
+     dashboard .header-title scrolls past the top (or on tool routes). Do not hide
+     .ov-word-wrap here — max-width + clip-path handle collapsed vs visible. */
   .nav-left{min-height:40px}
 }
 .nav-right{display:flex;align-items:center;gap:12px}
