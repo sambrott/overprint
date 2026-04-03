@@ -98,6 +98,7 @@ async function renderRoute() {
   var pageView = document.getElementById('view-page');
   if (!dashboard || !pageView) return;
 
+  try {
   dashboard.classList.remove('route-leave-to', 'route-enter-from');
   pageView.classList.remove('route-leave-to', 'route-enter-from');
 
@@ -228,6 +229,11 @@ async function renderRoute() {
     window.OV.mountTool(route.slug, pageView);
   }
   routeFirstBoot = false;
+  } finally {
+    if (myGen === routeGeneration) {
+      window.dispatchEvent(new Event('overprint-route-applied'));
+    }
+  }
 }
 
 function initRouter() {

@@ -78,6 +78,7 @@ document.addEventListener('DOMContentLoaded', function () {
     window.addEventListener('scroll', updateNavHomeWordVisible, { passive: true });
     window.addEventListener('resize', updateNavHomeWordVisible);
     window.addEventListener('hashchange', updateNavHomeWordVisible);
+    window.addEventListener('overprint-route-applied', updateNavHomeWordVisible);
     var dash = document.getElementById('dashboard');
     if (dash && typeof MutationObserver !== 'undefined') {
       new MutationObserver(updateNavHomeWordVisible).observe(dash, {
