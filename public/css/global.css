@@ -136,6 +136,13 @@ body{
   max-width:248px;
   pointer-events:auto;
 }
+/* Home (and other non-tool views): same L→R reveal on logo hover while the title is still in view */
+@media (hover: hover) {
+  .nav-left:not(.nav-tool-active):hover .ov-word-wrap{
+    max-width:248px;
+    pointer-events:auto;
+  }
+}
 .ov-word{
   font-family:'Syne',sans-serif;font-weight:800;font-size:14px;color:var(--text-hi);
   letter-spacing:0.2em;text-transform:uppercase;white-space:nowrap;
@@ -149,6 +156,9 @@ body{
   /* Literal px end-state so iOS can interpolate max-width (avoid min/calc on transitioned value) */
   .nav-left.nav-home-word-visible .ov-word-wrap{max-width:200px}
   .nav-left{min-height:40px}
+}
+@media (max-width:640px) and (hover:hover){
+  .nav-left:not(.nav-tool-active):hover .ov-word-wrap{max-width:200px}
 }
 .nav-right{
   grid-column:3;justify-self:end;display:flex;align-items:center;gap:10px;
