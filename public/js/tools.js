@@ -966,7 +966,8 @@
       c,
       ctx,
       rot = 0,
-      flip = 1;
+      flip = 1,
+      lastImportedName = null;
     function applyCanvas() {
       if (!img) return;
       var sc = (+panel.querySelector('#ov-isc').value || 100) / 100;
@@ -982,6 +983,7 @@
       ctx.restore();
     }
     function load(f) {
+      lastImportedName = f && f.name ? f.name : null;
       OV.loadImageFile(f).then(function (i) {
         img = i;
         rot = 0;
@@ -1007,7 +1009,9 @@
     panel.querySelector('#ov-idl').addEventListener('click', function () {
       var fmt = panel.querySelector('#ov-ifmt').value;
       var q = +panel.querySelector('#ov-iq').value || 0.92;
-      OV.downloadCanvas(c, 'export.' + (fmt.indexOf('jpeg') > 0 ? 'jpg' : fmt.indexOf('webp') > 0 ? 'webp' : 'png'), fmt, fmt.indexOf('png') >= 0 ? undefined : q);
+      var ext = fmt.indexOf('jpeg') > 0 ? 'jpg' : fmt.indexOf('webp') > 0 ? 'webp' : 'png';
+      var stem = (lastImportedName || 'export').replace(/\.[^/.]+$/, '');
+      OV.downloadCanvas(c, stem + '.' + ext, fmt, fmt.indexOf('png') >= 0 ? undefined : q);
     });
   }
 
@@ -1064,7 +1068,7 @@
             var fmt = meta.querySelector('[data-f]').value;
             var q = +meta.querySelector('[data-q]').value;
             var ext = fmt.indexOf('jpeg') > 0 ? 'jpg' : fmt.indexOf('webp') > 0 ? 'webp' : 'png';
-            OV.downloadCanvas(cFull, file.name.replace(/\.\w+$/, '') + '-opt.' + ext, fmt, fmt.indexOf('png') >= 0 ? undefined : q);
+            OV.downloadCanvas(cFull, file.name.replace(/\.\w+$/, '') + '.' + ext, fmt, fmt.indexOf('png') >= 0 ? undefined : q);
           });
         });
       });
@@ -1096,6 +1100,7 @@
     var zone = iface.querySelector('#ov-sz-zone');
     var grid = iface.querySelector('#ov-sg');
     var source = null;
+    var sourceFileName = null;
     function render() {
       if (!source) return;
       grid.innerHTML = '';
@@ -1113,6 +1118,7 @@
     }
     OV.bindDropZone(zone, input, function (files) {
       if (!files[0]) return;
+      sourceFileName = files[0].name || null;
       OV.loadImageFile(files[0]).then(function (img) {
         source = img;
         render();
@@ -1123,19 +1129,23 @@
       OV.loadScriptOnce(OV.CDN_JSZIP, 'JSZip')
         .then(function () {
           var zip = new JSZip();
+          var baseStem = (sourceFileName || 'export').replace(/\.[^/.]+$/, '');
           SOCIAL.forEach(function (s) {
             var c = document.createElement('canvas');
             c.width = s.w;
             c.height = s.h;
             c.getContext('2d').drawImage(OV.canvasCover(source, s.w, s.h), 0, 0);
-            var name = s.n.replace(/\s+/g, '-').toLowerCase() + '.png';
+            var name = baseStem + '_overprint_' + s.n.replace(/\s+/g, '-').toLowerCase() + '.png';
             var data = c.toDataURL('image/png').split(',')[1];
             zip.file(name, data, { base64: true });
           });
           return zip.generateAsync({ type: 'blob' });
         })
         .then(function (blob) {
-          if (blob) OV.downloadBlob(blob, 'social-sizes.zip');
+          if (blob) {
+            var zstem = (sourceFileName || 'export').replace(/\.[^/.]+$/, '');
+            OV.downloadBlob(blob, zstem + '_social-sizes.zip');
+          }
         })
         .catch(function () {
           window.alert('ZIP export needs a one-time load of JSZip from the network (cdn.jsdelivr.net).');
@@ -1226,13 +1236,14 @@
                 ow = Math.round((m * rr.rw) / rr.rh);
               }
               var out = OV.cropToAspect(img, rr.rw, rr.rh, ow, oh);
-              var name = (f.name || 'image-' + idx).replace(/\.\w+$/, '') + '-crop.png';
+              var name = (f.name || 'image-' + idx).replace(/\.\w+$/, '') + '_overprint.png';
               var data = out.toDataURL('image/png').split(',')[1];
               zip.file(name, data, { base64: true });
               done++;
               if (done === files.length) {
                 zip.generateAsync({ type: 'blob' }).then(function (blob) {
-                  OV.downloadBlob(blob, 'grid-crop.zip');
+                  var zstem = (files[0].name || 'export').replace(/\.[^/.]+$/, '');
+                  OV.downloadBlob(blob, zstem + '_grid-crop.zip');
                 });
               }
             });
@@ -1264,8 +1275,10 @@
     bindToolSliderValue(iface, '#ov-cn', '#ov-cn-val');
     var wrap = iface.querySelector('#ov-cprev');
     var srcImg = null;
+    var carouselSourceName = null;
     OV.bindDropZone(iface.querySelector('#ov-cz'), input, function (fs) {
       if (!fs[0]) return;
+      carouselSourceName = fs[0].name || null;
       OV.loadImageFile(fs[0]).then(function (img) {
         srcImg = img;
         slice();
@@ -1303,17 +1316,25 @@
           var w = srcImg.naturalWidth;
           var h = srcImg.naturalHeight;
           var sliceW = w / n;
+          var cstem = (carouselSourceName || 'export').replace(/\.[^/.]+$/, '');
           for (var i = 0; i < n; i++) {
             var c = document.createElement('canvas');
             c.width = sliceW;
             c.height = h;
             c.getContext('2d').drawImage(srcImg, i * sliceW, 0, sliceW, h, 0, 0, sliceW, h);
-            zip.file('panel-' + (i + 1) + '.png', c.toDataURL('image/png').split(',')[1], { base64: true });
+            zip.file(
+              cstem + '_overprint_panel-' + (i + 1) + '.png',
+              c.toDataURL('image/png').split(',')[1],
+              { base64: true }
+            );
           }
           return zip.generateAsync({ type: 'blob' });
         })
         .then(function (blob) {
-          if (blob) OV.downloadBlob(blob, 'carousel.zip');
+          if (blob) {
+            var zstem = (carouselSourceName || 'export').replace(/\.[^/.]+$/, '');
+            OV.downloadBlob(blob, zstem + '_carousel.zip');
+          }
         })
         .catch(function () {
           window.alert('ZIP export needs a one-time load of JSZip from the network (cdn.jsdelivr.net).');
@@ -1524,6 +1545,7 @@
     bindToolSliderValue(iface, '#ov-ssy', '#ov-ssy-val');
     bindToolSliderValue(iface, '#ov-ssx', '#ov-ssx-val');
     var shot = null;
+    var ssSourceName = null;
     var unitPrev = 'px';
     /** Keeps on-screen screenshot width stable; frame (canvas) scales around it. */
     var lastPreviewMetrics = null;
@@ -2015,6 +2037,7 @@
     });
     OV.bindDropZone(iface.querySelector('#ov-ssz'), input, function (fs) {
       if (!fs[0]) return;
+      ssSourceName = fs[0].name || null;
       OV.loadImageFile(fs[0]).then(function (img) {
         shot = img;
         compose();
@@ -2076,7 +2099,10 @@
     });
     iface.querySelector('#ov-sdl').addEventListener('click', function () {
       var c = iface.querySelector('#ov-spex');
-      if (c && c.width) OV.downloadCanvas(c, 'beautified.png', 'image/png');
+      if (c && c.width) {
+        var stem = (ssSourceName || 'screenshot').replace(/\.[^/.]+$/, '');
+        OV.downloadCanvas(c, stem + '.png', 'image/png');
+      }
     });
   }
 
@@ -4635,14 +4661,8 @@
         .startRendering()
         .then(function (buf) {
           var blob = beatMonoBufferToStereoWavBlob(buf);
-          var a = document.createElement('a');
           var bpm = Math.round(+iface.querySelector('#ov-bpm').value || 110);
-          a.href = URL.createObjectURL(blob);
-          a.download = 'overprint-beat-' + bpm + 'bpm-48k-stereo.wav';
-          a.click();
-          setTimeout(function () {
-            URL.revokeObjectURL(a.href);
-          }, 4000);
+          OV.downloadBlob(blob, 'overprint-beat-' + bpm + 'bpm-48k-stereo.wav');
           setBeatStat('Exported 48 kHz WAV (stereo). Ready for Premiere, Resolve, etc.');
         })
         .catch(function (e) {

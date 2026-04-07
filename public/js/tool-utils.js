@@ -163,7 +163,24 @@
     }
   };
 
+  /**
+   * Export filename: original stem + "_overprint" + extension (e.g. photo.png → photo_overprint.png).
+   * Idempotent if stem already ends with _overprint.
+   */
+  OV.withOverprintSuffix = function (filename) {
+    if (filename == null || typeof filename !== 'string') return 'export_overprint.bin';
+    filename = filename.trim();
+    if (!filename) return 'export_overprint.bin';
+    var d = filename.lastIndexOf('.');
+    if (d <= 0 || d === filename.length - 1) return filename + '_overprint';
+    var stem = filename.slice(0, d);
+    var ext = filename.slice(d);
+    if (/_overprint$/i.test(stem)) return filename;
+    return stem + '_overprint' + ext;
+  };
+
   OV.downloadBlob = function (blob, name) {
+    name = OV.withOverprintSuffix(name);
     var a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = name;
