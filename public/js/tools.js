@@ -437,7 +437,7 @@
   function getCssGenVisRoot(iface) {
     try {
       if (!iface || !iface.querySelector) return null;
-      return iface.querySelector('.tool-css-lib__inner') || null;
+      return iface.querySelector('.tool-grid--cssgen') || null;
     } catch (e) {
       return null;
     }
@@ -1220,8 +1220,7 @@
       cleanupCssGenLibPreviews(iface);
       detachCssLibListener(iface);
       iface.innerHTML =
-        '<div class="tool-css-lib">' +
-        '<div class="tool-css-lib__inner tool-grid" role="list">' +
+        '<div class="tool-grid tool-grid--cssgen" role="list">' +
         '<div class="tool-card" data-cat="create" data-cmd="liquid" role="button" tabindex="0" aria-label="Liquid layer (WebGL)">' +
         '<div class="tc-preview"><div class="tc-anim"><div class="ov-lib-gl-host"></div></div></div>' +
         '<div class="tc-body">' +
@@ -1236,7 +1235,7 @@
         '<div class="tc-name">Lava lamp</div>' +
         '<div class="tc-desc">Stripe swirls, WebGL1. Cyan, magenta, paper. Motion and JSON.</div>' +
         '<div class="tc-arrow">→</div></div></div>' +
-        '</div></div>';
+        '</div>';
 
       mountCssGenLibPreviews(iface);
 

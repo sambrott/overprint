@@ -863,7 +863,7 @@ html.theme-light .tool-header-tag.cat-type{color:var(--text-hi)}
 .tool-interface{background:var(--s1);border:1px solid var(--border);padding:24px;min-height:220px}
 .tool-interface:has(> .tool-shell.tool-shell--split),
 .tool-interface:has(> .tool-shell.tool-shell--single),
-.tool-interface:has(> .tool-css-lib){
+.tool-interface:has(> .tool-grid.tool-grid--cssgen){
   padding:0;border:none;background:transparent;min-height:0
 }
 /* CSS Generator: sub-view swaps (library ↔ tool) use same duration/easing as route transitions */
@@ -895,7 +895,7 @@ html.theme-light .tool-header-tag.cat-type{color:var(--text-hi)}
   .tool-interface{padding:18px 16px;min-height:180px}
   .tool-interface:has(> .tool-shell.tool-shell--split),
   .tool-interface:has(> .tool-shell.tool-shell--single),
-  .tool-interface:has(> .tool-css-lib){
+  .tool-interface:has(> .tool-grid.tool-grid--cssgen){
     padding:0;border:none;background:transparent;min-height:0
   }
   .tool-page--beat .tool-interface{padding:10px 12px}
@@ -1130,55 +1130,36 @@ details[open] > summary > .tool-disclosure-chev{transform:rotate(90deg)}
 .tool-btn--m:hover{background:var(--M-dim);border-color:var(--M)}
 .tool-btn--y{border-color:var(--Y);color:var(--Y)}
 .tool-btn--y:hover{background:var(--Y-dim);border-color:var(--Y)}
-/* CSS generator: same tool cards as home (tool-grid + .tool-card + .tc-anim) */
-.tool-css-lib{
-  display:flex;flex-direction:column;min-height:0;
-  /* Hug card list height; cap so many items still scroll (library has no .tool-css-lib__head today) */
-  max-height:min(88vh,720px);
-  width:100%;box-sizing:border-box;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--s2)
-}
-.tool-css-lib__head{
-  padding:16px 18px 8px;border-bottom:1px solid var(--border);background:var(--bg);flex-shrink:0
-}
-.tool-css-lib__inner.tool-grid{
-  padding:0 var(--pad) 16px;max-width:1200px;margin:0 auto;flex:0 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;
+/* CSS generator chooser: flat grid, left-aligned with .back-btn (no bordered shell; .tool-page supplies horizontal padding) */
+.tool-page .tool-grid.tool-grid--cssgen{
+  max-width:none;width:100%;
+  margin:0;
+  /* Do not add horizontal padding here — it would double .tool-page and misalign the grid vs the back button */
+  padding:0 0 20px;
+  min-height:0;
   max-height:min(72vh,560px);
+  overflow-y:auto;overflow-x:hidden;
   align-content:start;align-items:start;grid-auto-rows:min-content;
   scrollbar-width:thin;scrollbar-color:var(--C) var(--ov-scroll-track)
 }
-.tool-css-lib__inner.tool-grid::-webkit-scrollbar{width:8px}
-.tool-css-lib__inner.tool-grid::-webkit-scrollbar-track{background:var(--ov-scroll-track);border-radius:3px}
-.tool-css-lib__inner.tool-grid::-webkit-scrollbar-thumb{
+.tool-page .tool-grid.tool-grid--cssgen::-webkit-scrollbar{width:8px}
+.tool-page .tool-grid.tool-grid--cssgen::-webkit-scrollbar-track{background:var(--ov-scroll-track);border-radius:3px}
+.tool-page .tool-grid.tool-grid--cssgen::-webkit-scrollbar-thumb{
   background:linear-gradient(180deg,var(--C),var(--M) 50%,var(--Y));border-radius:3px;border:2px solid var(--s2)
 }
-/* Match dashboard card chrome inside the tool view */
-.tool-css-lib .tool-card[role="button"]{
-  min-width:0;align-self:start;
-  /* ~home tool-card height: avoid stretching in tall flex scroll; trim ~150px vs oversized rows */
-  display:flex;flex-direction:column;max-height:min(360px,52vh);
-  box-sizing:border-box;overflow:hidden
-}
-.tool-css-lib .ov-lib-gl-host{
+/* Same footprint as #dashboard .tool-card (default .tc-body / .tc-preview); only flex stretch for WebGL in preview */
+.tool-grid--cssgen .tool-card[role="button"]{min-width:0;align-self:start}
+.tool-grid--cssgen .ov-lib-gl-host{
   position:relative;width:100%;height:100%;
   min-height:1px;max-height:100%;background:#0a0a0a
 }
-/* Tighter text block to match dashboard cards (e.g. home tool grid .tc-body) */
-.tool-css-lib .tc-preview{
-  height:130px;flex:0 0 130px;min-height:0;overflow:hidden;
+.tool-grid--cssgen .tc-preview{
+  /* Default height 130px like home; stretch so .tc-anim + canvas fill the band (home uses centered previews) */
   display:flex;align-items:stretch;justify-content:center
 }
-.tool-css-lib .tc-anim{min-height:0;flex:1;align-self:stretch}
-.tool-css-lib .tc-body{
-  padding:8px 12px 8px;flex:0 0 auto;min-height:0;
-  position:relative;z-index:1
+.tool-grid--cssgen .tc-anim{
+  min-height:0;flex:1;align-self:stretch;width:100%
 }
-.tool-css-lib .tc-top{margin-bottom:3px}
-.tool-css-lib .tc-name{margin-bottom:2px}
-.tool-css-lib .tc-desc{
-  line-height:1.35;overflow:hidden;
-  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2
-}
-.tool-css-lib .tc-arrow{bottom:8px;right:10px}
 .tool-css-back{margin-bottom:4px}
 /* Collapsible: LLM prompts + copy (CSS generator & future tools) */
 .ov-llm-block{
