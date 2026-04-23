@@ -513,6 +513,13 @@ html.theme-light .cc-score-main--bad .cc-score-denom{color:rgba(185,28,28,.75)}
 .p-gen{display:flex;align-items:center;justify-content:center;height:100%;padding:20px 16px 8px}
 .p-gen-t{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--text-lo);text-align:center;line-height:1.6}
 
+/* CSS Generator card: Liquid WebGL preview only (same engine as CSS library) */
+.p-csslib-dash{position:relative;width:100%;height:100%;min-height:1px;overflow:hidden;background:#0a0a0a}
+.p-csslib-dash__viewport{position:relative;width:100%;height:100%;overflow:hidden}
+.p-csslib-dash__viewport .ov-lib-gl-host{
+  position:absolute;inset:0;width:100%;height:100%;min-height:1px
+}
+
 .p-av{display:flex;align-items:center;justify-content:center;height:100%;padding:18px 20px 10px}
 .p-av-canvas{
   display:block;width:min(72px,22vw);height:auto;max-height:88px;border-radius:4px;border:1px solid var(--border);
@@ -855,8 +862,24 @@ html.theme-light .tool-header-tag.cat-type{color:var(--text-hi)}
 .tool-header-export:hover .tool-header-export__icon{opacity:1}
 .tool-interface{background:var(--s1);border:1px solid var(--border);padding:24px;min-height:220px}
 .tool-interface:has(> .tool-shell.tool-shell--split),
-.tool-interface:has(> .tool-shell.tool-shell--single){
+.tool-interface:has(> .tool-shell.tool-shell--single),
+.tool-interface:has(> .tool-css-lib){
   padding:0;border:none;background:transparent;min-height:0
+}
+/* CSS Generator: sub-view swaps (library ↔ tool) use same duration/easing as route transitions */
+.tool-interface.tool-interface--cssgen-tx{
+  transition:opacity var(--route-t) var(--route-ease),transform var(--route-t) var(--route-ease);
+}
+.tool-interface--cssgen-tx--leave{
+  opacity:0;transform:translateY(-12px);pointer-events:none
+}
+.tool-interface--cssgen-tx--enter{
+  opacity:0;transform:translateY(16px)
+}
+@media (prefers-reduced-motion:reduce){
+  .tool-interface.tool-interface--cssgen-tx{transition:none}
+  .tool-interface--cssgen-tx--leave,
+  .tool-interface--cssgen-tx--enter{opacity:1;transform:none;pointer-events:auto}
 }
 .tool-page--beat .tool-interface{padding:12px 16px;min-height:0}
 .tool-page--beat .tool-stack{gap:12px}
@@ -871,7 +894,8 @@ html.theme-light .tool-header-tag.cat-type{color:var(--text-hi)}
   .about-page{padding-bottom:max(40px,env(safe-area-inset-bottom))}
   .tool-interface{padding:18px 16px;min-height:180px}
   .tool-interface:has(> .tool-shell.tool-shell--split),
-  .tool-interface:has(> .tool-shell.tool-shell--single){
+  .tool-interface:has(> .tool-shell.tool-shell--single),
+  .tool-interface:has(> .tool-css-lib){
     padding:0;border:none;background:transparent;min-height:0
   }
   .tool-page--beat .tool-interface{padding:10px 12px}
@@ -1063,7 +1087,8 @@ details[open] > summary > .tool-disclosure-chev{transform:rotate(90deg)}
 .tool-row--top{align-items:flex-start}
 .tool-field{display:flex;flex-direction:column;gap:6px;min-width:0}
 .tool-field--grow{flex:1;min-width:140px}
-.tool-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text-faint);font-weight:600}
+.tool-field--preset .tool-select{width:100%;max-width:100%}
+.tool-label{font-size:11px;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-faint);font-weight:600}
 .tool-input,.tool-select,.tool-textarea{
   font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--text-hi);
   background:var(--bg);border:1px solid var(--border);padding:10px 12px;border-radius:2px;min-height:44px;
@@ -1105,6 +1130,90 @@ details[open] > summary > .tool-disclosure-chev{transform:rotate(90deg)}
 .tool-btn--m:hover{background:var(--M-dim);border-color:var(--M)}
 .tool-btn--y{border-color:var(--Y);color:var(--Y)}
 .tool-btn--y:hover{background:var(--Y-dim);border-color:var(--Y)}
+/* CSS generator: same tool cards as home (tool-grid + .tool-card + .tc-anim) */
+.tool-css-lib{
+  display:flex;flex-direction:column;min-height:0;
+  /* Hug card list height; cap so many items still scroll (library has no .tool-css-lib__head today) */
+  max-height:min(88vh,720px);
+  width:100%;box-sizing:border-box;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--s2)
+}
+.tool-css-lib__head{
+  padding:16px 18px 8px;border-bottom:1px solid var(--border);background:var(--bg);flex-shrink:0
+}
+.tool-css-lib__inner.tool-grid{
+  padding:0 var(--pad) 16px;max-width:1200px;margin:0 auto;flex:0 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;
+  max-height:min(72vh,560px);
+  align-content:start;align-items:start;grid-auto-rows:min-content;
+  scrollbar-width:thin;scrollbar-color:var(--C) var(--ov-scroll-track)
+}
+.tool-css-lib__inner.tool-grid::-webkit-scrollbar{width:8px}
+.tool-css-lib__inner.tool-grid::-webkit-scrollbar-track{background:var(--ov-scroll-track);border-radius:3px}
+.tool-css-lib__inner.tool-grid::-webkit-scrollbar-thumb{
+  background:linear-gradient(180deg,var(--C),var(--M) 50%,var(--Y));border-radius:3px;border:2px solid var(--s2)
+}
+/* Match dashboard card chrome inside the tool view */
+.tool-css-lib .tool-card[role="button"]{
+  min-width:0;align-self:start;
+  /* ~home tool-card height: avoid stretching in tall flex scroll; trim ~150px vs oversized rows */
+  display:flex;flex-direction:column;max-height:min(360px,52vh);
+  box-sizing:border-box;overflow:hidden
+}
+.tool-css-lib .ov-lib-gl-host{
+  position:relative;width:100%;height:100%;
+  min-height:1px;max-height:100%;background:#0a0a0a
+}
+/* Tighter text block to match dashboard cards (e.g. home tool grid .tc-body) */
+.tool-css-lib .tc-preview{
+  height:130px;flex:0 0 130px;min-height:0;overflow:hidden;
+  display:flex;align-items:stretch;justify-content:center
+}
+.tool-css-lib .tc-anim{min-height:0;flex:1;align-self:stretch}
+.tool-css-lib .tc-body{
+  padding:8px 12px 8px;flex:0 0 auto;min-height:0;
+  position:relative;z-index:1
+}
+.tool-css-lib .tc-top{margin-bottom:3px}
+.tool-css-lib .tc-name{margin-bottom:2px}
+.tool-css-lib .tc-desc{
+  line-height:1.35;overflow:hidden;
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2
+}
+.tool-css-lib .tc-arrow{bottom:8px;right:10px}
+.tool-css-back{margin-bottom:4px}
+/* Collapsible: LLM prompts + copy (CSS generator & future tools) */
+.ov-llm-block{
+  border:1px solid var(--border);border-radius:4px;background:var(--s1);
+  box-sizing:border-box
+}
+.ov-llm-block__summary{
+  cursor:pointer;padding:10px 12px;list-style:none;font-family:'IBM Plex Mono',monospace;font-size:12px;
+  font-weight:600;color:var(--text);letter-spacing:0.04em;user-select:none
+}
+.ov-llm-block__summary::-webkit-details-marker{display:none}
+.ov-llm-block__inner{padding:0 12px 12px;display:flex;flex-direction:column;gap:8px}
+.ov-llm-block .tool-out{margin:0;max-width:none}
+.ov-llm-block__status{min-height:1.1em}
+/* Lava lamp full tool preview (WebGL) */
+.ov-lvol-wrap{
+  position:relative;align-self:stretch;width:100%;flex:1;min-width:0;min-height:260px;
+  border:1px solid var(--border);border-radius:4px;overflow:hidden;background:#0a0a0a
+}
+.tool-preview-pane .ov-lvol-wrap{min-height:280px;max-height:100%}
+@media(max-width:900px){
+  .ov-lvol-wrap{min-height:200px;max-height:min(50vh,360px)}
+}
+.ov-lava-wrap{
+  position:relative;align-self:stretch;width:100%;flex:1;min-width:0;min-height:260px;
+  background:var(--s1);border:1px solid var(--border);border-radius:4px;overflow:hidden
+}
+.tool-preview-pane .ov-lava-wrap{min-height:280px;max-height:100%}
+.ov-lava-canvas{
+  position:absolute;left:0;top:0;width:100%;height:100%;
+  display:block;pointer-events:none
+}
+@media(max-width:900px){
+  .ov-lava-wrap{min-height:200px;max-height:min(50vh,360px)}
+}
 .tool-pre-wrap{
   font-family:'IBM Plex Mono',monospace;font-size:11px;line-height:1.6;color:var(--text-lo);
   background:var(--bg);border:1px solid var(--border);padding:14px;border-radius:2px;overflow:auto;max-height:220px;white-space:pre-wrap;word-break:break-all
@@ -1595,7 +1704,7 @@ html.theme-light .fp-slide{background:var(--s2);box-shadow:0 6px 24px rgba(15,25
   margin-bottom:10px
 }
 .fp-rail--props .tool-field{width:100%}
-.fp-rail--props .tool-label{font-size:8px;letter-spacing:1px}
+.fp-rail--props .tool-label{font-size:10px;letter-spacing:1px}
 .fp-rail--props .fp-chip-row{margin-top:4px}
 .fp-editable[contenteditable]{
   cursor:text;border-radius:4px;padding:2px 4px;margin:-2px -4px;transition:background .12s;

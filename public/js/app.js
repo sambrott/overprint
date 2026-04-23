@@ -2,6 +2,11 @@ document.addEventListener('DOMContentLoaded', function () {
   initBeatPreview();
   initFilters();
   initAvatarCardPreview();
+  if (window.OV && typeof window.OV.mountCssGenDashboardPreviews === 'function') {
+    try {
+      window.OV.mountCssGenDashboardPreviews();
+    } catch (e) {}
+  }
 
   (function initThemeToggle() {
     var root = document.documentElement;

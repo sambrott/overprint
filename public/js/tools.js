@@ -403,155 +403,873 @@
     });
   }
 
-  /* CSS generator */
-  function initCssGenerator(iface) {
-    tabs(
-      iface,
-      ['Gradient', 'Shadow', 'Radius', 'Glass', 'Noise'],
-      [
-        function (pPrev, pCtrl) {
-          pPrev.innerHTML =
-            '<div id="gp" style="height:80px;border:1px solid var(--border);border-radius:2px"></div>';
-          pCtrl.innerHTML =
-              '<div class="tool-row">' +
-              '<div class="tool-field"><span class="tool-label">C1</span><input type="color" class="tool-input" id="g1" value="#00b4d8"></div>' +
-              '<div class="tool-field"><span class="tool-label">C2</span><input type="color" class="tool-input" id="g2" value="#e040a0"></div>' +
-              '<div class="tool-field tool-field--slider">' +
-              '<span class="tool-label">Angle</span>' +
-              '<div class="tool-bpm-slider-row">' +
-              '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ga" min="0" max="360" step="1" value="135" aria-valuemin="0" aria-valuemax="360" aria-valuenow="135">' +
-              '<span class="tool-bpm-val" id="ga-val">135</span></div></div>' +
-              '</div>' +
-              '<pre class="tool-pre-wrap" id="go"></pre>';
-          function u() {
-            var a = pCtrl.querySelector('#ga').value || 135;
-            var c1 = pCtrl.querySelector('#g1').value;
-            var c2 = pCtrl.querySelector('#g2').value;
-            var css = 'linear-gradient(' + a + 'deg, ' + c1 + ', ' + c2 + ')';
-            pPrev.querySelector('#gp').style.background = css;
-            pCtrl.querySelector('#go').textContent = 'background: ' + css + ';';
-          }
-          ['g1', 'g2', 'ga'].forEach(function (id) {
-            pCtrl.querySelector('#' + id).addEventListener('input', u);
-          });
-          bindToolSliderValue(pCtrl, '#ga', '#ga-val');
-          u();
-          copyRow(pCtrl, 'Copy CSS', function () {
-            return pCtrl.querySelector('#go').textContent;
-          });
-        },
-        function (pPrev, pCtrl) {
-          pPrev.innerHTML =
-            '<div id="sp" style="width:120px;height:80px;background:var(--s2);margin:12px auto;border:1px solid var(--border)"></div>';
-          pCtrl.innerHTML =
-              '<div class="tool-row">' +
-              '<div class="tool-field tool-field--slider">' +
-              '<span class="tool-label">X</span>' +
-              '<div class="tool-bpm-slider-row">' +
-              '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="sx" min="-40" max="40" step="1" value="4" aria-valuenow="4">' +
-              '<span class="tool-bpm-val" id="sx-val">4</span></div></div>' +
-              '<div class="tool-field tool-field--slider">' +
-              '<span class="tool-label">Y</span>' +
-              '<div class="tool-bpm-slider-row">' +
-              '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="sy" min="-40" max="40" step="1" value="8" aria-valuenow="8">' +
-              '<span class="tool-bpm-val" id="sy-val">8</span></div></div>' +
-              '<div class="tool-field tool-field--slider">' +
-              '<span class="tool-label">Blur</span>' +
-              '<div class="tool-bpm-slider-row">' +
-              '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="sb" min="0" max="80" step="1" value="24" aria-valuenow="24">' +
-              '<span class="tool-bpm-val" id="sb-val">24</span></div></div>' +
-              '<div class="tool-field tool-field--slider">' +
-              '<span class="tool-label">Spread</span>' +
-              '<div class="tool-bpm-slider-row">' +
-              '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ss" min="-32" max="32" step="1" value="0" aria-valuenow="0">' +
-              '<span class="tool-bpm-val" id="ss-val">0</span></div></div>' +
-              '</div>' +
-              '<div class="tool-field"><span class="tool-label">Color</span><input type="color" class="tool-input" id="sc" value="#000000"></div>' +
-              '<pre class="tool-pre-wrap" id="so"></pre>';
-          function u() {
-            var x = +pCtrl.querySelector('#sx').value || 0;
-            var y = +pCtrl.querySelector('#sy').value || 0;
-            var b = +pCtrl.querySelector('#sb').value || 0;
-            var s = +pCtrl.querySelector('#ss').value || 0;
-            var c = pCtrl.querySelector('#sc').value;
-            var css = x + 'px ' + y + 'px ' + b + 'px ' + s + 'px ' + c;
-            pPrev.querySelector('#sp').style.boxShadow = css;
-            pCtrl.querySelector('#so').textContent = 'box-shadow: ' + css + ';';
-          }
-          pCtrl.querySelectorAll('.tool-input').forEach(function (i) {
-            i.addEventListener('input', u);
-          });
-          bindToolSliderValue(pCtrl, '#sx', '#sx-val');
-          bindToolSliderValue(pCtrl, '#sy', '#sy-val');
-          bindToolSliderValue(pCtrl, '#sb', '#sb-val');
-          bindToolSliderValue(pCtrl, '#ss', '#ss-val');
-          u();
-          copyRow(pCtrl, 'Copy CSS', function () {
-            return pCtrl.querySelector('#so').textContent;
-          });
-        },
-        function (pPrev, pCtrl) {
-          pPrev.innerHTML =
-            '<div id="rp" style="width:140px;height:90px;background:var(--C-dim);border:2px solid var(--C);margin:12px auto"></div>';
-          pCtrl.innerHTML =
-              '<div class="tool-row">' +
-              '<div class="tool-field tool-field--slider">' +
-              '<span class="tool-label">All</span>' +
-              '<div class="tool-bpm-slider-row">' +
-              '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ra" min="0" max="64" step="1" value="12" aria-valuenow="12">' +
-              '<span class="tool-bpm-val" id="ra-val">12</span></div></div>' +
-              '</div>' +
-              '<pre class="tool-pre-wrap" id="ro"></pre>';
-          function u() {
-            var r = (+pCtrl.querySelector('#ra').value || 0) + 'px';
-            pPrev.querySelector('#rp').style.borderRadius = r;
-            pCtrl.querySelector('#ro').textContent = 'border-radius: ' + r + ';';
-          }
-          pCtrl.querySelector('#ra').addEventListener('input', u);
-          bindToolSliderValue(pCtrl, '#ra', '#ra-val');
-          u();
-          copyRow(pCtrl, 'Copy CSS', function () {
-            return pCtrl.querySelector('#ro').textContent;
-          });
-        },
-        function (pPrev, pCtrl) {
-          pPrev.innerHTML =
-            '<div id="glp" style="padding:24px;background:rgba(20,20,28,.55);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.12);border-radius:8px;max-width:260px;margin:12px auto;text-align:center;color:var(--text-hi)">Glass card</div>';
-          pCtrl.innerHTML =
-            '<pre class="tool-pre-wrap" id="glo"></pre>';
-          var css =
-            'background: rgba(20,20,28,0.55);\n' +
-            'backdrop-filter: blur(12px);\n' +
-            '-webkit-backdrop-filter: blur(12px);\n' +
-            'border: 1px solid rgba(255,255,255,0.12);\n' +
-            'border-radius: 8px;';
-          pCtrl.querySelector('#glo').textContent = css;
-          copyRow(pCtrl, 'Copy CSS', function () {
-            return pCtrl.querySelector('#glo').textContent;
-          });
-        },
-        function (pPrev, pCtrl) {
-          var svg =
-            '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200">' +
-            '<filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="4" stitchTiles="stitch"/></filter>' +
-            '<rect width="100%" height="100%" filter="url(#n)" opacity="0.35"/></svg>';
-          pPrev.innerHTML = '<div id="nvis" style="max-width:200px;margin:0 auto;border:1px solid var(--border)"></div>';
-          pPrev.querySelector('#nvis').innerHTML = svg;
-          pCtrl.innerHTML =
-            '<pre class="tool-pre-wrap" id="nsvg"></pre>' +
-              '<div class="tool-row"><button type="button" class="tool-btn tool-btn--c" id="ndl">Download SVG</button></div>';
-          pCtrl.querySelector('#nsvg').textContent = svg.replace(/></g, '>\n<');
-          pCtrl.querySelector('#ndl').addEventListener('click', function () {
-            var blob = new Blob([svg], { type: 'image/svg+xml' });
-            OV.downloadBlob(blob, 'noise.svg');
-          });
-          copyRow(pCtrl, 'Copy SVG', function () {
-            return svg;
-          });
-        },
-      ],
-      { split: true }
+  /* CSS generator — tool library, then per-tool view */
+
+  var LAVA_SLIDERS = [
+    { key: 'morph', label: 'Morph (master surface)', min: 0, max: 1, step: 0.01 },
+    { key: 'sizeScale', label: 'Size scale (0.6 = 40% smaller)', min: 0.35, max: 0.8, step: 0.01 },
+    { key: 'merge', label: 'Merge / smooth-union', min: 0, max: 1, step: 0.01 },
+    { key: 'edgeWave', label: 'Edge wave (rim undulation)', min: 0, max: 1, step: 0.01 },
+    { key: 'axisPuff', label: 'Axis puff (lobe bulge)', min: 0, max: 1, step: 0.01 },
+    { key: 'detail', label: 'Detail ripples', min: 0, max: 1, step: 0.01 },
+    { key: 'whiteRim', label: 'White / ice band', min: 0.4, max: 1.5, step: 0.01 },
+    { key: 'cpuMotion', label: 'CPU Liss wobble', min: 0, max: 1, step: 0.01 },
+    { key: 'aaSoft', label: 'Edge anti-alias softness', min: 0, max: 1, step: 0.01 },
+    { key: 'breathe', label: 'Expand / compress pulse', min: 0, max: 1, step: 0.01 }
+  ];
+
+  function cssVec3ToHex(v) {
+    if (!v || v.length !== 3) return '#ffffff';
+    return OV.rgbToHex(
+      Math.round(v[0] * 255),
+      Math.round(v[1] * 255),
+      Math.round(v[2] * 255)
     );
+  }
+  function cssHexToVec3(hex) {
+    var rgb = OV.parseHex(hex);
+    if (!rgb) {
+      return [1, 1, 1];
+    }
+    return [rgb.r / 255, rgb.g / 255, rgb.b / 255];
+  }
+
+  function getCssGenVisRoot(iface) {
+    try {
+      if (!iface || !iface.querySelector) return null;
+      return iface.querySelector('.tool-css-lib__inner') || null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function buildLlmSliderPanelInstruction(sliderDefs, colorInstruction) {
+    var lines = sliderDefs.map(function (s) {
+      return s.key + ' — ' + s.label + ' (min ' + s.min + ', max ' + s.max + ', step ' + s.step + ')';
+    });
+    return (
+      'After the shader runs, add a small control menu (e.g. a sidebar, toolbar strip, or collapsible panel) in their IDE: ' +
+      'HTML <input type="range"> for each float below, with matching min, max, and step. ' +
+      colorInstruction +
+      'Each slider and color input should update the same parameter object passed to the host so the user can refine the look without editing JSON by hand.\n\n' +
+      'Float parameters to mirror as range sliders:\n' +
+      lines.join('\n')
+    );
+  }
+
+  function buildLlmCopyPrompt(kind, p, sliderDefs) {
+    var title =
+      kind === 'liquid' ? 'Overprint — Liquid (OVLava) — copy prompt' : 'Overprint — Lava lamp — copy prompt';
+    var arch;
+    var colorInstr;
+    if (kind === 'liquid') {
+      arch =
+        'You are helping reproduce the Overprint “Liquid” WebGL2 metaball background (public/js/lava-liquid.js, window.OVLava). ' +
+        'The shader is a soft union of five moving metaballs; bodyTint and rimTint are vec3 linear RGB 0–1. ' +
+        'Mount with OVLava.mount(canvas, function () { return p; }) where p has the same shape as OVLava.DEFAULT.';
+      colorInstr = 'Include <input type="color"> for bodyTint and rimTint (map hex to vec3 0–1). ';
+    } else {
+      arch =
+        'You are helping reproduce the Overprint “Lava lamp” full-frame stripe shader (public/js/lvol-banner-gl.js, window.OVLavaLamp or OVLvolBanner). ' +
+        'It is WebGL1: a noise-warped multi-band field with u_cream, u_orange, u_blue (vec3) and floats u_freq through u_bor. ' +
+        'There is no center box—only animated bands. Create with the host API’s create(host, { getParams: () => p }).';
+      colorInstr = 'Include <input type="color"> for u_cream, u_orange, and u_blue (hex to vec3). ';
+    }
+    return (
+      title +
+      '\n\n' +
+      arch +
+      '\n\n' +
+      buildLlmSliderPanelInstruction(sliderDefs, colorInstr) +
+      '\n\n' +
+      'Current parameters from the app (the user’s slider and color values—match these exactly, do not invent new numbers):\n' +
+      JSON.stringify(p, null, 2)
+    );
+  }
+
+  function getCssGenToolPageEl(iface) {
+    return iface && iface.closest ? iface.closest('.tool-page') : null;
+  }
+
+  function clearCssGenHeaderBack(iface) {
+    var page = getCssGenToolPageEl(iface);
+    if (!page) return;
+    var b = page.querySelector('.back-btn');
+    if (b && b._ovCssGenBack) {
+      b.removeEventListener('click', b._ovCssGenBack, true);
+      b._ovCssGenBack = null;
+    }
+  }
+
+  function attachCssGenHeaderBackToLibrary(iface, beforeLibrary) {
+    clearCssGenHeaderBack(iface);
+    var page = getCssGenToolPageEl(iface);
+    if (!page) return;
+    var b = page.querySelector('.back-btn');
+    if (!b) return;
+    b._ovCssGenBack = function (e) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      if (typeof beforeLibrary === 'function') {
+        beforeLibrary();
+      }
+      initCssGeneratorLibrary(iface);
+    };
+    b.addEventListener('click', b._ovCssGenBack, true);
+  }
+
+  var CSSGEN_IFACE_TX_MS = 220;
+
+  function runCssgenIfaceTransition(iface, paint) {
+    if (!iface || typeof paint !== 'function') {
+      return;
+    }
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      paint();
+      return;
+    }
+    if (!iface.hasChildNodes()) {
+      paint();
+      return;
+    }
+    iface.classList.add('tool-interface--cssgen-tx', 'tool-interface--cssgen-tx--leave');
+    setTimeout(function () {
+      paint();
+      iface.classList.remove('tool-interface--cssgen-tx--leave');
+      iface.classList.add('tool-interface--cssgen-tx--enter');
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          iface.classList.remove('tool-interface--cssgen-tx--enter');
+          setTimeout(function () {
+            iface.classList.remove('tool-interface--cssgen-tx');
+          }, CSSGEN_IFACE_TX_MS);
+        });
+      });
+    }, CSSGEN_IFACE_TX_MS);
+  }
+
+  function detachCssLibListener(iface) {
+    if (iface && iface._ovCssLibClick) {
+      iface.removeEventListener('click', iface._ovCssLibClick);
+      iface._ovCssLibClick = null;
+    }
+    if (iface && iface._ovCssLibKeydown) {
+      iface.removeEventListener('keydown', iface._ovCssLibKeydown);
+      iface._ovCssLibKeydown = null;
+    }
+  }
+
+  function cleanupCssGenLibPreviews(iface) {
+    var fns = iface._ovCssLibPreviewCleanups;
+    if (fns && fns.length) {
+      fns.forEach(function (fn) {
+        try {
+          fn();
+        } catch (err) {}
+      });
+    }
+    iface._ovCssLibPreviewCleanups = null;
+  }
+
+  function mountCssGenLibPreviews(iface) {
+    cleanupCssGenLibPreviews(iface);
+    var stops = [];
+    var visRoot = getCssGenVisRoot(iface);
+    var glThumb = {
+      maxFps: 10,
+      maxDpr: 1,
+      qualityScale: 0.72,
+      pauseWhenNotVisible: true,
+      visibilityRoot: visRoot
+    };
+    var liqHost = iface.querySelector('[data-cmd="liquid"] .ov-lib-gl-host');
+    if (liqHost && window.OVLava) {
+      var c = document.createElement('canvas');
+      c.setAttribute('aria-hidden', 'true');
+      c.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;';
+      liqHost.style.cssText = 'position:relative;width:100%;height:100%;min-height:1px;';
+      liqHost.appendChild(c);
+      var lp = JSON.parse(JSON.stringify(OVLava.DEFAULT));
+      try {
+        var stopL = OVLava.mount(
+          c,
+          function () {
+            return lp;
+          },
+          glThumb
+        );
+        stops.push(stopL);
+      } catch (e1) {}
+    }
+    var lampHost = iface.querySelector('[data-cmd="lava-lamp"] .ov-lib-gl-host');
+    var LampAPI = window.OVLavaLamp || window.OVLvolBanner;
+    if (lampHost && LampAPI) {
+      try {
+        var lpLamp = LampAPI.cloneDefaults();
+        var vr = LampAPI.create(lampHost, {
+          getParams: function () {
+            return lpLamp;
+          },
+          maxFps: 10,
+          maxDpr: 1,
+          pauseWhenNotVisible: true,
+          visibilityRoot: visRoot
+        });
+        if (vr && vr.destroy) stops.push(vr.destroy);
+      } catch (e2) {}
+    }
+    iface._ovCssLibPreviewCleanups = stops;
+    OV.addCleanup(function () {
+      cleanupCssGenLibPreviews(iface);
+    });
+  }
+
+  var _ovCssgenDashStops = null;
+
+  function unmountCssGenDashboardPreviews() {
+    if (!_ovCssgenDashStops || !_ovCssgenDashStops.length) {
+      _ovCssgenDashStops = null;
+      return;
+    }
+    _ovCssgenDashStops.forEach(function (fn) {
+      try {
+        fn();
+      } catch (e) {}
+    });
+    _ovCssgenDashStops = null;
+  }
+
+  function mountCssGenDashboardPreviews() {
+    unmountCssGenDashboardPreviews();
+    var dash = document.getElementById('dashboard');
+    if (!dash) {
+      return;
+    }
+    var card = dash.querySelector('[data-cssgen-card-preview]');
+    if (!card) {
+      return;
+    }
+    var liqHost = card.querySelector('[data-cssgen-gl="liquid"]');
+    var stops = [];
+    var toolCard = card.closest && card.closest('.tool-card');
+    var glOpts = {
+      maxFps: 10,
+      maxDpr: 1,
+      qualityScale: 0.72,
+      pauseWhenNotVisible: true,
+      visibilityRoot: null,
+      hoverTarget: toolCard
+    };
+    if (liqHost && window.OVLava) {
+      liqHost.innerHTML = '';
+      var c = document.createElement('canvas');
+      c.setAttribute('aria-hidden', 'true');
+      c.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;';
+      liqHost.style.cssText = 'position:relative;width:100%;height:100%;min-height:1px;';
+      liqHost.appendChild(c);
+      var lp = JSON.parse(JSON.stringify(OVLava.DEFAULT));
+      try {
+        stops.push(OVLava.mount(c, function () { return lp; }, glOpts));
+      } catch (e0) {}
+    }
+    _ovCssgenDashStops = stops;
+  }
+
+  OV.unmountCssGenDashboardPreviews = unmountCssGenDashboardPreviews;
+  OV.mountCssGenDashboardPreviews = mountCssGenDashboardPreviews;
+
+  /* Lava lamp (stripe swirl) — float uniforms; cream/orange/blue via color pickers */
+  var LVOL_SLIDERS = [
+    { key: 'u_freq', label: 'Stripe frequency', min: 0.2, max: 2.6, step: 0.01 },
+    { key: 'u_warp', label: 'Noise warp', min: 0, max: 10, step: 0.05 },
+    { key: 'u_scale', label: 'Noise scale', min: 0.5, max: 2.5, step: 0.01 },
+    { key: 'u_cross', label: 'Diagonal mix', min: 0, max: 1, step: 0.01 },
+    { key: 'u_angle', label: 'Swirl angle mix', min: 0, max: 2, step: 0.01 },
+    { key: 'u_speed', label: 'Scroll speed', min: 0.02, max: 0.45, step: 0.005 },
+    { key: 'u_wspeed', label: 'Noise drift', min: 0.02, max: 0.35, step: 0.005 },
+    { key: 'u_cw', label: 'Cream band width', min: 0.02, max: 0.25, step: 0.005 },
+    { key: 'u_ow', label: 'Orange band width', min: 0.05, max: 0.45, step: 0.005 },
+    { key: 'u_bor', label: 'Blue/orange balance', min: 0.15, max: 0.65, step: 0.01 }
+  ];
+
+  function getCssGenLiquidPresets(OV) {
+    return [
+      {
+        id: 'overprint',
+        name: 'Overprint (CMY)',
+        apply: function () {
+          return JSON.parse(JSON.stringify(OV.DEFAULT));
+        }
+      },
+      {
+        id: 'magentaAmber',
+        name: 'Magenta + amber',
+        apply: function () {
+          var p = JSON.parse(JSON.stringify(OV.DEFAULT));
+          p.bodyTint = [224 / 255, 64 / 255, 160 / 255];
+          p.rimTint = [0.95, 0.72, 0.18];
+          p.whiteRim = 1.35;
+          return p;
+        }
+      },
+      {
+        id: 'emeraldCyan',
+        name: 'Emerald + cyan rim',
+        apply: function () {
+          var p = JSON.parse(JSON.stringify(OV.DEFAULT));
+          p.bodyTint = [0.1, 0.45, 0.32];
+          p.rimTint = [0, 180 / 255, 216 / 255];
+          p.merge = 0.55;
+          p.morph = 0.55;
+          return p;
+        }
+      },
+      {
+        id: 'inkScreen',
+        name: 'Ink (dark + screen)',
+        apply: function () {
+          var p = JSON.parse(JSON.stringify(OV.DEFAULT));
+          p.bodyTint = [0.12, 0.12, 0.16];
+          p.rimTint = [0.7, 0.75, 0.9];
+          p.whiteRim = 1.2;
+          p.morph = 0.42;
+          return p;
+        }
+      }
+    ];
+  }
+
+  function getCssGenLampPresets(Lamp) {
+    return [
+      {
+        id: 'overprint',
+        name: 'Overprint (CMY)',
+        apply: function () {
+          return Lamp.cloneDefaults();
+        }
+      },
+      {
+        id: 'ember',
+        name: 'Ember (warm K)',
+        apply: function () {
+          var p = Lamp.cloneDefaults();
+          p.u_cream = [0.96, 0.88, 0.72];
+          p.u_orange = [0.85, 0.35, 0.2];
+          p.u_blue = [0.1, 0.45, 0.7];
+          return p;
+        }
+      },
+      {
+        id: 'pacific',
+        name: 'Pacific (cool)',
+        apply: function () {
+          var p = Lamp.cloneDefaults();
+          p.u_cream = [0.9, 0.93, 0.95];
+          p.u_orange = [224 / 255, 64 / 255, 160 / 255];
+          p.u_blue = [0.05, 0.6, 0.65];
+          p.u_freq = 1.1;
+          return p;
+        }
+      },
+      {
+        id: 'dynamo',
+        name: 'Dynamo (fast motion)',
+        apply: function () {
+          var p = Lamp.cloneDefaults();
+          p.u_speed = 0.28;
+          p.u_wspeed = 0.22;
+          p.u_warp = 6.2;
+          return p;
+        }
+      }
+    ];
+  }
+
+  function initCssGeneratorLiquidTool(iface) {
+    if (!window.OVLava) {
+      runCssgenIfaceTransition(iface, function () {
+        cleanupCssGenLibPreviews(iface);
+        detachCssLibListener(iface);
+        iface.innerHTML = toolShellSingle(
+          '<p class="tool-placeholder">Could not load the liquid engine. Add <code>lava-liquid.js</code> before <code>tools.js</code> in <code>index.html</code>.</p>'
+        );
+      });
+      return;
+    }
+    var liqPresetDefs = getCssGenLiquidPresets(OVLava);
+    var liqPresetOpts = liqPresetDefs
+      .map(function (pr) {
+        return '<option value="' + pr.id + '">' + pr.name + '</option>';
+      })
+      .join('');
+    var params = JSON.parse(JSON.stringify(OVLava.DEFAULT));
+    var slidesHtml = LAVA_SLIDERS.map(function (s) {
+      var id = 'lava-ctrl-' + s.key;
+      return (
+        '<div class="tool-field tool-field--slider">' +
+        '<span class="tool-label">' +
+        s.label +
+        '</span>' +
+        '<div class="tool-bpm-slider-row">' +
+        '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="' +
+        id +
+        '" min="' +
+        s.min +
+        '" max="' +
+        s.max +
+        '" step="' +
+        s.step +
+        '" value="' +
+        params[s.key] +
+        '">' +
+        '<span class="tool-bpm-val" id="' +
+        id +
+        '-v">0.00</span></div></div>'
+      );
+    }).join('');
+
+    function applyLiquid() {
+      cleanupCssGenLibPreviews(iface);
+      detachCssLibListener(iface);
+      iface.innerHTML = toolShellSplit(
+      '<div class="ov-lava-wrap"><canvas id="ov-lava" class="ov-lava-canvas" width="4" height="4" aria-label="Liquid layer preview" role="img"></canvas></div>',
+      '<div class="tool-stack tool-stack--lava-ctrl">' +
+        '<div class="tool-field tool-field--grow tool-field--preset">' +
+        '<label class="tool-label" for="lava-preset">Color & motion preset</label>' +
+        '<select class="tool-input tool-select" id="lava-preset">' +
+        liqPresetOpts +
+        '</select></div>' +
+        '<div class="tool-row" style="flex-wrap:wrap;gap:6px">' +
+        '<button type="button" class="tool-btn tool-btn--c" id="lava-llm-copy">Copy prompt</button></div>' +
+        '<div class="tool-row"><span class="tool-copy-status" data-lava-llm-st=""></span></div>' +
+        '<div class="tool-row" style="flex-wrap:wrap;gap:6px">' +
+        '<button type="button" class="tool-btn tool-btn--c" id="lava-copy">Copy params + embed</button>' +
+        '<button type="button" class="tool-btn" id="lava-rst">Reset</button></div>' +
+        '<div class="tool-row"><span class="tool-copy-status" data-lava-copy-status=""></span></div>' +
+        '<div class="tool-row" style="flex-wrap:wrap;gap:8px;align-items:flex-end">' +
+        '<div class="tool-field"><span class="tool-label">Liquid (body)</span><input type="color" class="tool-input" id="lava-c-body" value="' +
+        cssVec3ToHex(params.bodyTint) +
+        '"></div>' +
+        '<div class="tool-field"><span class="tool-label">Rim / highlight</span><input type="color" class="tool-input" id="lava-c-rim" value="' +
+        cssVec3ToHex(params.rimTint) +
+        '"></div></div>' +
+        slidesHtml +
+        '</div>'
+    );
+
+    var canvas = iface.querySelector('#ov-lava');
+    var tb = iface.querySelector('.tool-toolbar-pane');
+    var statusEl = iface.querySelector('[data-lava-copy-status]');
+    var unmountLava = null;
+
+    LAVA_SLIDERS.forEach(function (s) {
+      var sel = '#lava-ctrl-' + s.key;
+      bindToolSliderValue(tb, sel, sel + '-v', function (n) {
+        return n.toFixed(2);
+      });
+      tb.querySelector(sel).addEventListener('input', function () {
+        params[s.key] = +tb.querySelector(sel).value;
+      });
+    });
+
+    var cBody = tb.querySelector('#lava-c-body');
+    var cRim = tb.querySelector('#lava-c-rim');
+    function syncLiquidColorsFromInputs() {
+      if (cBody) {
+        params.bodyTint = cssHexToVec3(cBody.value);
+      }
+      if (cRim) {
+        params.rimTint = cssHexToVec3(cRim.value);
+      }
+    }
+    if (cBody) cBody.addEventListener('input', syncLiquidColorsFromInputs);
+    if (cRim) cRim.addEventListener('input', syncLiquidColorsFromInputs);
+
+    var selPres = tb.querySelector('#lava-preset');
+    var llmSt = tb.querySelector('[data-lava-llm-st]');
+    function flashLiquidLlm() {
+      if (llmSt) {
+        llmSt.textContent = 'Copied';
+        setTimeout(function () {
+          llmSt.textContent = '';
+        }, 2000);
+      }
+    }
+    function applyLiquidParamsFromObject(next) {
+      params = next;
+      LAVA_SLIDERS.forEach(function (s) {
+        var r = tb.querySelector('#lava-ctrl-' + s.key);
+        if (r) {
+          r.value = String(params[s.key]);
+          r.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+      });
+      if (cBody) cBody.value = cssVec3ToHex(params.bodyTint);
+      if (cRim) cRim.value = cssVec3ToHex(params.rimTint);
+    }
+    if (selPres) {
+      selPres.addEventListener('change', function () {
+        var id = selPres.value;
+        for (var i = 0; i < liqPresetDefs.length; i++) {
+          if (liqPresetDefs[i].id === id) {
+            applyLiquidParamsFromObject(liqPresetDefs[i].apply());
+            return;
+          }
+        }
+      });
+    }
+    var btnLlm = tb.querySelector('#lava-llm-copy');
+    if (btnLlm) {
+      btnLlm.addEventListener('click', function () {
+        LAVA_SLIDERS.forEach(function (s) {
+          var r = tb.querySelector('#lava-ctrl-' + s.key);
+          if (r) params[s.key] = +r.value;
+        });
+        syncLiquidColorsFromInputs();
+        OV.copyText(buildLlmCopyPrompt('liquid', params, LAVA_SLIDERS)).then(flashLiquidLlm);
+      });
+    }
+
+    try {
+      unmountLava = OVLava.mount(canvas, function () {
+        return params;
+      });
+    } catch (err) {
+      var werr = iface.querySelector('.ov-lava-wrap');
+      if (werr) {
+        werr.innerHTML =
+          '<p class="tool-out" style="padding:20px">WebGL2 is not available in this browser.</p>';
+      }
+    }
+
+    if (unmountLava) {
+      OV.addCleanup(function () {
+        if (unmountLava) {
+          unmountLava();
+          unmountLava = null;
+        }
+      });
+    }
+
+    attachCssGenHeaderBackToLibrary(iface, function () {
+      if (unmountLava) {
+        unmountLava();
+        unmountLava = null;
+      }
+    });
+
+    iface.querySelector('#lava-copy').addEventListener('click', function () {
+      LAVA_SLIDERS.forEach(function (s) {
+        var r = tb.querySelector('#lava-ctrl-' + s.key);
+        if (r) params[s.key] = +r.value;
+      });
+      syncLiquidColorsFromInputs();
+      OV.copyText(OVLava.buildCopyText(params)).then(function () {
+        if (statusEl) {
+          statusEl.textContent = 'Copied';
+          setTimeout(function () {
+            statusEl.textContent = '';
+          }, 2000);
+        }
+      });
+    });
+
+    iface.querySelector('#lava-rst').addEventListener('click', function () {
+      if (selPres) {
+        selPres.value = 'overprint';
+      }
+      applyLiquidParamsFromObject(JSON.parse(JSON.stringify(OVLava.DEFAULT)));
+    });
+    }
+    runCssgenIfaceTransition(iface, applyLiquid);
+  }
+
+  function buildLavaLampParamCopy(p) {
+    return [
+      '/* Lava lamp stripe shader (WebGL) — lvol-banner-gl.js in Overprint */',
+      JSON.stringify(p, null, 2)
+    ].join('\n\n');
+  }
+
+  function initCssGeneratorLavaLampTool(iface) {
+    var LampAPI = window.OVLavaLamp || window.OVLvolBanner;
+    if (!LampAPI) {
+      runCssgenIfaceTransition(iface, function () {
+        cleanupCssGenLibPreviews(iface);
+        detachCssLibListener(iface);
+        iface.innerHTML = toolShellSingle(
+          '<p class="tool-placeholder">Could not load the lava lamp shader. Add <code>lvol-banner-gl.js</code> before <code>tools.js</code> in <code>index.html</code>.</p>'
+        );
+      });
+      return;
+    }
+    var vparams = LampAPI.cloneDefaults();
+    var lampPresetDefs = getCssGenLampPresets(LampAPI);
+    var lampPresetOpts = lampPresetDefs
+      .map(function (pr) {
+        return '<option value="' + pr.id + '">' + pr.name + '</option>';
+      })
+      .join('');
+    var colorRow =
+      '<div class="tool-row" style="flex-wrap:wrap;gap:8px;align-items:flex-end">' +
+      '<div class="tool-field"><span class="tool-label">Cream</span><input type="color" class="tool-input" id="ll-c-cream" value="' +
+      cssVec3ToHex(vparams.u_cream) +
+      '"></div>' +
+      '<div class="tool-field"><span class="tool-label">Orange</span><input type="color" class="tool-input" id="ll-c-orange" value="' +
+      cssVec3ToHex(vparams.u_orange) +
+      '"></div>' +
+      '<div class="tool-field"><span class="tool-label">Blue</span><input type="color" class="tool-input" id="ll-c-blue" value="' +
+      cssVec3ToHex(vparams.u_blue) +
+      '"></div></div>';
+    var vslides = LVOL_SLIDERS.map(function (s) {
+      var id = 'lvol-ctrl-' + s.key;
+      return (
+        '<div class="tool-field tool-field--slider">' +
+        '<span class="tool-label">' +
+        s.label +
+        '</span>' +
+        '<div class="tool-bpm-slider-row">' +
+        '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="' +
+        id +
+        '" min="' +
+        s.min +
+        '" max="' +
+        s.max +
+        '" step="' +
+        s.step +
+        '" value="' +
+        vparams[s.key] +
+        '">' +
+        '<span class="tool-bpm-val" id="' +
+        id +
+        '-v">0</span></div></div>'
+      );
+    }).join('');
+
+    function applyLamp() {
+      cleanupCssGenLibPreviews(iface);
+      detachCssLibListener(iface);
+      iface.innerHTML = toolShellSplit(
+      '<div class="ov-lvol-wrap"><div class="ov-lib-gl-host" id="ov-lamp-main" aria-label="Lava lamp stripe" role="img"></div></div>',
+      '<div class="tool-stack tool-stack--lvol-ctrl">' +
+        '<div class="tool-field tool-field--grow tool-field--preset">' +
+        '<label class="tool-label" for="lvol-preset">Color & motion preset</label>' +
+        '<select class="tool-input tool-select" id="lvol-preset">' +
+        lampPresetOpts +
+        '</select></div>' +
+        '<div class="tool-row" style="flex-wrap:wrap;gap:6px">' +
+        '<button type="button" class="tool-btn tool-btn--c" id="lvol-llm-copy">Copy prompt</button></div>' +
+        '<div class="tool-row"><span class="tool-copy-status" data-lvol-llm-st=""></span></div>' +
+        '<div class="tool-row" style="flex-wrap:wrap;gap:6px">' +
+        '<button type="button" class="tool-btn tool-btn--c" id="lvol-copy">Copy params (JSON)</button>' +
+        '<button type="button" class="tool-btn" id="lvol-rst">Reset</button></div>' +
+        '<div class="tool-row"><span class="tool-copy-status" data-lvol-copy-status=""></span></div>' +
+        colorRow +
+        vslides +
+        '<pre class="tool-pre-wrap" id="lvol-pre" style="max-height:140px;font-size:10px">…</pre></div>'
+    );
+
+    var vhost = iface.querySelector('#ov-lamp-main');
+    var tbV = iface.querySelector('.tool-toolbar-pane');
+    var stV = iface.querySelector('[data-lvol-copy-status]');
+    var preV = iface.querySelector('#lvol-pre');
+    var vdestroy = null;
+
+    function updateLampPre() {
+      if (preV) {
+        preV.textContent = buildLavaLampParamCopy(vparams);
+      }
+    }
+    var llCream = tbV.querySelector('#ll-c-cream');
+    var llOrange = tbV.querySelector('#ll-c-orange');
+    var llBlue = tbV.querySelector('#ll-c-blue');
+    function syncLampColorsFromInputs() {
+      if (llCream) vparams.u_cream = cssHexToVec3(llCream.value);
+      if (llOrange) vparams.u_orange = cssHexToVec3(llOrange.value);
+      if (llBlue) vparams.u_blue = cssHexToVec3(llBlue.value);
+      updateLampPre();
+    }
+    if (llCream) llCream.addEventListener('input', syncLampColorsFromInputs);
+    if (llOrange) llOrange.addEventListener('input', syncLampColorsFromInputs);
+    if (llBlue) llBlue.addEventListener('input', syncLampColorsFromInputs);
+
+    var selLamp = tbV.querySelector('#lvol-preset');
+    var lvolLlmSt = tbV.querySelector('[data-lvol-llm-st]');
+    function flashLampLlm() {
+      if (lvolLlmSt) {
+        lvolLlmSt.textContent = 'Copied';
+        setTimeout(function () {
+          lvolLlmSt.textContent = '';
+        }, 2000);
+      }
+    }
+    function applyLampParamsFromObject(next) {
+      vparams = next;
+      LVOL_SLIDERS.forEach(function (s) {
+        var r = tbV.querySelector('#lvol-ctrl-' + s.key);
+        if (r) {
+          r.value = String(vparams[s.key]);
+          r.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+      });
+      if (llCream) llCream.value = cssVec3ToHex(vparams.u_cream);
+      if (llOrange) llOrange.value = cssVec3ToHex(vparams.u_orange);
+      if (llBlue) llBlue.value = cssVec3ToHex(vparams.u_blue);
+      updateLampPre();
+    }
+    if (selLamp) {
+      selLamp.addEventListener('change', function () {
+        var id = selLamp.value;
+        for (var j = 0; j < lampPresetDefs.length; j++) {
+          if (lampPresetDefs[j].id === id) {
+            applyLampParamsFromObject(lampPresetDefs[j].apply());
+            return;
+          }
+        }
+      });
+    }
+    var btnLampLlm = tbV.querySelector('#lvol-llm-copy');
+    if (btnLampLlm) {
+      btnLampLlm.addEventListener('click', function () {
+        LVOL_SLIDERS.forEach(function (s) {
+          var r = tbV.querySelector('#lvol-ctrl-' + s.key);
+          if (r) vparams[s.key] = +r.value;
+        });
+        syncLampColorsFromInputs();
+        OV.copyText(buildLlmCopyPrompt('lamp', vparams, LVOL_SLIDERS)).then(flashLampLlm);
+      });
+    }
+
+    LVOL_SLIDERS.forEach(function (s) {
+      var sel = '#lvol-ctrl-' + s.key;
+      bindToolSliderValue(tbV, sel, sel + '-v', function (n) {
+        if (s.step >= 0.1) return n.toFixed(1);
+        if (s.step >= 0.01) return n.toFixed(2);
+        return n.toFixed(3);
+      });
+      tbV.querySelector(sel).addEventListener('input', function () {
+        vparams[s.key] = +tbV.querySelector(sel).value;
+        updateLampPre();
+      });
+    });
+
+    updateLampPre();
+    try {
+      vdestroy = LampAPI.create(vhost, {
+        getParams: function () {
+          return vparams;
+        }
+      });
+    } catch (vErr) {
+      if (vhost) {
+        vhost.textContent = 'WebGL not available';
+      }
+    }
+    if (vdestroy && vdestroy.destroy) {
+      OV.addCleanup(function () {
+        if (vdestroy) {
+          try {
+            vdestroy.destroy();
+          } catch (e) {}
+          vdestroy = null;
+        }
+      });
+    }
+
+    attachCssGenHeaderBackToLibrary(iface, function () {
+      if (vdestroy && vdestroy.destroy) {
+        vdestroy.destroy();
+        vdestroy = null;
+      }
+    });
+
+    iface.querySelector('#lvol-copy').addEventListener('click', function () {
+      LVOL_SLIDERS.forEach(function (s) {
+        var r = tbV.querySelector('#lvol-ctrl-' + s.key);
+        if (r) vparams[s.key] = +r.value;
+      });
+      syncLampColorsFromInputs();
+      OV.copyText(buildLavaLampParamCopy(vparams)).then(function () {
+        if (stV) {
+          stV.textContent = 'Copied';
+          setTimeout(function () {
+            stV.textContent = '';
+          }, 2000);
+        }
+      });
+    });
+    iface.querySelector('#lvol-rst').addEventListener('click', function () {
+      if (selLamp) {
+        selLamp.value = 'overprint';
+      }
+      applyLampParamsFromObject(LampAPI.cloneDefaults());
+    });
+    }
+    runCssgenIfaceTransition(iface, applyLamp);
+  }
+
+  function initCssGeneratorLibrary(iface) {
+    if (!iface._ovCssgenLibCleanup) {
+      iface._ovCssgenLibCleanup = true;
+      OV.addCleanup(function () {
+        detachCssLibListener(iface);
+      });
+    }
+    function applyLibrary() {
+      clearCssGenHeaderBack(iface);
+      cleanupCssGenLibPreviews(iface);
+      detachCssLibListener(iface);
+      iface.innerHTML =
+        '<div class="tool-css-lib">' +
+        '<div class="tool-css-lib__inner tool-grid" role="list">' +
+        '<div class="tool-card" data-cat="create" data-cmd="liquid" role="button" tabindex="0" aria-label="Liquid layer (WebGL)">' +
+        '<div class="tc-preview"><div class="tc-anim"><div class="ov-lib-gl-host"></div></div></div>' +
+        '<div class="tc-body">' +
+        '<div class="tc-top"><div class="tc-num">1</div><div class="tc-tag">Create</div></div>' +
+        '<div class="tc-name">Liquid</div>' +
+        '<div class="tc-desc">Metaball layer, WebGL2. C/Y tints, sliders, copy.</div>' +
+        '<div class="tc-arrow">→</div></div></div>' +
+        '<div class="tool-card" data-cat="create" data-cmd="lava-lamp" role="button" tabindex="0" aria-label="Lava lamp stripe (WebGL)">' +
+        '<div class="tc-preview"><div class="tc-anim"><div class="ov-lib-gl-host"></div></div></div>' +
+        '<div class="tc-body">' +
+        '<div class="tc-top"><div class="tc-num">2</div><div class="tc-tag">Create</div></div>' +
+        '<div class="tc-name">Lava lamp</div>' +
+        '<div class="tc-desc">Stripe swirls, WebGL1. Cyan, magenta, paper. Motion and JSON.</div>' +
+        '<div class="tc-arrow">→</div></div></div>' +
+        '</div></div>';
+
+      mountCssGenLibPreviews(iface);
+
+      function onCssLibClick(e) {
+        var t = e.target;
+        if (!t || !t.closest) return;
+        var card = t.closest('[data-cmd]');
+        if (!card) return;
+        var cmd = card.getAttribute('data-cmd');
+        if (cmd === 'liquid') initCssGeneratorLiquidTool(iface);
+        if (cmd === 'lava-lamp') initCssGeneratorLavaLampTool(iface);
+      }
+      function onCssLibKey(e) {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        var t = e.target;
+        if (!t || !t.closest) return;
+        var card = t.closest('[data-cmd]');
+        if (!card) return;
+        e.preventDefault();
+        var cmd = card.getAttribute('data-cmd');
+        if (cmd === 'liquid') initCssGeneratorLiquidTool(iface);
+        if (cmd === 'lava-lamp') initCssGeneratorLavaLampTool(iface);
+      }
+      iface._ovCssLibClick = onCssLibClick;
+      iface._ovCssLibKeydown = onCssLibKey;
+      iface.addEventListener('click', onCssLibClick);
+      iface.addEventListener('keydown', onCssLibKey);
+    }
+    runCssgenIfaceTransition(iface, applyLibrary);
+  }
+
+  function initCssGenerator(iface) {
+    initCssGeneratorLibrary(iface);
   }
 
   /* Color lab */
