@@ -743,6 +743,20 @@ html.theme-light .fcv-canvas-main{
 .p-imgopt-arrow{color:var(--C);font-size:13px;font-weight:700}
 .p-imgopt-out{font-size:8px;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-lo)}
 
+/* Video converter card preview (MOV / MP4 → GIF) */
+.p-vconv{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:5px 8px;max-width:240px;padding:0 8px}
+.p-vconv-f{
+  font-size:7px;font-weight:700;letter-spacing:0.12em;padding:5px 8px;border:1px solid var(--border);
+  color:var(--text-faint);border-radius:2px;text-transform:uppercase;transition:border-color .25s,color .25s
+}
+.tool-card:hover .p-vconv-f{border-color:var(--C);color:var(--C)}
+.p-vconv-mid{display:flex;align-items:center;gap:6px;width:100%;justify-content:center;margin-top:2px}
+.p-vconv-arrow{color:var(--C);font-size:13px;font-weight:700}
+.p-vconv-out{font-size:9px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-lo)}
+@media (hover: none), (max-width: 768px) {
+  .tool-card .p-vconv-f{border-color:var(--C);color:var(--C)}
+}
+
 .footer{
   border-top:1px solid var(--border);
   padding:18px calc(var(--pad) + env(safe-area-inset-right))  max(18px,env(safe-area-inset-bottom)) calc(var(--pad) + env(safe-area-inset-left));
@@ -870,6 +884,30 @@ html.theme-light .tool-header-tag.cat-type{color:var(--text-hi)}
 .drop-zone.is-drag{border-color:var(--C);background:var(--C-dim);color:var(--text-hi)}
 /* Screenshot beautifier: fill empty preview pane with drop target */
 .ss-beaut-media .drop-zone{flex:1;min-height:min(280px,50vh);display:flex;align-items:center;justify-content:center;box-sizing:border-box}
+/* Video converter: large drop target + preview stays inside scrollable pane */
+.tool-preview-pane .tool-media-pane.ov-vc-media{
+  display:flex;flex-direction:column;align-items:stretch;gap:12px;
+  flex:1;min-height:0;width:100%
+}
+.ov-vc-media .drop-zone.ov-vc-drop{
+  flex:1 1 auto;min-height:min(280px,50vh);display:flex;align-items:center;justify-content:center;
+  box-sizing:border-box;padding:40px 24px
+}
+/* After a file is loaded: hide drop zone; preview fills the preview column */
+.ov-vc-media.ov-vc-media--has-file .ov-vc-drop{display:none}
+.ov-vc-preview-wrap{
+  flex:1 1 auto;min-height:0;max-height:min(52vh,560px);width:100%;box-sizing:border-box;
+  display:none;flex-direction:row;align-items:center;justify-content:center;overflow:auto;
+  padding:6px 0
+}
+.ov-vc-media.ov-vc-media--has-file .ov-vc-preview-wrap.ov-vc-preview-wrap--visible{
+  flex:1 1 auto;min-height:min(64vh,720px);max-height:none
+}
+.ov-vc-preview-wrap.ov-vc-preview-wrap--visible{display:flex}
+.ov-vc-preview-wrap .ov-vc-video{
+  display:block;max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;
+  border:1px solid var(--border);background:#000;box-sizing:border-box
+}
 /* Preview wrap: canvas keeps constant on-screen screenshot width; tall/wide frames scroll inside .tool-media-pane (no max-height shrink) */
 .ss-beaut-preview-wrap{
   flex:1;

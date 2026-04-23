@@ -924,156 +924,512 @@
     drawPreview();
   }
 
-  /* Image toolbox */
+  /* Image toolbox: convert / resize + batch optimize (tabs) */
   function initImageToolbox(iface) {
-    var input = el('<input type="file" accept="image/*" style="display:none">');
-    iface.innerHTML =
-      toolShellSplit(
+    var initialTab = 0;
+    try {
+      if (sessionStorage.getItem('overprint-image-toolbox-tab') === '1') {
+        initialTab = 1;
+        sessionStorage.removeItem('overprint-image-toolbox-tab');
+      }
+    } catch (e) {}
+
+    function renderConvertTab(previewPane, ctrlPane) {
+      var input = el('<input type="file" accept="image/*" style="display:none">');
+      previewPane.innerHTML =
         '<div class="tool-stack tool-media-pane" style="width:100%;max-width:100%;align-items:center">' +
-          '<div class="drop-zone" id="ov-it-zone" tabindex="0">Drop an image or click to browse</div>' +
-          '<div id="ov-it-canvas-wrap" style="display:none;width:100%;margin-top:12px">' +
-          '<canvas id="ov-itc" style="max-width:100%;border:1px solid var(--border)"></canvas>' +
-          '</div></div>',
+        '<div class="drop-zone" id="ov-it-zone" tabindex="0">Drop an image or click to browse</div>' +
+        '<div id="ov-it-canvas-wrap" style="display:none;width:100%;margin-top:12px">' +
+        '<canvas id="ov-itc" style="max-width:100%;border:1px solid var(--border)"></canvas>' +
+        '</div></div>';
+      ctrlPane.innerHTML =
         '<div class="tool-stack" id="ov-itp">' +
-          '<div class="tool-row">' +
-          '<div class="tool-field tool-field--slider">' +
-          '<span class="tool-label">Quality</span>' +
-          '<div class="tool-bpm-slider-row">' +
-          '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ov-iq" min="0.5" max="1" step="0.05" value="0.92" aria-valuenow="0.92">' +
-          '<span class="tool-bpm-val" id="ov-iq-val">92%</span></div></div>' +
-          '<div class="tool-field tool-field--slider">' +
-          '<span class="tool-label">Scale %</span>' +
-          '<div class="tool-bpm-slider-row">' +
-          '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ov-isc" min="5" max="200" step="1" value="100" aria-valuenow="100">' +
-          '<span class="tool-bpm-val" id="ov-isc-val">100</span></div></div>' +
-          '<div class="tool-field"><span class="tool-label">Format</span><select class="tool-select" id="ov-ifmt"><option value="image/png">PNG</option><option value="image/jpeg">JPEG</option><option value="image/webp">WebP</option></select></div>' +
-          '</div>' +
-          '<div class="tool-row">' +
-          '<button type="button" class="tool-btn" id="ov-ir90">Rotate 90°</button>' +
-          '<button type="button" class="tool-btn" id="ov-iflip">Flip H</button>' +
-          '<button type="button" class="tool-btn tool-btn--c" id="ov-idl">Download</button></div>' +
-          '</div>'
-      ) + '';
-    iface.appendChild(input);
-    var zone = iface.querySelector('#ov-it-zone');
-    var canvasWrap = iface.querySelector('#ov-it-canvas-wrap');
-    var panel = iface.querySelector('#ov-itp');
-    bindToolSliderValue(panel, '#ov-iq', '#ov-iq-val', function (n) {
-      return Math.round(n * 100) + '%';
-    });
-    bindToolSliderValue(panel, '#ov-isc', '#ov-isc-val');
-    var img,
-      c,
-      ctx,
-      rot = 0,
-      flip = 1,
-      lastImportedName = null;
-    function applyCanvas() {
-      if (!img) return;
-      var sc = (+panel.querySelector('#ov-isc').value || 100) / 100;
-      var w = Math.round(img.naturalWidth * sc);
-      var h = Math.round(img.naturalHeight * sc);
-      c.width = rot % 180 === 0 ? w : h;
-      c.height = rot % 180 === 0 ? h : w;
-      ctx.save();
-      ctx.translate(c.width / 2, c.height / 2);
-      ctx.rotate((rot * Math.PI) / 180);
-      ctx.scale(flip, 1);
-      ctx.drawImage(img, -w / 2, -h / 2, w, h);
-      ctx.restore();
-    }
-    function load(f) {
-      lastImportedName = f && f.name ? f.name : null;
-      OV.loadImageFile(f).then(function (i) {
-        img = i;
-        rot = 0;
-        flip = 1;
-        c = panel.querySelector('#ov-itc');
-        ctx = c.getContext('2d');
-        canvasWrap.style.display = '';
+        '<div class="tool-row">' +
+        '<div class="tool-field tool-field--slider">' +
+        '<span class="tool-label">Quality</span>' +
+        '<div class="tool-bpm-slider-row">' +
+        '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ov-iq" min="0.5" max="1" step="0.05" value="0.92" aria-valuenow="0.92">' +
+        '<span class="tool-bpm-val" id="ov-iq-val">92%</span></div></div>' +
+        '<div class="tool-field tool-field--slider">' +
+        '<span class="tool-label">Scale %</span>' +
+        '<div class="tool-bpm-slider-row">' +
+        '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ov-isc" min="5" max="200" step="1" value="100" aria-valuenow="100">' +
+        '<span class="tool-bpm-val" id="ov-isc-val">100</span></div></div>' +
+        '<div class="tool-field"><span class="tool-label">Format</span><select class="tool-select" id="ov-ifmt"><option value="image/png">PNG</option><option value="image/jpeg">JPEG</option><option value="image/webp">WebP</option></select></div>' +
+        '</div>' +
+        '<div class="tool-row">' +
+        '<button type="button" class="tool-btn" id="ov-ir90">Rotate 90°</button>' +
+        '<button type="button" class="tool-btn" id="ov-iflip">Flip H</button>' +
+        '<button type="button" class="tool-btn tool-btn--c" id="ov-idl">Download</button></div>' +
+        '</div>';
+      iface.appendChild(input);
+      var zone = previewPane.querySelector('#ov-it-zone');
+      var canvasWrap = previewPane.querySelector('#ov-it-canvas-wrap');
+      var panel = ctrlPane.querySelector('#ov-itp');
+      bindToolSliderValue(panel, '#ov-iq', '#ov-iq-val', function (n) {
+        return Math.round(n * 100) + '%';
+      });
+      bindToolSliderValue(panel, '#ov-isc', '#ov-isc-val');
+      var img,
+        c,
+        ctx,
+        rot = 0,
+        flip = 1,
+        lastImportedName = null;
+      function applyCanvas() {
+        if (!img) return;
+        var sc = (+panel.querySelector('#ov-isc').value || 100) / 100;
+        var w = Math.round(img.naturalWidth * sc);
+        var h = Math.round(img.naturalHeight * sc);
+        c.width = rot % 180 === 0 ? w : h;
+        c.height = rot % 180 === 0 ? h : w;
+        ctx.save();
+        ctx.translate(c.width / 2, c.height / 2);
+        ctx.rotate((rot * Math.PI) / 180);
+        ctx.scale(flip, 1);
+        ctx.drawImage(img, -w / 2, -h / 2, w, h);
+        ctx.restore();
+      }
+      function load(f) {
+        lastImportedName = f && f.name ? f.name : null;
+        OV.loadImageFile(f).then(function (i) {
+          img = i;
+          rot = 0;
+          flip = 1;
+          c = previewPane.querySelector('#ov-itc');
+          ctx = c.getContext('2d');
+          canvasWrap.style.display = '';
+          applyCanvas();
+        });
+      }
+      OV.bindDropZone(zone, input, function (files) {
+        if (files[0]) load(files[0]);
+      });
+      panel.querySelector('#ov-isc').addEventListener('input', applyCanvas);
+      panel.querySelector('#ov-ir90').addEventListener('click', function () {
+        rot = (rot + 90) % 360;
         applyCanvas();
       });
+      panel.querySelector('#ov-iflip').addEventListener('click', function () {
+        flip *= -1;
+        applyCanvas();
+      });
+      panel.querySelector('#ov-idl').addEventListener('click', function () {
+        var fmt = panel.querySelector('#ov-ifmt').value;
+        var q = +panel.querySelector('#ov-iq').value || 0.92;
+        var ext = fmt.indexOf('jpeg') > 0 ? 'jpg' : fmt.indexOf('webp') > 0 ? 'webp' : 'png';
+        var stem = (lastImportedName || 'export').replace(/\.[^/.]+$/, '');
+        OV.downloadCanvas(c, stem + '.' + ext, fmt, fmt.indexOf('png') >= 0 ? undefined : q);
+      });
     }
-    OV.bindDropZone(zone, input, function (files) {
-      if (files[0]) load(files[0]);
-    });
-    panel.querySelector('#ov-isc').addEventListener('input', applyCanvas);
-    panel.querySelector('#ov-ir90').addEventListener('click', function () {
-      rot = (rot + 90) % 360;
-      applyCanvas();
-    });
-    panel.querySelector('#ov-iflip').addEventListener('click', function () {
-      flip *= -1;
-      applyCanvas();
-    });
-    panel.querySelector('#ov-idl').addEventListener('click', function () {
-      var fmt = panel.querySelector('#ov-ifmt').value;
-      var q = +panel.querySelector('#ov-iq').value || 0.92;
-      var ext = fmt.indexOf('jpeg') > 0 ? 'jpg' : fmt.indexOf('webp') > 0 ? 'webp' : 'png';
-      var stem = (lastImportedName || 'export').replace(/\.[^/.]+$/, '');
-      OV.downloadCanvas(c, stem + '.' + ext, fmt, fmt.indexOf('png') >= 0 ? undefined : q);
+
+    function renderBatchTab(previewPane, ctrlPane) {
+      var input = el('<input type="file" accept="image/*" multiple style="display:none">');
+      previewPane.innerHTML =
+        '<div class="tool-stack tool-media-pane ov-iop-list-wrap" id="ov-iop-wrap" style="width:100%;min-height:0">' +
+        '<div class="tool-stack" id="ov-iop"></div></div>';
+      ctrlPane.innerHTML =
+        '<div class="tool-stack">' +
+        '<div class="drop-zone" id="ov-iop-zone">Drop images or click to batch optimize</div>' +
+        '<p class="tool-out" style="margin-top:10px">Each row: preview, quality, format, export.</p></div>';
+      iface.appendChild(input);
+      var zone = ctrlPane.querySelector('#ov-iop-zone');
+      var list = previewPane.querySelector('#ov-iop');
+      function handle(files) {
+        Array.prototype.forEach.call(files, function (file) {
+          if (!file.type.match(/^image\//)) return;
+          OV.loadImageFile(file).then(function (img) {
+            var row = el('<div class="tool-row tool-row--top" style="border:1px solid var(--border);padding:12px;align-items:center"></div>');
+            var prev = document.createElement('canvas');
+            prev.width = 80;
+            prev.height = 80;
+            prev.style.border = '1px solid var(--border)';
+            var cov = OV.canvasCover(img, 80, 80);
+            prev.getContext('2d').drawImage(cov, 0, 0);
+            row.appendChild(prev);
+            var meta = el(
+              '<div class="tool-field tool-field--grow"><span class="tool-label">' +
+                file.name +
+                '</span><span class="tool-meta-kb">' +
+                (file.size / 1024).toFixed(1) +
+                ' KB</span>' +
+                '<div class="tool-row" style="margin-top:8px">' +
+                '<div class="tool-field tool-field--slider" style="flex:1;min-width:140px">' +
+                '<span class="tool-label">Quality</span>' +
+                '<div class="tool-bpm-slider-row">' +
+                '<input type="range" class="tool-input tool-input--range tool-input--bpm" min="0.5" max="1" step="0.05" value="0.85" data-q aria-valuenow="0.85">' +
+                '<span class="tool-bpm-val" data-qv>85%</span></div></div>' +
+                '<select class="tool-select" data-f><option value="image/jpeg">JPEG</option><option value="image/webp">WebP</option><option value="image/png">PNG</option></select>' +
+                '<button type="button" class="tool-btn tool-btn--c" data-go>Export</button></div></div>'
+            );
+            row.appendChild(meta);
+            bindToolSliderValue(meta, '[data-q]', '[data-qv]', function (n) {
+              return Math.round(n * 100) + '%';
+            });
+            list.appendChild(row);
+            var cFull = document.createElement('canvas');
+            cFull.width = img.naturalWidth;
+            cFull.height = img.naturalHeight;
+            cFull.getContext('2d').drawImage(img, 0, 0);
+            meta.querySelector('[data-go]').addEventListener('click', function () {
+              var fmt = meta.querySelector('[data-f]').value;
+              var q = +meta.querySelector('[data-q]').value;
+              var ext = fmt.indexOf('jpeg') > 0 ? 'jpg' : fmt.indexOf('webp') > 0 ? 'webp' : 'png';
+              OV.downloadCanvas(cFull, file.name.replace(/\.\w+$/, '') + '.' + ext, fmt, fmt.indexOf('png') >= 0 ? undefined : q);
+            });
+          });
+        });
+      }
+      OV.bindDropZone(zone, input, handle);
+    }
+
+    tabs(iface, ['Convert & resize', 'Batch optimize'], [renderConvertTab, renderBatchTab], { split: true });
+    var tb = iface.querySelectorAll('.tool-tabs .tool-tab');
+    if (initialTab > 0 && tb[initialTab]) {
+      tb[initialTab].click();
+    }
+  }
+
+  /** Seek video for GIF frame capture; tolerates no-op seeks and waits for decode. */
+  function seekVideoFrame(video, time) {
+    return new Promise(function (resolve) {
+      var dur = video.duration;
+      if (!isFinite(dur) || dur <= 0) {
+        resolve();
+        return;
+      }
+      var t = Math.max(0, Math.min(time, dur - 1e-3));
+      var finish = function () {
+        requestAnimationFrame(function () {
+          requestAnimationFrame(resolve);
+        });
+      };
+      if (Math.abs(video.currentTime - t) < 0.0005) {
+        finish();
+        return;
+      }
+      var to = window.setTimeout(function () {
+        video.removeEventListener('seeked', onSeeked);
+        finish();
+      }, 4000);
+      function onSeeked() {
+        window.clearTimeout(to);
+        video.removeEventListener('seeked', onSeeked);
+        finish();
+      }
+      video.addEventListener('seeked', onSeeked);
+      try {
+        video.currentTime = t;
+      } catch (e) {
+        window.clearTimeout(to);
+        video.removeEventListener('seeked', onSeeked);
+        finish();
+      }
     });
   }
 
-  /* Image optimizer */
-  function initImageOptimizer(iface) {
-    var input = el('<input type="file" accept="image/*" multiple style="display:none">');
+  /* Video → GIF (screen recordings: MP4, MOV) */
+  function initVideoConverter(iface) {
+    var VC_MAX_W = 8192;
+    var input = el(
+      '<input type="file" accept="video/mp4,video/quicktime,.mp4,.mov,.MOV" style="display:none">'
+    );
     iface.innerHTML = toolShellSplit(
-      '<div class="tool-stack tool-media-pane ov-iop-list-wrap" id="ov-iop-wrap" style="width:100%;min-height:0">' +
-        '<div class="tool-stack" id="ov-iop"></div></div>',
-      '<div class="tool-stack">' +
-        '<div class="drop-zone" id="ov-iop-zone">Drop images or click to batch optimize</div>' +
-        '<p class="tool-out" style="margin-top:10px">Each row: preview, quality, format, export.</p></div>'
+      '<div class="tool-stack tool-media-pane ov-vc-media">' +
+        '<div class="drop-zone ov-vc-drop" id="ov-vc-zone" tabindex="0">Drop a screen recording (.mp4, .mov) or click to browse</div>' +
+        '<div id="ov-vc-preview-wrap" class="ov-vc-preview-wrap" aria-hidden="true">' +
+        '<video id="ov-vc-v" class="ov-vc-video" playsinline muted preload="metadata"></video></div>' +
+        '<p class="tool-out ov-vc-status" id="ov-vc-status"></p></div>',
+      '<div class="tool-stack" id="ov-vc-ctrl">' +
+        '<div class="tool-row">' +
+        '<div class="tool-field tool-field--slider">' +
+        '<span class="tool-label">GIF frame rate</span>' +
+        '<div class="tool-bpm-slider-row">' +
+        '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ov-vc-fps" min="4" max="18" step="1" value="10" aria-valuenow="10">' +
+        '<span class="tool-bpm-val" id="ov-vc-fps-val">10 fps</span></div></div>' +
+        '<div class="tool-field tool-field--slider">' +
+        '<span class="tool-label">Output width (px)</span>' +
+        '<div class="tool-bpm-slider-row">' +
+        '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ov-vc-mw" min="160" max="' +
+        VC_MAX_W +
+        '" step="1" value="1920" aria-valuenow="1920">' +
+        '<span class="tool-bpm-val" id="ov-vc-mw-val">1920</span></div></div></div>' +
+        '<p class="tool-out" id="ov-vc-out-lbl" style="margin:0"></p>' +
+        '<div class="tool-row">' +
+        '<div class="tool-field tool-field--slider">' +
+        '<span class="tool-label">Max length (sec)</span>' +
+        '<div class="tool-bpm-slider-row">' +
+        '<input type="range" class="tool-input tool-input--range tool-input--bpm" id="ov-vc-maxsec" min="1" max="60" step="1" value="30" aria-valuenow="30">' +
+        '<span class="tool-bpm-val" id="ov-vc-maxsec-val">30 s</span></div></div></div>' +
+        '<div class="tool-row">' +
+        '<button type="button" class="tool-btn" id="ov-vc-clear" hidden>Change video</button>' +
+        '<button type="button" class="tool-btn tool-btn--c" id="ov-vc-go">Convert to GIF</button></div>' +
+        '<p class="tool-out" style="margin-top:8px">Runs in your browser. Defaults match video resolution; lower width for smaller files. Very long clips: trim first.</p></div>'
     );
     iface.appendChild(input);
-    var zone = iface.querySelector('#ov-iop-zone');
-    var list = iface.querySelector('#ov-iop');
-    function handle(files) {
-      Array.prototype.forEach.call(files, function (file) {
-        if (!file.type.match(/^image\//)) return;
-        OV.loadImageFile(file).then(function (img) {
-          var row = el('<div class="tool-row tool-row--top" style="border:1px solid var(--border);padding:12px;align-items:center"></div>');
-          var prev = document.createElement('canvas');
-          prev.width = 80;
-          prev.height = 80;
-          prev.style.border = '1px solid var(--border)';
-          var cov = OV.canvasCover(img, 80, 80);
-          prev.getContext('2d').drawImage(cov, 0, 0);
-          row.appendChild(prev);
-          var meta = el(
-            '<div class="tool-field tool-field--grow"><span class="tool-label">' +
-              file.name +
-              '</span><span class="tool-meta-kb">' +
-              (file.size / 1024).toFixed(1) +
-              ' KB</span>' +
-              '<div class="tool-row" style="margin-top:8px">' +
-              '<div class="tool-field tool-field--slider" style="flex:1;min-width:140px">' +
-              '<span class="tool-label">Quality</span>' +
-              '<div class="tool-bpm-slider-row">' +
-              '<input type="range" class="tool-input tool-input--range tool-input--bpm" min="0.5" max="1" step="0.05" value="0.85" data-q aria-valuenow="0.85">' +
-              '<span class="tool-bpm-val" data-qv>85%</span></div></div>' +
-              '<select class="tool-select" data-f><option value="image/jpeg">JPEG</option><option value="image/webp">WebP</option><option value="image/png">PNG</option></select>' +
-              '<button type="button" class="tool-btn tool-btn--c" data-go>Export</button></div></div>'
-          );
-          row.appendChild(meta);
-          bindToolSliderValue(meta, '[data-q]', '[data-qv]', function (n) {
-            return Math.round(n * 100) + '%';
-          });
-          list.appendChild(row);
-          var cFull = document.createElement('canvas');
-          cFull.width = img.naturalWidth;
-          cFull.height = img.naturalHeight;
-          cFull.getContext('2d').drawImage(img, 0, 0);
-          meta.querySelector('[data-go]').addEventListener('click', function () {
-            var fmt = meta.querySelector('[data-f]').value;
-            var q = +meta.querySelector('[data-q]').value;
-            var ext = fmt.indexOf('jpeg') > 0 ? 'jpg' : fmt.indexOf('webp') > 0 ? 'webp' : 'png';
-            OV.downloadCanvas(cFull, file.name.replace(/\.\w+$/, '') + '.' + ext, fmt, fmt.indexOf('png') >= 0 ? undefined : q);
-          });
-        });
+    var panel = iface.querySelector('#ov-vc-ctrl');
+    bindToolSliderValue(panel, '#ov-vc-fps', '#ov-vc-fps-val', function (n) {
+      return n + ' fps';
+    });
+    bindToolSliderValue(panel, '#ov-vc-mw', '#ov-vc-mw-val');
+    bindToolSliderValue(panel, '#ov-vc-maxsec', '#ov-vc-maxsec-val', function (n) {
+      return n + ' s';
+    });
+    var mediaRoot = iface.querySelector('.ov-vc-media');
+    var zone = iface.querySelector('#ov-vc-zone');
+    var wrap = iface.querySelector('#ov-vc-preview-wrap');
+    var video = iface.querySelector('#ov-vc-v');
+    var statusEl = iface.querySelector('#ov-vc-status');
+    var outLbl = iface.querySelector('#ov-vc-out-lbl');
+    var btn = iface.querySelector('#ov-vc-go');
+    var clearBtn = iface.querySelector('#ov-vc-clear');
+    var mwInput = panel.querySelector('#ov-vc-mw');
+    var fileUrl = null;
+    var currentFile = null;
+
+    function isVideoFile(f) {
+      if (!f) return false;
+      if (f.type && /^video\//i.test(f.type)) return true;
+      var n = String(f.name || '').toLowerCase();
+      return /\.(mp4|m4v|mov|webm|mkv)$/i.test(n);
+    }
+
+    function setStatus(t) {
+      if (statusEl) statusEl.textContent = t || '';
+    }
+
+    function updateOutLabel() {
+      if (!outLbl || !mwInput) return;
+      var vw = video.videoWidth;
+      var vh = video.videoHeight;
+      if (!vw || !vh) {
+        outLbl.textContent = '';
+        return;
+      }
+      var tw = +mwInput.value || vw;
+      var scale = Math.min(1, tw / vw);
+      var ow = Math.max(1, Math.round(vw * scale));
+      var oh = Math.max(1, Math.round(vh * scale));
+      var full = scale >= 0.9995 || tw >= vw;
+      outLbl.textContent = 'GIF output: ' + ow + '×' + oh + (full ? ' (matches video)' : ' (scaled)');
+    }
+
+    function onVideoMetadata() {
+      var w = video.videoWidth;
+      var h = video.videoHeight;
+      if (!w || !h) return;
+      mwInput.min = '16';
+      mwInput.max = String(VC_MAX_W);
+      mwInput.value = String(Math.min(w, VC_MAX_W));
+      mwInput.setAttribute('aria-valuenow', mwInput.value);
+      var mv = panel.querySelector('#ov-vc-mw-val');
+      if (mv) mv.textContent = mwInput.value;
+      updateOutLabel();
+    }
+
+    mwInput.addEventListener('input', updateOutLabel);
+
+    function clearVideo(skipStatusClear) {
+      if (fileUrl) {
+        try {
+          URL.revokeObjectURL(fileUrl);
+        } catch (e) {}
+      }
+      fileUrl = null;
+      currentFile = null;
+      video.removeAttribute('src');
+      try {
+        video.load();
+      } catch (e) {}
+      wrap.classList.remove('ov-vc-preview-wrap--visible');
+      wrap.setAttribute('aria-hidden', 'true');
+      if (mediaRoot) mediaRoot.classList.remove('ov-vc-media--has-file');
+      if (clearBtn) {
+        clearBtn.hidden = true;
+        clearBtn.disabled = false;
+      }
+      if (!skipStatusClear) setStatus('');
+      outLbl.textContent = '';
+    }
+
+    function loadFile(file) {
+      if (!isVideoFile(file)) {
+        setStatus('Use a video file (.mp4, .mov, etc.).');
+        return;
+      }
+      if (fileUrl) {
+        try {
+          URL.revokeObjectURL(fileUrl);
+        } catch (e) {}
+      }
+      currentFile = file;
+      fileUrl = URL.createObjectURL(file);
+      video.defaultMuted = true;
+      video.muted = true;
+      video.playsInline = true;
+      video.preload = 'auto';
+      video.src = fileUrl;
+      if (mediaRoot) mediaRoot.classList.add('ov-vc-media--has-file');
+      wrap.classList.add('ov-vc-preview-wrap--visible');
+      wrap.setAttribute('aria-hidden', 'false');
+      if (clearBtn) clearBtn.hidden = false;
+      setStatus('Loading…');
+
+      function onMeta() {
+        onVideoMetadata();
+        setStatus(file.name + ' — ready. Preview & convert below.');
+      }
+
+      function onErr() {
+        clearVideo(true);
+        setStatus('Could not decode this file. Try MP4 (H.264) or re-export from QuickTime.');
+      }
+
+      video.addEventListener('error', onErr, { once: true });
+      if (video.readyState >= 1 && video.videoWidth > 0) {
+        requestAnimationFrame(onMeta);
+      } else {
+        video.addEventListener('loadedmetadata', onMeta, { once: true });
+      }
+    }
+
+    if (clearBtn) {
+      clearBtn.addEventListener('click', function () {
+        clearVideo();
       });
     }
-    OV.bindDropZone(zone, input, handle);
+
+    OV.bindDropZone(zone, input, function (files) {
+      if (files[0]) loadFile(files[0]);
+    });
+
+    btn.addEventListener('click', function () {
+      var G = typeof GIFenc !== 'undefined' ? GIFenc : window.GIFenc;
+      if (!G || typeof G.GIFEncoder !== 'function') {
+        alert('GIF encoder did not load. Refresh the page and try again.');
+        return;
+      }
+      if (!currentFile || !video.src) {
+        setStatus('Choose a video first.');
+        return;
+      }
+
+      var fps = +panel.querySelector('#ov-vc-fps').value || 10;
+      var maxW = +panel.querySelector('#ov-vc-mw').value || video.videoWidth || 1920;
+      var maxSec = +panel.querySelector('#ov-vc-maxsec').value || 30;
+      var delayMs = Math.max(20, Math.round(1000 / fps));
+
+      btn.disabled = true;
+      if (clearBtn) clearBtn.disabled = true;
+      video.pause();
+
+      function runEncode() {
+        var dur = video.duration;
+        if (!isFinite(dur) || dur <= 0) {
+          setStatus('Could not read video duration.');
+          btn.disabled = false;
+          if (clearBtn) clearBtn.disabled = false;
+          return;
+        }
+        var useDur = Math.min(dur, maxSec);
+        var vw = video.videoWidth;
+        var vh = video.videoHeight;
+        if (!vw || !vh) {
+          setStatus('Could not read video size. Wait for preview to load.');
+          btn.disabled = false;
+          if (clearBtn) clearBtn.disabled = false;
+          return;
+        }
+        var scale = Math.min(1, maxW / vw);
+        var cw = Math.max(1, Math.round(vw * scale));
+        var ch = Math.max(1, Math.round(vh * scale));
+        var nFrames = Math.min(360, Math.max(1, Math.ceil(useDur * fps)));
+        var canvas = document.createElement('canvas');
+        canvas.width = cw;
+        canvas.height = ch;
+        var ctx = canvas.getContext('2d');
+        var gif = G.GIFEncoder();
+        var quantize = G.quantize;
+        var applyPalette = G.applyPalette;
+        var fi = 0;
+
+        function fail(msg) {
+          setStatus(msg || 'GIF encoding failed.');
+          btn.disabled = false;
+          if (clearBtn) clearBtn.disabled = false;
+        }
+
+        function nextFrame() {
+          if (fi >= nFrames) {
+            try {
+              gif.finish();
+              var bytes = gif.bytes();
+              var stem = (currentFile.name || 'recording').replace(/\.[^/.]+$/i, '');
+              OV.downloadBlob(new Blob([bytes], { type: 'image/gif' }), stem + '.gif');
+              setStatus('Done — ' + nFrames + ' frames at ' + cw + '×' + ch + '.');
+            } catch (e) {
+              console.error(e);
+              fail('Could not finish GIF file.');
+            }
+            btn.disabled = false;
+            if (clearBtn) clearBtn.disabled = false;
+            return;
+          }
+          var t = Math.min((fi + 0.5) / fps, useDur - 1e-3);
+          setStatus('Encoding frame ' + (fi + 1) + ' / ' + nFrames + '…');
+          seekVideoFrame(video, t)
+            .then(function () {
+              try {
+                ctx.drawImage(video, 0, 0, cw, ch);
+                var imageData = ctx.getImageData(0, 0, cw, ch);
+                var palette = quantize(imageData.data, 256);
+                var index = applyPalette(imageData.data, palette);
+                var opts = { palette: palette, delay: delayMs };
+                if (fi === 0) opts.repeat = 0;
+                gif.writeFrame(index, cw, ch, opts);
+                fi++;
+                window.setTimeout(nextFrame, 0);
+              } catch (e) {
+                console.error(e);
+                fail('Frame ' + (fi + 1) + ' failed (memory or size). Try a lower output width.');
+              }
+            })
+            .catch(function (e) {
+              console.error(e);
+              fail('Seek failed while building GIF.');
+            });
+        }
+        nextFrame();
+      }
+
+      if (video.readyState >= 1 && video.videoWidth > 0) {
+        runEncode();
+      } else {
+        setStatus('Waiting for video…');
+        video.addEventListener(
+          'loadedmetadata',
+          function () {
+            if (video.videoWidth > 0) runEncode();
+            else {
+              setStatus('Video has no frame size.');
+              btn.disabled = false;
+              if (clearBtn) clearBtn.disabled = false;
+            }
+          },
+          { once: true }
+        );
+      }
+    });
+
+    OV.addCleanup(function () {
+      if (fileUrl) {
+        try {
+          URL.revokeObjectURL(fileUrl);
+        } catch (e) {}
+      }
+      fileUrl = null;
+      currentFile = null;
+    });
   }
 
   /* Social sizer */
@@ -4955,8 +5311,8 @@
     'noise-texture': initNoiseTexture,
     'qr-code-generator': initQrCodeGenerator,
     'image-toolbox': initImageToolbox,
-    'image-optimizer': initImageOptimizer,
     'social-sizer': initSocialSizer,
+    'video-converter': initVideoConverter,
     'grid-crop': initGridCrop,
     'carousel-maker': initCarouselMaker,
     'screenshot-beautifier': initScreenshotBeautifier,

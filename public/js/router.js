@@ -160,9 +160,17 @@ async function renderRoute() {
 
   if (route.type === 'tool' && route.slug === 'svg-optimizer') {
     try {
-      history.replaceState(null, '', '#/tools/image-optimizer');
+      sessionStorage.setItem('overprint-image-toolbox-tab', '1');
+      history.replaceState(null, '', '#/tools/image-toolbox');
     } catch (e) {}
-    route.slug = 'image-optimizer';
+    route.slug = 'image-toolbox';
+  }
+  if (route.type === 'tool' && route.slug === 'image-optimizer') {
+    try {
+      sessionStorage.setItem('overprint-image-toolbox-tab', '1');
+      history.replaceState(null, '', '#/tools/image-toolbox');
+    } catch (e) {}
+    route.slug = 'image-toolbox';
   }
   if (route.type === 'tool' && route.slug === 'placeholder-hub') {
     try {
